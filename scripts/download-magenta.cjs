@@ -14,8 +14,9 @@
 // premier, zero ensuite. Le probleme n'etait pas la bande passante, c'etait le hors-ligne,
 // l'integrite et la dependance a un tiers.
 //
-// CINQ POINTS DE CONTROLE POUR SEPT NOEUDS : `continuation` et `melody` partagent melody_rnn,
-// `drums` et `drumsSeed` partagent drums_2bar_nade_9_q2.
+// SIX POINTS DE CONTROLE POUR HUIT NOEUDS : `continuation` et `melody` partagent melody_rnn,
+// `drums` et `drumsSeed` partagent drums_2bar_nade_9_q2. Le sixieme, coconet_bach, sert
+// l'harmonisation a quatre voix ; il est entre le 2026-11-22, empreintes relevees le meme jour.
 //
 // L'EMPREINTE N'EST PAS DECORATIVE : on telecharge des poids qui seront executes. Un fichier dont
 // le SHA-256 ne correspond pas est refuse, et le script echoue au lieu d'installer ce qu'il a recu
@@ -37,6 +38,7 @@ const SOURCES = {
   "mel_2bar_small": "music_vae/mel_2bar_small",
   "groovae_2bar_humanize": "music_vae/groovae_2bar_humanize",
   "piano_genie": "piano_genie/model/epiano/stp_iq_auto_contour_dt_166006",
+  "coconet_bach": "coconet/bach",
 };
 
 /** Chaque fichier attendu, et son empreinte. */
@@ -81,6 +83,10 @@ const EMPREINTES = {
     "group1-shard1of1": "516c74178d85ce6eea34c4a9bb7a5b682ff8686689e4b88f718bd4a4afaf8039",
     "weights_manifest.json": "a018e49e061183c33c0289a0525b452194b5e99b67c88a22196d304c2b3ef7d7",
   },
+  "coconet_bach": {
+    "group1-shard1of1": "b543d9ce9d924d54c1c0e88d2738830b7711326d5f49b739d35f893e31925021",
+    "weights_manifest.json": "1b84f8999523b08c7aa5086b13b2aa444a52bbc466c7b4918878bf7190cc05a4",
+  },
 };
 
 /**
@@ -89,7 +95,7 @@ const EMPREINTES = {
  * « DDSP Tone Transfer » les tirait a l'execution, de `storage.googleapis.com` et de `tfhub.dev`.
  * Ils sont publies en deux archives, `magenta-ddsp` et `magenta-spice`, dont le manifeste porte
  * chaque fichier et son empreinte : c'est `modeles.cjs --telecharger` qui les prend, les verifie et
- * les deplie, le meme tuyau que l'application. Les cinq points de controle ci-dessus viennent
+ * les deplie, le meme tuyau que l'application. Les six points de controle ci-dessus viennent
  * encore de Google, comme avant.
  */
 const DE_LA_RELEASE = ["magenta-ddsp", "magenta-spice"];
@@ -150,7 +156,7 @@ async function main() {
     for (const r of manquants) octets += await telecharger(modele, r);
     pris += manquants.length;
   }
-  if (pris === 0) console.log("[magenta] les cinq points de controle sont presents et conformes.");
+  if (pris === 0) console.log("[magenta] les six points de controle sont presents et conformes.");
   else console.log(`[magenta] ${pris} fichier(s), ${(octets / 1e6).toFixed(2)} Mo, empreintes verifiees.`);
   const aPrendre = paquetsAPrendre();
   if (aPrendre.length > 0) prendreALaRelease(aPrendre);
@@ -165,7 +171,7 @@ const tolerant = process.argv.includes("--tolerant");
 
 main().catch((e) => {
   console.error(`[magenta] ECHEC : ${e.message}`);
-  console.error("[magenta] Les sept noeuds Magenta, ou « DDSP Tone Transfer », ne fonctionneront pas.");
+  console.error("[magenta] Les huit noeuds Magenta, ou « DDSP Tone Transfer », ne fonctionneront pas.");
   if (tolerant) {
     console.error("[magenta] Installation poursuivie. Relancez : npm run download:magenta");
     return;

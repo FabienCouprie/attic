@@ -295,6 +295,17 @@ export type TonaliteChroma = {
  * puissent pas diverger.
  */
 export function tonaliteDepuisChroma(chroma: number[]): TonaliteChroma {
+  const scores = scoresDesTonalites(chroma);
+  return { tonique: scores[0].tonique, type: scores[0].type, confiance: scores[0].score, marge: scores[0].score - scores[1].score };
+}
+
+/**
+ * Les vingt-quatre tonalités et leur score de Krumhansl-Schmuckler, du meilleur au moins bon.
+ *
+ * SORTI DE `tonaliteDepuisChroma` À L'IDENTIQUE, pour qu'une lecture puisse départager deux candidats
+ * proches par autre chose que leur score : la basse finale d'un choral (`audio/corpus-tonalite.ts`).
+ */
+export function scoresDesTonalites(chroma: number[]): { tonique: number; type: "major" | "minor"; score: number }[] {
   const scores: { tonique: number; type: "major" | "minor"; score: number }[] = [];
   for (let tonique = 0; tonique < 12; tonique++) {
     scores.push({ tonique, type: "major", score: correlerProfil(chroma, PROFIL_MAJEUR, tonique) });
@@ -303,7 +314,7 @@ export function tonaliteDepuisChroma(chroma: number[]): TonaliteChroma {
   // Tri stable : à score égal, l'ordre d'insertion — majeur avant mineur, do
   // d'abord — départage, comme la boucle qu'il remplace.
   scores.sort((a, b) => b.score - a.score);
-  return { tonique: scores[0].tonique, type: scores[0].type, confiance: scores[0].score, marge: scores[0].score - scores[1].score };
+  return scores;
 }
 
 /**

@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-512 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+520 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -342,7 +342,12 @@ FAMILLE=Écho npm run ecouter
 ```bash
 GRAPHE=un-son-projete-en-microtonal npm run executer
 GRAPHE=exemples/canon-de-proportions.json npm run executer
+GPU=1 GRAPHE=work/un-graphe-avec-coconet.json npm run executer
 ```
+
+  `GPU=1` lance Chromium avec la carte graphique, sous Windows, comme l'épreuve de Coconet : sans elle,
+  le WebGL de Chromium sans tête est logiciel, et un réseau de Magenta y passe dix fois plus de temps.
+  Un run ne dure pas plus de 180 s : un graphe plus long se découpe.
 
   Il rend l'état et le message de **chaque** nœud — pas seulement de ceux qui ont levé, car un nœud
   « Terminé » qui ne fait rien entendre est le symptôme d'un câble oublié — puis écrit dans
@@ -429,9 +434,10 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
 
   Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
   du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
-  du réglage. Le registre porte **93 composants à graine** depuis le 2026-11-15, les accords joués et
-  la gamme jouée ayant gagné la leur le 2026-11-14, la corde pincée la sienne le lendemain, et le
-  « Dither » étant né avec la sienne le même jour. Relevé sur les 89 d'avant : 59 comparés sur le son,
+  du réglage. Le registre porte **96 composants à graine** depuis le 2026-11-22, les accords joués et
+  la gamme jouée ayant gagné la leur le 2026-11-14, la corde pincée la sienne le lendemain, le
+  « Dither » étant né avec la sienne le même jour, « Harmoniser (Coconet) », « Harmoniser à quatre
+  voix » et « Apprendre sur un corpus » avec la leur le 2026-11-22. Relevé sur les 89 d'avant : 59 comparés sur le son,
   zéro infidèle ; 88 en 14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans
   sortie audio. « Dither » passé seul le 2026-11-15 : comparé sur le son, fidèle.
   Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
@@ -517,7 +523,7 @@ jamais vu rouge ne garde rien.
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
-| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 373 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
+| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 376 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Vérifier qu'**aucun message ne reste en français** dans l'interface anglaise | `ANGLAIS=1 npm run messages-anglais` : chaque fiche lancée sur le banc en anglais, son message et son erreur passés au détecteur du registre — le texte en dur des vues est tenu par `src/docs/vues-anglais.test.ts` |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |

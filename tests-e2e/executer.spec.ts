@@ -33,6 +33,14 @@ import { serveurDeVerification } from "./serveur-de-developpement";
 import { lireWav } from "../src/audio/empreinte-wav";
 
 const devUrl = serveurDeVerification(5241);
+
+// LA CARTE GRAPHIQUE, SUR DEMANDE : `GPU=1` lance Chromium avec les options de l'épreuve de Coconet
+// (`harmoniser-coconet-dans-application.spec.ts`). Sans elles, le WebGL de Chromium sans tête est
+// logiciel, et un graphe qui porte un réseau de Magenta y passe dix fois plus de temps. Sans la
+// variable, rien ne change.
+if (process.env.GPU === "1" && process.platform === "win32") {
+  test.use({ launchOptions: { args: ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] } });
+}
 const ICI = dirname(fileURLToPath(import.meta.url));
 const RACINE = resolve(ICI, "..");
 

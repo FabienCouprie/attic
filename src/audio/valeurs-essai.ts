@@ -26,6 +26,9 @@ import { videoDEssai } from "./video-essai";
 import { CONTENUS_CONTROLE } from "./sous-types-controle";
 import { CONTENUS_TEXTE } from "./sous-types-texte";
 import type { Sequence } from "./sequence";
+import type { Corpus, PieceDuCorpus } from "./corpus";
+import type { ModeleHarmonique } from "./modele-harmonique";
+import { apprendreSurCorpus } from "./champ-apprentissage";
 
 export interface OptionsEssai {
   /** Le son d'essai, quand la valeur demandée en a besoin. C'est l'appelant qui le détient. */
@@ -66,6 +69,42 @@ export function sequenceDEssai(): Sequence {
     })),
     tempo: 120,
   };
+}
+
+/**
+ * Un corpus de deux pièces à quatre voix, une cadence I IV V I en do majeur et i iv V i en la mineur.
+ *
+ * QUATRE VOIX, PARCE QUE C'EST CE QU'UN CORPUS PORTE ICI : une pièce d'une seule voix nourrirait
+ * un lecteur de corpus sans rien lui demander de ce qui le distingue d'une séquence.
+ */
+export function corpusDEssai(): Corpus {
+  const piece = (accords: number[][], source: string, tonique: number, mode: "majeur" | "mineur"): PieceDuCorpus => ({
+    sequence: {
+      notes: accords.flatMap((accord, k) => accord.map((note, voix) => ({ note, velocite: 90, debut: k, fin: k + 1, voix }))),
+      tempo: 60,
+      voix: ["soprano", "alto", "ténor", "basse"].map((nom, numero) => ({ numero, nom })),
+    },
+    source, tonalite: { tonique, mode, origine: "notes" },
+  });
+  return {
+    pieces: [
+      piece([[72, 67, 64, 48], [72, 69, 65, 53], [71, 67, 62, 55], [72, 67, 64, 48]], "essai-do-majeur", 0, "majeur"),
+      piece([[69, 64, 60, 45], [69, 65, 62, 50], [68, 64, 59, 52], [69, 64, 57, 45]], "essai-la-mineur", 9, "mineur"),
+    ],
+  };
+}
+
+/**
+ * Un modèle harmonique appris en cinq passes sur la pièce majeure du corpus d'essai : de quoi nourrir
+ * une entrée « Modèle » avec un vrai modèle, non avec une forme vide.
+ */
+export function modeleDEssai(): ModeleHarmonique {
+  const r = apprendreSurCorpus({
+    corpus: corpusDEssai(), mode: "majeur", pas: 1, voisinages: { vertical: true, horizontal: true, diagonal: true },
+    penalite: 0.001, passes: 5, partValidation: 0, graine: 1,
+  });
+  if (!r.modele) throw new Error("le corpus d'essai n'apprend aucun modèle");
+  return r.modele;
 }
 
 /** Le même matériau, écrit en fichier MIDI : c'est ce qu'attend un port « midi ». */
@@ -210,6 +249,8 @@ export const SANS_VALEUR_DESSAI: Record<string, string> = {
 export function valeurDEssai(type: string, sousType?: string, o: OptionsEssai = {}): unknown {
   switch (type) {
     case "sequence": return sequenceDEssai();
+    case "corpus": return corpusDEssai();
+    case "modele-harmonique": return modeleDEssai();
     case "midi": return midiDEssai();
     case "texte": return texteDEssai(sousType);
     case "accordage": return accordageDEssai();

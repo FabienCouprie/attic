@@ -16,6 +16,8 @@
 // déjà pour le DSP.
 import type { PluginDef, ContexteExecution } from "../core";
 import type { Accordage } from "./accordage";
+import type { Corpus } from "./corpus";
+import type { ModeleHarmonique } from "./modele-harmonique";
 import type { Cercle, Suite } from "./cercle";
 import type { Banque } from "./clavier-banque";
 import type { Courbe } from "./courbe";
@@ -67,6 +69,8 @@ export type ValeurAudio =
   | SpectrogrammeMel
   | Banque
   | Accordage
+  | Corpus
+  | ModeleHarmonique
   | null;
 
 /** Runtime passé aux plugins audio (Web Audio). */

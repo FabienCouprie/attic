@@ -20,41 +20,18 @@ import { decouperMorceaux, lireMorceau } from "../audio/abc";
 import { refusAbc } from "../audio/abc-fautes";
 import { abcPourGravure, refusTournures } from "../audio/abc-gravure";
 import { choixOuiNon } from "../core/oui-non";
+import { outilVerovio } from "./verovio-outil";
 
 const en = () => langueCourante() === "en";
 
 const EXEMPLE = "X:1\nT:Gamme\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |";
 
-type Boite = Promise<{ creerModule: () => Promise<any>; VerovioToolkit: new (m: any) => any }>;
-const boites = new Map<boolean, Boite>();
-
 /**
- * Un moteur neuf pour chaque gravure ; seuls les imports se gardent.
- *
- * UN MODULE NEUF, ET NON UN TOOLKIT GARDÉ, revue des notations en texte, décision de Fabien du
- * 2026-11-22. Verovio garde l'armure d'une partition ABC à la suivante, dans son module WebAssembly, en
- * 6.3.0 comme en 6.4.1 : le moteur se chargeait une fois pour toutes, et après un air en do bémol,
- * l'air en do se gravait avec huit altérations, une par note. Ni un toolkit neuf sur le même module, ni
- * `resetOptions`, ni un MEI chargé entre deux airs ne réparaient la fuite. Un module coûte 103 ms.
- *
- * LE HUMDRUM A SON PROPRE MODULE, décision de Fabien du même jour, « Load the Humdrum module ».
- * `verovio/wasm` ne le connaît pas : un fichier `**kern` correct était refusé. `verovio/wasm-hum` le
- * lit, et n'est importé que pour lui. Mesuré par Vite le 2026-11-22 : son morceau pèse 14 317 004
- * octets contre 8 207 951, et 2 797 312 octets compressés en LZMA, comme dans l'installeur.
+ * Un moteur neuf pour chaque gravure, et le module Humdrum pour une partition Humdrum, par
+ * `verovio-outil.ts`, où la raison des deux est écrite : la gravure et « Lire une partition » chargent
+ * Verovio par le même chemin.
  */
-async function outil(humdrum: boolean): Promise<any> {
-  if (!boites.has(humdrum)) {
-    boites.set(humdrum, (async () => {
-      const [creerModule, { VerovioToolkit }] = await Promise.all([
-        (humdrum ? import("verovio/wasm-hum") : import("verovio/wasm")).then((m: any) => m.default ?? m),
-        import("verovio/esm") as Promise<any>,
-      ]);
-      return { creerModule, VerovioToolkit };
-    })().catch((e) => { boites.delete(humdrum); throw e; }));
-  }
-  const { creerModule, VerovioToolkit } = await boites.get(humdrum)!;
-  return new VerovioToolkit(await creerModule());
-}
+const outil = (humdrum: boolean) => outilVerovio(humdrum);
 
 export const fiches: FicheAudio[] = ([
   fiche({

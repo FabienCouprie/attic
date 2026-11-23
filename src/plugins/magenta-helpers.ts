@@ -1,6 +1,7 @@
 // plugins/magenta-helpers.ts — Fonctions de calcul des nœuds Magenta.
 // Partagées entre le thread principal (magenta.ts) et le worker Magenta.
-// @magenta/music : Apache 2.0 — déjà listé dans THIRD_PARTY.md.
+// @magenta/music : Apache 2.0, listé dans THIRD_PARTY.md depuis le 2026-11-22 ; il ne l'était pas,
+// quoi qu'en dît cette ligne.
 
 import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";
@@ -52,8 +53,11 @@ const POINTS = {
  *     n'a pas de preload : on passe par le schéma `attic-res:`, servi par le processus principal,
  *     qui résout par le même chemin que tout le reste du dépôt ;
  *   · test en Node — pas de `location` du tout, et aucun modèle n'y est chargé.
+ *
+ * EXPORTÉE pour `coconet-helpers.ts`, le sixième point de contrôle, qui se charge hors de `POINTS` :
+ * Coconet n'a pas de nœud jumeau avec qui partager son modèle, et son échantillonnage est réécrit.
  */
-function baseDuPoint(point: string): string {
+export function baseDuPoint(point: string): string {
   const loc = typeof self !== "undefined" ? self.location : undefined;
   if (!loc) return `magenta/${point}`;
   if (loc.protocol === "file:") return `attic-res://magenta/${point}`;

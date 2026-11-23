@@ -91,6 +91,28 @@
       ]
     },
     {
+      "id": "corpus-chorals-bach-2",
+      "nom": "Chorals de Bach (DCML corrigé)",
+      "nomEn": "Bach chorales (corrected DCML)",
+      "noeuds": [
+        "lire-corpus"
+      ],
+      "octets": 1178974,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/corpus-chorals-bach-dcml-2.json",
+        "octets": 1178974,
+        "sha256": "4c07dff8dc8e7c10289bc7c3938989c2b901521b3111a7a3f9bd0ed45acc0179"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/corpus-chorals-bach-dcml-2.json",
+          "octets": 1178974,
+          "sha256": "4c07dff8dc8e7c10289bc7c3938989c2b901521b3111a7a3f9bd0ed45acc0179"
+        }
+      ]
+    },
+    {
       "id": "genre",
       "nom": "Classement par genre",
       "nomEn": "Genre classifier",
@@ -1882,6 +1904,33 @@
           "chemin": "magenta/piano_genie/weights_manifest.json",
           "octets": 884,
           "sha256": "a018e49e061183c33c0289a0525b452194b5e99b67c88a22196d304c2b3ef7d7"
+        }
+      ]
+    },
+    {
+      "id": "magenta-coconet",
+      "nom": "Harmonisation de choral (Coconet)",
+      "nomEn": "Chorale harmonization (Coconet)",
+      "noeuds": [
+        "harmoniser-coconet"
+      ],
+      "octets": 595914,
+      "source": {
+        "type": "archive",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/magenta-coconet.zip",
+        "octets": 401572,
+        "sha256": "bb1c93478883f357c708dd95deebb05629229d59e5f8c75d7455c693fd2936f3"
+      },
+      "fichiers": [
+        {
+          "chemin": "magenta/coconet_bach/group1-shard1of1",
+          "octets": 553436,
+          "sha256": "b543d9ce9d924d54c1c0e88d2738830b7711326d5f49b739d35f893e31925021"
+        },
+        {
+          "chemin": "magenta/coconet_bach/weights_manifest.json",
+          "octets": 42478,
+          "sha256": "1b84f8999523b08c7aa5086b13b2aa444a52bbc466c7b4918878bf7190cc05a4"
         }
       ]
     }

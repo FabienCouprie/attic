@@ -39,8 +39,9 @@ describe("le garde du dépliage connaît toutes les boucles par passes", () => {
 
   it("ET IL Y EN A BIEN À CONNAÎTRE, le compte étant écrit", () => {
     // Un cas qui ne trouve rien passe, et l'on croirait qu'il garde quelque chose.
-    expect(FICHES_BOUCLE_DEBUT.length).toBe(3);
-    expect(FICHES_BOUCLE_FIN.length).toBe(3);
+    // Quatre depuis le 2026-11-22 : la boucle qui fabrique un corpus (`plugins/fabriquer-corpus.ts`).
+    expect(FICHES_BOUCLE_DEBUT.length).toBe(4);
+    expect(FICHES_BOUCLE_FIN.length).toBe(4);
   });
 });
 

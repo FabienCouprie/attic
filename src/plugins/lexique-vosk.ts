@@ -81,6 +81,10 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   "303",
   // ═══ UN MOT RELEVÉ LE 2026-11-22 PAR LE MÊME GARDE ═══
   //
+  // « Harmoniser (Coconet) » : le moteur jette « coconet », et le nom entrait amputé en
+  // « harmoniser », qui concurrençait « Harmoniser à quatre voix ». Le composant se dit par son nom
+  // parlé, « harmoniser par le réseau ».
+  "coconet",
   // « Dither » est entré au catalogue le 2026-11-15, et le garde, lancé après lui, a vu le moteur
   // jeter « dither », le seul mot de son nom : le composant ne pouvait pas se dire. Il se dit par
   // son nom parlé, « arrondi avec bruit », choisi par Fabien.

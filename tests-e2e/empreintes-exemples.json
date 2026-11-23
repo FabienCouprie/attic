@@ -260,6 +260,52 @@
       },
       "erreurs": []
     },
+    "deux-corpus-trois-harmonisations.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.01852449334714,
+          "crete": 0.11838122457265854,
+          "trames": 529200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1915.3553158774919,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "par-bach": {
+          "rms": 0.26676974748162247,
+          "crete": 0.7924485802650452,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 291.5154688774755,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.26676974748162247,
+          "crete": 0.7924485802650452,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 291.5154688774755,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "deux-effets-deux-passages.json": {
       "lecteurs": {
         "source": {
@@ -712,6 +758,131 @@
             "fmt",
             "fact",
             "data"
+          ]
+        }
+      },
+      "erreurs": []
+    },
+    "un-choral-harmonise.json": {
+      "lecteurs": {
+        "harmoniser": {
+          "rms": 0.26249752366926415,
+          "crete": 0.7982080578804016,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.70108774312854,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.26249752366926415,
+          "crete": 0.7982080578804016,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.70108774312854,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
+    "un-corpus-appris.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.017576121862991994,
+          "crete": 0.11818134039640427,
+          "trames": 529200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2024.32582223761,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "mele": {
+          "rms": 0.2573294206655659,
+          "crete": 0.8047736287117004,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 277.9902479230761,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.2573294206655659,
+          "crete": 0.8047736287117004,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 277.9902479230761,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
+    "un-corpus-fabrique.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.015764068824267053,
+          "crete": 0.12020153552293777,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2113.4866118387263,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "harmoniser": {
+          "rms": 0.2956238221372602,
+          "crete": 1.1268424987792969,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 357.5238856126291,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.2956238221372602,
+          "crete": 1.1268424987792969,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 357.5238856126291,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
           ]
         }
       },

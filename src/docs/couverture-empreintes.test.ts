@@ -59,10 +59,12 @@ const DU_MOTEUR: Record<string, string> = {
  * fichier par son worker, puis sans worker, dans le fil, et pas un octet ne doit différer. Décidé
  * par Fabien le 2026-11-07, plutôt que d'apprendre au banc l'empreinte d'un fichier MIDI.
  *
- * LA LISTE EST VIDE DEPUIS LE 2026-11-14 : son seul inscrit, le worker du « Transcripteur MIDI »,
- * est parti avec ce composant. La règle reste pour le suivant.
+ * LA LISTE A ÉTÉ VIDE DU 2026-11-14 AU 2026-11-22 : son premier inscrit, le worker du « Transcripteur
+ * MIDI », est parti avec ce composant. Le second rend un modèle harmonique, non du son.
  */
-const SANS_SORTIE_AUDIO: Record<string, string> = {};
+const SANS_SORTIE_AUDIO: Record<string, string> = {
+  "apprendre-corpus-worker.ts": "apprendre-corpus-dans-application.spec.ts",
+};
 
 function workersDeCalcul(): string[] {
   return readdirSync(WORKERS)

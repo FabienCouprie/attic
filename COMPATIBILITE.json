@@ -341,6 +341,27 @@
     {"nom":"Taille de la transformée","type":"choix","defaut":"4096","choix":["256","512","1024","2048","4096","8192"]}
    ]
   },
+  "apprendre-corpus": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Corpus","type":"corpus"}
+   ],
+   "sorties": [
+    {"nom":"Modèle","type":"modele-harmonique"},
+    {"nom":"Rapport","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
+    {"nom":"Pas","type":"choix","defaut":"noire","choix":["noire","croche"]},
+    {"nom":"Verticaux","type":"case","defaut":1,"min":0,"max":1},
+    {"nom":"Horizontaux","type":"case","defaut":1,"min":0,"max":1},
+    {"nom":"Diagonaux","type":"case","defaut":1,"min":0,"max":1},
+    {"nom":"Pénalité L1","type":"curseur","defaut":0.0005,"min":0,"max":0.01},
+    {"nom":"Passes","type":"nombre","defaut":100,"min":1,"max":2000},
+    {"nom":"Part de validation","type":"curseur","defaut":10,"min":0,"max":50,"unite":"%"},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
   "arbre-rythmique": {
    "version": 1,
    "entrees": [],
@@ -1947,6 +1968,34 @@
     {"nom":"Style","type":"choix","defaut":"ville","choix":["ville","concentrique","organique","voronoi"]},
     {"nom":"Esthétique","type":"choix","defaut":"classique","choix":["classique","baroque","art-nouveau","art-deco","exotique"]},
     {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
+  "corpus-fabriquer-debut": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Rang","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Pièces","type":"curseur","defaut":8,"min":1},
+    {"nom":"Graines","type":"choix","defaut":"Une par tour","choix":["Une par tour","Identiques"]}
+   ]
+  },
+  "corpus-fabriquer-fin": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rang","type":"texte","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Corpus","type":"corpus"},
+    {"nom":"Journal","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Format","type":"choix","defaut":"aucun","choix":["aucun","midi","musicxml"]},
+    {"nom":"Dossier","type":"dossier","defaut":""},
+    {"nom":"Préfixe","type":"texte","defaut":"piece"},
+    {"nom":"Si le fichier existe","type":"choix","defaut":"erreur","choix":["erreur","ecraser"]}
    ]
   },
   "correction-hauteur": {
@@ -4126,6 +4175,47 @@
     {"nom":"Nuance","type":"curseur","defaut":100,"min":1,"max":127}
    ]
   },
+  "harmoniser-choral": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Modèle","type":"modele-harmonique","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rapport","type":"texte"},
+    {"nom":"Audio","type":"audio"}
+   ],
+   "reglages": [
+    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
+    {"nom":"Tonique","type":"choix","defaut":"0","choix":["0","1","2","3","4","5","6","7","8","9","10","11"],"optionsHeritees":{"A":"9","A#":"10","B":"11","Bb":"10","C":"0","C#":"1","D":"2","D#":"3","Do":"0","Do#":"1","Do♯":"1","E":"4","Eb":"3","F":"5","F#":"6","Fa":"5","Fa#":"6","Fa♯":"6","G":"7","G#":"8","La":"9","La#":"10","La♯":"10","Mi":"4","Mib":"3","Mi♭":"3","Ré":"2","Ré#":"3","Ré♯":"3","Si":"11","Sib":"10","Si♭":"10","Sol":"7","Sol#":"8","Sol♯":"8","a":"9","a#":"10","b":"11","bb":"10","b♭":"10","c":"0","c#":"1","d":"2","d#":"3","do":"0","do#":"1","do♯":"1","e":"4","eb":"3","e♭":"3","f":"5","f#":"6","fa":"5","fa#":"6","fa♯":"6","g":"7","g#":"8","la":"9","la#":"10","la♯":"10","mi":"4","mib":"3","mi♭":"3","ré":"2","ré#":"3","ré♯":"3","si":"11","sib":"10","si♭":"10","sol":"7","sol#":"8","sol♯":"8"}},
+    {"nom":"Pas","type":"choix","defaut":"noire","choix":["noire","croche"]},
+    {"nom":"Septièmes","type":"choix","defaut":"dominante","choix":["aucune","dominante","toutes"]},
+    {"nom":"Renversements","type":"case","defaut":1,"min":0,"max":1},
+    {"nom":"Température","type":"curseur","defaut":0,"min":0,"max":2},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true},
+    {"nom":"Part des règles","type":"curseur","defaut":50,"min":0,"max":100,"unite":"%"},
+    {"nom":"Faisceau","type":"nombre","defaut":0,"min":0,"max":500}
+   ]
+  },
+  "harmoniser-coconet": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Séquence","type":"sequence"}
+   ],
+   "sorties": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rapport","type":"texte"},
+    {"nom":"Audio","type":"audio"}
+   ],
+   "reglages": [
+    {"nom":"Voix gardées","type":"choix","defaut":"soprano","choix":["soprano","toutes"]},
+    {"nom":"Température","type":"curseur","defaut":0.99,"min":0,"max":1.5},
+    {"nom":"Itérations","type":"curseur","defaut":96,"min":8,"max":256},
+    {"nom":"Lier les notes répétées","type":"case","defaut":1,"min":0,"max":1},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
   "harmonizer": {
    "version": 1,
    "entrees": [
@@ -4430,6 +4520,36 @@
     {"nom":"Anticipation","type":"curseur","defaut":2,"min":0.5,"max":10,"unite":"ms"},
     {"nom":"Maintien","type":"curseur","defaut":20,"min":0,"max":100,"unite":"ms"},
     {"nom":"Relâchement","type":"curseur","defaut":100,"min":10,"max":1000,"unite":"ms"}
+   ]
+  },
+  "lire-corpus": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Corpus","type":"corpus"},
+    {"nom":"Rapport","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Source","type":"choix","defaut":"chorals-bach","choix":["chorals-bach","dossier"]},
+    {"nom":"Dossier","type":"dossier","defaut":""},
+    {"nom":"Voix","type":"nombre","defaut":4,"min":2,"max":4},
+    {"nom":"Limite","type":"nombre","defaut":0,"min":0,"max":10000}
+   ]
+  },
+  "lire-partition": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Notation","type":"texte","sousType":"notation","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rapport","type":"texte"},
+    {"nom":"Audio","type":"audio"}
+   ],
+   "reglages": [
+    {"nom":"Chemin","type":"fichier","defaut":""},
+    {"nom":"Notation","type":"texte","defaut":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<score-partwise version=\"3.1\"><part-list><score-part id=\"P1\"><part-name>Voix</part-name></score-part></part-list>\n<part id=\"P1\"><measure number=\"1\"><attributes><divisions>1</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number=\"1\"><sign>G</sign><line>2</line></clef><clef number=\"2\"><sign>F</sign><line>4</line></clef></attributes>\n<note><pitch><step>E</step><octave>5</octave></pitch><duration>1</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>D</step><octave>5</octave></pitch><duration>1</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type><staff>1</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><voice>2</voice><type>half</type><staff>1</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><voice>5</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>B</step><octave>3</octave></pitch><duration>1</duration><voice>5</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>G</step><octave>3</octave></pitch><duration>2</duration><voice>5</voice><type>half</type><staff>2</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><voice>6</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>G</step><octave>2</octave></pitch><duration>1</duration><voice>6</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>C</step><octave>3</octave></pitch><duration>2</duration><voice>6</voice><type>half</type><staff>2</staff></note>\n</measure></part></score-partwise>"},
+    {"nom":"Tempo","type":"nombre","defaut":0,"min":0,"max":300,"unite":"BPM"}
    ]
   },
   "magenta-continuation": {
@@ -8574,6 +8694,23 @@
     {"nom":"Attaque","type":"nombre","defaut":0.05,"min":0.005,"max":0.5,"unite":"s"},
     {"nom":"Durée","type":"nombre","defaut":2,"min":0.1,"max":10,"unite":"s"},
     {"nom":"Volume","type":"nombre","defaut":80,"min":0,"max":100,"unite":"%"}
+   ]
+  },
+  "verifier-choral": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Modèle","type":"modele-harmonique","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Rapport","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
+    {"nom":"Tonique","type":"choix","defaut":"0","choix":["0","1","2","3","4","5","6","7","8","9","10","11"],"optionsHeritees":{"A":"9","A#":"10","B":"11","Bb":"10","C":"0","C#":"1","D":"2","D#":"3","Do":"0","Do#":"1","Do♯":"1","E":"4","Eb":"3","F":"5","F#":"6","Fa":"5","Fa#":"6","Fa♯":"6","G":"7","G#":"8","La":"9","La#":"10","La♯":"10","Mi":"4","Mib":"3","Mi♭":"3","Ré":"2","Ré#":"3","Ré♯":"3","Si":"11","Sib":"10","Si♭":"10","Sol":"7","Sol#":"8","Sol♯":"8","a":"9","a#":"10","b":"11","bb":"10","b♭":"10","c":"0","c#":"1","d":"2","d#":"3","do":"0","do#":"1","do♯":"1","e":"4","eb":"3","e♭":"3","f":"5","f#":"6","fa":"5","fa#":"6","fa♯":"6","g":"7","g#":"8","la":"9","la#":"10","la♯":"10","mi":"4","mib":"3","mi♭":"3","ré":"2","ré#":"3","ré♯":"3","si":"11","sib":"10","si♭":"10","sol":"7","sol#":"8","sol♯":"8"}},
+    {"nom":"Temps par mesure","type":"nombre","defaut":4,"min":1,"max":12},
+    {"nom":"Anacrouse","type":"nombre","defaut":0,"min":0,"max":11},
+    {"nom":"Arêtes rapportées","type":"nombre","defaut":5,"min":0,"max":50}
    ]
   },
   "vexflow-grille": {

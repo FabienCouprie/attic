@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 99 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 268 · transposable tel quel
+- **pur** : 291 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -75,6 +75,19 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | cercle-rendu.ts | pur | — |
 | cercle-retouche.ts | pur | — |
 | cercle.ts | pur | — |
+| champ-apprentissage.ts | pur | — |
+| champ-corpus.ts | pur | — |
+| champ-paires.ts | pur | — |
+| choral-175-dcml.ts | pur | — |
+| choral-candidats.ts | pur | — |
+| choral-chaine.ts | pur | — |
+| choral-corpus-essai.ts | pur | — |
+| choral-energie.ts | pur | — |
+| choral-harmoniser.ts | pur | — |
+| choral-modele.ts | pur | — |
+| choral-regles.ts | pur | — |
+| choral-tranches.ts | pur | — |
+| choral-verifier.ts | pur | — |
 | classes-hauteurs.ts | pur | — |
 | classification-pistes.ts | pur | — |
 | clavier-banque-lot.ts | pur | — |
@@ -83,6 +96,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | clefs-portee.ts | pur | — |
 | cles.ts | pur | — |
 | cloche-risset.ts | recipient | AudioBuffer |
+| coconet-grille.ts | pur | — |
 | color-looper.ts | recipient | AudioBuffer |
 | commun.ts | rendu | OfflineAudioContext |
 | concatenatif.ts | pur | — |
@@ -97,6 +111,10 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | convertir-frequence.ts | rendu | OfflineAudioContext |
 | convolution.ts | rendu | OfflineAudioContext |
 | corde-pincee.ts | pur | — |
+| corpus-fichier.ts | pur | — |
+| corpus-midi.ts | pur | — |
+| corpus-tonalite.ts | pur | — |
+| corpus.ts | pur | — |
 | correction-hauteur.ts | pur | — |
 | correction-pleurage.ts | pur | — |
 | couleur-rgb.ts | recipient | AudioBuffer |
@@ -121,6 +139,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | csound-orchestre.ts | pur | — |
 | csound-partition.ts | pur | — |
 | csound.ts | rendu | OfflineAudioContext |
+| dcml-tsv.ts | pur | — |
 | decalage-frequence.ts | pur | — |
 | decibels.ts | pur | — |
 | declipper.ts | pur | — |
@@ -263,6 +282,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | midi.ts | pur | — |
 | miroir.ts | pur | — |
 | mixage.ts | recipient | AudioBuffer |
+| modele-harmonique.ts | pur | — |
 | moebius.ts | recipient | AudioBuffer |
 | mono-grave.ts | pur | — |
 | mono-stereo.ts | pur | — |
@@ -275,6 +295,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | multicanal-ecoute.ts | rendu | OfflineAudioContext |
 | multicanal.ts | recipient | AudioBuffer |
 | musicxml-arbre.ts | pur | — |
+| musicxml-parties.ts | pur | — |
 | musicxml-temps.ts | pur | — |
 | musicxml.ts | pur | — |
 | nancarrow.ts | recipient | AudioBuffer |
@@ -298,6 +319,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | parfum.ts | pur | — |
 | parole-datee.ts | recipient | AudioBuffer |
 | particules.ts | pur | — |
+| partition-lecture.ts | pur | — |
 | passage-zero.ts | pur | — |
 | pca-neuronale.ts | recipient | AudioBuffer |
 | peigne.ts | recipient | AudioBuffer |
@@ -381,6 +403,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | tempo-octave.ts | pur | — |
 | tempo-reancrage.ts | pur | — |
 | terrain-onde.ts | pur | — |
+| tessitures-satb.ts | pur | — |
 | texture-statistique.ts | pur | — |
 | theorie-romains.ts | pur | — |
 | theorie-serielle.ts | pur | — |

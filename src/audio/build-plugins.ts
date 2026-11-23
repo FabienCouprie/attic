@@ -205,6 +205,7 @@ export const audioOptimizeDeps: any = {
   include: [
     "@firecrawl/pdf-inspector-wasm",
     "@magenta/music",
+    "@magenta/music/esm/coconet/model",
     "@magenta/music/esm/core/sequences",
     "@magenta/music/esm/music_rnn/model",
     "@magenta/music/esm/music_vae/model",

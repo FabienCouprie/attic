@@ -234,6 +234,10 @@ describe("le pilote de graphe", () => {
     // et relisent ce que la fin fait entendre par `apercusEnWav` : le son seul dit si les copies d'une
     // boucle ou d'un instrument ont été refaites.
     //
+    // L'HARMONISATION PAR COCONET Y PREND `semer` puis `relancerEtAttendre`, deux pages neuves de suite
+    // à la même graine, et relit dans l'exécution gardée les notes reçues et rendues : la graine ne se
+    // juge que sur deux lancements qui ne partagent aucun cache.
+    //
     // « SVG VERS PDF » Y PREND `semerEtLancer` deux fois et `etatDesNoeuds` : une partition gravée puis
     // imprimée, dans l'application construite, et le PDF écrit relu hors de la page.
     expect(appelants.sort(), "les appelants déclarés du pilote")
@@ -243,7 +247,8 @@ describe("le pilote de graphe", () => {
         "copies-remises-a-zero-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
-        "graphe-complexite-dans-application.spec.ts", "inspecteur-echantillon-dans-application.spec.ts",
+        "graphe-complexite-dans-application.spec.ts", "harmoniser-coconet-dans-application.spec.ts",
+        "inspecteur-echantillon-dans-application.spec.ts",
         "journal-de-passe.spec.ts",
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",

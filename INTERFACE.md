@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**512 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**520 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -148,6 +148,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Analyse rythmique | `analyse-rythme` | 240 × 118 |
 | Anneau de Möbius | `anneau-moebius` | 240 × 118 |
 | Apparier sur une référence | `apparier-reference` | 240 × 140 |
+| Apprendre sur un corpus | `apprendre-corpus` | 240 × 140 |
 | Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 162 |
 | Arpège flocon de Koch | `arpege-koch` | 240 × 140 |
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
@@ -217,6 +218,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Écrire un contrepoint | `contrepoint-solveur` | 240 × 162 |
 | Convertir une voix | `convertir-voix` | 240 × 140 |
 | Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
+| Fabriquer un corpus (début) | `corpus-fabriquer-debut` | 240 × 118 |
+| Fabriquer un corpus (fin) | `corpus-fabriquer-fin` | 240 × 140 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Correction du pleurage | `correction-pleurage` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
@@ -325,6 +328,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
+| Harmoniser à quatre voix | `harmoniser-choral` | 240 × 162 |
+| Harmoniser (Coconet) | `harmoniser-coconet` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 162 |
 | Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 206 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
@@ -341,6 +346,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Légende d'image | `legende-image` | 240 × 118 |
 | Limiteur | `limiteur` | 240 × 184 |
 | Limiteur à crête vraie | `limiteur-crete-vraie` | 240 × 118 |
+| Lire un corpus | `lire-corpus` | 240 × 140 |
+| Lire une partition | `lire-partition` | 240 × 162 |
 | Magenta Continuation | `magenta-continuation` | 240 × 118 |
 | Magenta Drums | `magenta-drums` | 240 × 118 |
 | Magenta Générer batterie | `magenta-generer-batterie` | 240 × 118 |
@@ -529,6 +536,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ubiquité | `ubiquite` | 240 × 140 |
 | Vague | `vague` | 240 × 162 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
+| Vérifier un choral | `verifier-choral` | 240 × 140 |
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |

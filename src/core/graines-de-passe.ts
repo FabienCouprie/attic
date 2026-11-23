@@ -28,13 +28,38 @@ export interface TablesDeDepliage {
   expansions: ReadonlyMap<string, string>;
   /** Comment une graine brute devient une graine : `resoudreGraine`, sauf au banc. */
   tirer?: (brut: number) => number;
+  /** Le corps des boucles à passes qui demandent leurs graines, et la passe en cours. Voir `GrainesDesPasses`. */
+  passes?: ReadonlyMap<string, PasseDuCorps>;
+  /** Des bases partagées par toutes les passes d'un run, au lieu d'une table par passe. */
+  basesPartagees?: Map<string, number>;
+}
+
+/**
+ * La passe en cours d'un nœud du corps d'une boucle à passes.
+ *
+ * `parPasse` vrai mêle le numéro de la passe à la graine, comme « Une par tour » mêle celui du tour ;
+ * faux, toutes les passes reçoivent la même. Dans les deux cas la BASE est partagée par les passes,
+ * et c'est ce qui rend une graine à zéro rejouable : tirée une fois, rendue une fois, elle refait
+ * toutes les pièces.
+ */
+export interface PasseDuCorps { passe: number; parPasse: boolean }
+
+/**
+ * Ce que le pilote d'une boucle à passes transmet à chaque passe.
+ *
+ * LE CORPS EST DÉSIGNÉ PAR LE PILOTE, qui seul sait où la boucle commence et finit ; la passe ne le
+ * calcule pas. Les bases vivent le temps du run entier, une passe n'en recréant aucune.
+ */
+export interface GrainesDesPasses {
+  passes: ReadonlyMap<string, PasseDuCorps>;
+  basesDeGraine: Map<string, number>;
 }
 
 export interface GraineTiree { nom: string; valeur: number }
 
-export function creerResolveurDeGraines({ toursDesCopies, origines, expansions, tirer = resoudreGraine }: TablesDeDepliage) {
+export function creerResolveurDeGraines({ toursDesCopies, origines, expansions, tirer = resoudreGraine, passes, basesPartagees }: TablesDeDepliage) {
   const graines = new Map<string, number>();
-  const basesDeGraine = new Map<string, number>();
+  const basesDeGraine = basesPartagees ?? new Map<string, number>();
   /** Ce qu'un nœud a TIRÉ, par réglage : rendu dans son message, sans quoi on ne pourrait le rejouer. */
   const grainesTirees = new Map<string, GraineTiree[]>();
 
@@ -44,9 +69,11 @@ export function creerResolveurDeGraines({ toursDesCopies, origines, expansions, 
     if (deja !== undefined) return deja;
     const tour = toursDesCopies.get(nodeId);
     const origine = origines.get(nodeId);
+    // Une copie d'une boucle de graphe posée dans le corps prend la passe de son original.
+    const passe = passes?.get(nodeId) ?? (origine !== undefined ? passes?.get(origine) : undefined);
     let valeur: number;
     let base: number;
-    if (tour === undefined && origine === undefined) {
+    if (tour === undefined && origine === undefined && passe === undefined) {
       valeur = base = tirer(brut);
     } else {
       // LES COPIES D'UN MÊME NŒUD PARTAGENT UNE BASE, dans les deux réglages, et c'est ce qui rend
@@ -59,6 +86,9 @@ export function creerResolveurDeGraines({ toursDesCopies, origines, expansions, 
       if (deja === undefined) basesDeGraine.set(cleBase, base);
       // Et c'est la CONVENTION DE GRAINE qui mêle le numéro du tour, jamais le moteur lui-même.
       valeur = tour === undefined ? base : graineDuTour(base, tour);
+      // LA PASSE SE MÊLE APRÈS LE TOUR, par la même convention : une boucle de graphe dans le corps
+      // d'une boucle à passes garde ses tours différents, et chaque passe les décale tous.
+      if (passe?.parPasse) valeur = graineDuTour(valeur, passe.passe);
     }
     graines.set(cle, valeur);
     // TIRÉE veut dire que l'utilisateur n'en avait pas posé : c'est celle-là qu'il faut lui rendre,

@@ -1,0 +1,307 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": -440
+      },
+      "width": 1500,
+      "height": 380,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN MODÈLE APPRIS SUR UN CORPUS FABRIQUÉ\n\nIl est appris sur des chorals écrits par les règles, puis appliqué à un soprano de Bach.\n\nEn haut, la boucle fabrique quarante chorals : « Mélodie aléatoire » invente une mélodie de quatre mesures à chaque passe, à une graine par pièce, et « Harmoniser à quatre voix » l'écrit à quatre voix par les règles. « Apprendre sur un corpus » apprend sur ces quarante chorals un modèle qui note chaque colonne et chaque passage.\n\nEn bas, « Lire une partition » lit le choral 175 du DCML (CC0), dont seul le soprano est harmonisé, deux fois. Par le modèle seul, « Part des règles » à zéro : les règles ne font que proposer les colonnes. Par le modèle mêlé aux règles, à parts égales. Chaque harmonisation est jugée selon les règles par « Vérifier un choral », qui nomme aussi les passages que le modèle trouve les plus coûteux.\n\nLe modèle seul, appris sur des mélodies tirées au hasard, se trompe là où les règles ne se trompent pas : c'est ce que le juge en dit. La sortie audio fait entendre l'harmonisation mêlée.",
+        "nomEn": "A MODEL LEARNED FROM A MADE CORPUS\n\nIt is learned from chorales written by the rules, then applied to a Bach soprano.\n\nAt the top, the loop makes forty chorales: « Random Melody » invents a four-bar melody at every pass, with one seed per piece, and « Harmonize in Four Parts » writes it in four parts by the rules. « Learn from a Corpus » learns from these forty chorales a model that scores every column and every passage.\n\nBelow, « Read a Score » reads chorale 175 of the DCML (CC0), whose soprano alone is harmonized, twice. By the model alone, « Share of the rules » at zero: the rules only propose the columns. By the model mixed with the rules, in equal shares. Every harmonization is judged against the rules by « Check a Chorale », which also names the passages the model finds the costliest.\n\nThe model alone, learned from melodies drawn at random, errs where the rules do not: that is what the judge says of it. The audio output plays the mixed harmonization."
+      }
+    },
+    {
+      "id": "debut",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "corpus-fabriquer-debut",
+        "parametres": {
+          "Pièces": 40,
+          "Graines": "Une par tour"
+        }
+      }
+    },
+    {
+      "id": "melodie",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 200
+      },
+      "data": {
+        "ficheId": "melodie-aleatoire",
+        "parametres": {
+          "Graine": 11,
+          "Mesures": 4,
+          "Tempo": 80
+        }
+      }
+    },
+    {
+      "id": "notes",
+      "type": "atelier",
+      "position": {
+        "x": 420,
+        "y": 240
+      },
+      "data": {
+        "ficheId": "midi-vers-sequence",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "harmoniser",
+      "type": "atelier",
+      "position": {
+        "x": 780,
+        "y": 200
+      },
+      "data": {
+        "ficheId": "harmoniser-choral",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "fin",
+      "type": "atelier",
+      "position": {
+        "x": 1180,
+        "y": 40
+      },
+      "data": {
+        "ficheId": "corpus-fabriquer-fin",
+        "parametres": {
+          "Format": "aucun"
+        }
+      }
+    },
+    {
+      "id": "apprendre",
+      "type": "atelier",
+      "position": {
+        "x": 1560,
+        "y": 40
+      },
+      "data": {
+        "ficheId": "apprendre-corpus",
+        "parametres": {
+          "Passes": 100,
+          "Part de validation": 0
+        }
+      }
+    },
+    {
+      "id": "choral",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 600
+      },
+      "data": {
+        "ficheId": "lire-partition",
+        "parametres": {
+          "Notation": "quarterbeats_all_endings\tduration_qb\tstaff\tvoice\tmidi\ttied\n0\t1.0\t2\t2\t48\t\n0\t1.0\t2\t1\t60\t\n0\t1.0\t1\t2\t64\t\n0\t1.0\t1\t1\t67\t\n1\t0.5\t2\t2\t48\t\n1\t1.0\t2\t1\t55\t\n1\t0.5\t1\t2\t60\t\n1\t1.0\t1\t1\t64\t\n3/2\t0.5\t2\t2\t47\t\n3/2\t0.5\t1\t2\t62\t\n2\t1.0\t2\t2\t45\t\n2\t1.0\t2\t1\t60\t\n2\t1.0\t1\t2\t64\t\n2\t1.0\t1\t1\t69\t\n3\t1.0\t2\t2\t44\t\n3\t1.0\t2\t1\t59\t\n3\t1.0\t1\t2\t64\t\n3\t1.0\t1\t1\t71\t\n4\t0.5\t2\t2\t45\t\n4\t1.0\t2\t1\t57\t\n4\t1.0\t1\t2\t64\t\n4\t1.0\t1\t1\t72\t\n9/2\t0.5\t2\t2\t47\t\n5\t0.5\t2\t2\t48\t\n5\t1.0\t2\t1\t64\t\n5\t1.0\t1\t2\t69\t1\n5\t1.0\t1\t1\t72\t\n11/2\t0.5\t2\t2\t50\t\n6\t2.0\t2\t2\t52\t\n6\t2.0\t2\t1\t64\t\n6\t1.0\t1\t2\t69\t-1\n6\t2.0\t1\t1\t71\t\n7\t1.0\t1\t2\t68\t\n8\t1.0\t2\t2\t53\t\n8\t1.0\t2\t1\t60\t1\n8\t0.5\t1\t1\t69\t\n8\t1.0\t1\t2\t69\t\n17/2\t0.5\t1\t1\t71\t\n9\t1.0\t2\t2\t52\t\n9\t0.5\t2\t1\t60\t-1\n9\t0.5\t1\t2\t67\t\n9\t1.0\t1\t1\t72\t\n19/2\t0.5\t2\t1\t55\t1\n19/2\t0.5\t1\t2\t64\t\n10\t0.5\t2\t2\t47\t\n10\t0.5\t2\t1\t55\t-1\n10\t1.0\t1\t2\t62\t1\n10\t1.0\t1\t1\t67\t\n21/2\t0.5\t2\t2\t43\t\n21/2\t0.5\t2\t1\t59\t\n11\t1.0\t2\t2\t48\t\n11\t0.5\t2\t1\t55\t\n11\t0.5\t1\t2\t62\t-1\n11\t1.0\t1\t1\t64\t\n23/2\t0.5\t2\t1\t52\t\n23/2\t0.5\t1\t2\t55\t\n12\t0.5\t2\t2\t45\t\n12\t0.5\t2\t1\t57\t\n12\t0.5\t1\t2\t60\t\n12\t1.0\t1\t1\t65\t\n25/2\t0.5\t2\t2\t47\t\n25/2\t0.5\t2\t1\t55\t\n25/2\t0.5\t1\t2\t62\t1\n13\t1.0\t2\t2\t48\t\n13\t1.0\t2\t1\t55\t\n13\t0.5\t1\t2\t62\t-1\n13\t1.0\t1\t1\t64\t\n27/2\t0.5\t1\t2\t60\t\n14\t1.0\t2\t2\t41\t\n14\t1.0\t2\t1\t57\t\n14\t1.0\t1\t2\t60\t\n14\t2.0\t1\t1\t62\t\n15\t1.0\t2\t2\t43\t\n15\t0.5\t2\t1\t55\t\n15\t1.0\t1\t2\t59\t\n31/2\t0.5\t2\t1\t53\t\n16\t4.0\t2\t2\t36\t\n16\t4.0\t2\t1\t52\t\n16\t4.0\t1\t2\t55\t\n16\t4.0\t1\t1\t60\t\n20\t0.5\t2\t2\t48\t\n20\t1.0\t2\t1\t55\t\n20\t1.0\t1\t2\t60\t\n20\t1.0\t1\t1\t64\t\n41/2\t0.5\t2\t2\t36\t\n21\t1.0\t2\t2\t48\t\n21\t1.0\t2\t1\t57\t\n21\t1.0\t1\t2\t62\t1\n21\t1.0\t1\t1\t66\t\n22\t1.0\t2\t2\t47\t\n22\t0.5\t2\t1\t59\t\n22\t0.5\t1\t2\t62\t-1\n22\t1.0\t1\t1\t68\t\n45/2\t0.5\t2\t1\t62\t\n45/2\t0.5\t1\t2\t65\t\n23\t0.5\t2\t2\t48\t\n23\t0.5\t2\t1\t60\t\n23\t0.5\t1\t2\t64\t\n23\t1.0\t1\t1\t69\t\n47/2\t0.5\t2\t2\t53\t\n47/2\t0.5\t2\t1\t57\t\n47/2\t0.5\t1\t2\t60\t\n24\t0.5\t2\t2\t50\t\n24\t1.5\t2\t1\t57\t\n24\t0.5\t1\t2\t65\t\n24\t1.0\t1\t1\t71\t\n49/2\t0.5\t2\t2\t47\t\n49/2\t0.5\t1\t2\t62\t\n25\t1.0\t2\t2\t52\t\n25\t0.5\t1\t2\t59\t\n25\t1.0\t1\t1\t71\t\n51/2\t0.5\t2\t1\t56\t\n51/2\t0.25\t1\t2\t64\t\n103/4\t0.25\t1\t2\t62\t\n26\t2.0\t2\t2\t45\t\n26\t2.0\t2\t1\t57\t\n26\t2.0\t1\t2\t60\t\n26\t2.0\t1\t1\t69\t\n28\t0.5\t2\t2\t55\t\n28\t1.0\t2\t1\t62\t\n28\t1.0\t1\t2\t67\t\n28\t1.0\t1\t1\t71\t\n57/2\t0.5\t2\t2\t53\t\n29\t0.5\t2\t2\t52\t\n29\t1.0\t2\t1\t64\t\n29\t1.0\t1\t2\t67\t\n29\t1.0\t1\t1\t72\t\n59/2\t0.5\t2\t2\t50\t\n30\t0.5\t2\t2\t48\t\n30\t1.0\t2\t1\t62\t\n30\t1.0\t1\t2\t67\t\n30\t1.0\t1\t1\t74\t\n61/2\t0.5\t2\t2\t47\t\n31\t0.5\t2\t2\t48\t\n31\t1.0\t2\t1\t60\t\n31\t1.0\t1\t2\t67\t\n31\t1.0\t1\t1\t76\t\n63/2\t0.5\t2\t2\t50\t\n32\t0.5\t2\t2\t53\t\n32\t1.0\t2\t1\t60\t\n32\t0.5\t1\t2\t69\t\n32\t1.5\t1\t1\t74\t\n65/2\t0.5\t2\t2\t50\t\n65/2\t0.5\t1\t2\t65\t\n33\t1.0\t2\t2\t55\t\n33\t1.0\t2\t1\t59\t\n33\t0.5\t1\t2\t62\t\n67/2\t0.25\t1\t2\t67\t\n67/2\t0.5\t1\t1\t72\t\n135/4\t0.25\t1\t2\t65\t\n34\t2.0\t2\t2\t48\t\n34\t2.0\t2\t1\t55\t\n34\t2.0\t1\t2\t64\t\n34\t2.0\t1\t1\t72\t",
+          "Tempo": 80
+        }
+      }
+    },
+    {
+      "id": "par-le-modele",
+      "type": "atelier",
+      "position": {
+        "x": 1560,
+        "y": 460
+      },
+      "data": {
+        "ficheId": "harmoniser-choral",
+        "parametres": {
+          "Part des règles": 0
+        }
+      }
+    },
+    {
+      "id": "juge-modele",
+      "type": "atelier",
+      "position": {
+        "x": 1960,
+        "y": 400
+      },
+      "data": {
+        "ficheId": "verifier-choral",
+        "parametres": {
+          "Arêtes rapportées": 3
+        }
+      }
+    },
+    {
+      "id": "mele",
+      "type": "atelier",
+      "position": {
+        "x": 1560,
+        "y": 820
+      },
+      "data": {
+        "ficheId": "harmoniser-choral",
+        "parametres": {
+          "Part des règles": 50
+        }
+      }
+    },
+    {
+      "id": "juge-mele",
+      "type": "atelier",
+      "position": {
+        "x": 1960,
+        "y": 760
+      },
+      "data": {
+        "ficheId": "verifier-choral",
+        "parametres": {
+          "Arêtes rapportées": 3
+        }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": {
+        "x": 1960,
+        "y": 1080
+      },
+      "data": {
+        "ficheId": "sortie-audio",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "debut",
+      "sourceHandle": "out:0",
+      "target": "fin",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e2",
+      "source": "melodie",
+      "sourceHandle": "out:1",
+      "target": "notes",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e3",
+      "source": "notes",
+      "sourceHandle": "out:0",
+      "target": "harmoniser",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e4",
+      "source": "harmoniser",
+      "sourceHandle": "out:0",
+      "target": "fin",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e5",
+      "source": "fin",
+      "sourceHandle": "out:0",
+      "target": "apprendre",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e6",
+      "source": "choral",
+      "sourceHandle": "out:0",
+      "target": "par-le-modele",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e7",
+      "source": "apprendre",
+      "sourceHandle": "out:0",
+      "target": "par-le-modele",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e8",
+      "source": "par-le-modele",
+      "sourceHandle": "out:0",
+      "target": "juge-modele",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e9",
+      "source": "apprendre",
+      "sourceHandle": "out:0",
+      "target": "juge-modele",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e10",
+      "source": "choral",
+      "sourceHandle": "out:0",
+      "target": "mele",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e11",
+      "source": "apprendre",
+      "sourceHandle": "out:0",
+      "target": "mele",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e12",
+      "source": "mele",
+      "sourceHandle": "out:0",
+      "target": "juge-mele",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e13",
+      "source": "apprendre",
+      "sourceHandle": "out:0",
+      "target": "juge-mele",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e14",
+      "source": "mele",
+      "sourceHandle": "out:2",
+      "target": "ecoute",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 40,
+    "y": 480,
+    "zoom": 0.45
+  }
+}

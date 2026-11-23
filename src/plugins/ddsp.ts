@@ -1,5 +1,7 @@
 // plugins/ddsp.ts — Nœud de transfert de timbre (tone transfer) via DDSP.
-// @magenta/music : Apache 2.0 — ajouté dans THIRD_PARTY.md.
+// @magenta/music : Apache 2.0, listé dans THIRD_PARTY.md depuis le 2026-11-22 ; il ne l'était pas,
+// quoi qu'en dît cette ligne. Les points de contrôle DDSP et SPICE sont livrés depuis le
+// 2026-11-23, et THIRD_PARTY.md les nomme aussi.
 //
 // Utilise SPICE pour extraire f0/loudness d’un audio, puis un modèle DDSP
 // pré-entraîné pour resynthétiser le signal avec le timbre d’un instrument.

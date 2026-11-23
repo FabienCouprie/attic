@@ -30,6 +30,8 @@ import { estCourbe } from "./courbe";
 import { estObjet } from "./multicanal";
 import { estCercle } from "./cercle";
 import { estSequence } from "./sequence";
+import { estCorpus } from "./corpus";
+import { estModeleHarmonique } from "./modele-harmonique";
 import { depuisPaquetAudio, versPaquetAudio } from "./paquet-audio";
 import { ALIAS } from "./alias";
 
@@ -188,6 +190,30 @@ if (typeof window !== "undefined") {
   // d'accords » aurait été à relire deux fois. « Accordage » est le mot du facteur d'instruments, et
   // il est libre ici à une occurrence près, l'étiquette d'une tablature, qui désigne la même chose.
   registre.enregistrerTypeFlux({ id: "accordage", couleur: "#f2d600", forme: "losange", libelle: "Accordage" });
+  // ROSE ORCHIDÉE PÂLE, choisi par la mesure sur les quinze couleurs du registre et le fond #0f0b17.
+  //
+  // LA CLARTÉ D'ABORD : un câble fin se voit par elle, non par sa teinte. Le premier candidat sans
+  // contrainte était un bleu pur, à 62,9 ΔE de sa plus proche voisine mais à L* 29, un câble sombre
+  // sur un fond presque noir. Sous L* 55 rien n'a été retenu ; celle-ci est à L* 83.
+  //
+  // PUIS LA DISTANCE : 39,5 ΔE (CIE76, la mesure du garde) du blanc du cercle, sa plus proche ; en
+  // CIEDE2000, 22,3 du corail de la vidéo, quand la paire la plus serrée de la palette, MIDI et
+  // banque, y est à 8,3. Une menthe claire mesurait un peu mieux, 43,1 et 25,3, mais tombait dans la
+  // famille de l'audio et de l'objet, et un corpus ne s'entend pas.
+  //
+  // UN PORT QUI PORTE DES PIÈCES SÉPARÉES, chacune une séquence à voix avec sa source et sa tonalité
+  // lue. Voir `audio/corpus.ts`.
+  registre.enregistrerTypeFlux({ id: "corpus", couleur: "#ffbbee", libelle: "Corpus", estDuType: estCorpus });
+  // MENTHE CLAIRE ET POINT EN LOSANGE, mesurés sur les seize couleurs et le fond.
+  //
+  // LA COULEUR : la meilleure de la recherche, à L* 90, 43,1 ΔE (CIE76) de l'audio et 25,3 en
+  // CIEDE2000. Hors de la famille des verts, la meilleure était un olive terne, à L* 55, 34,8 et
+  // 19,7. La menthe est de la teinte de l'audio, mais deux fois plus claire, et c'est la forme qui
+  // tranche.
+  //
+  // LE LOSANGE est celui de l'accordage, et pour la même raison : un modèle appris n'est ni du son ni
+  // des notes, c'est une règle qu'on applique à des hauteurs. Voir `audio/modele-harmonique.ts`.
+  registre.enregistrerTypeFlux({ id: "modele-harmonique", couleur: "#00ffcc", forme: "losange", libelle: "Modèle harmonique", estDuType: estModeleHarmonique });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

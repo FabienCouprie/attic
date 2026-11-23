@@ -86,6 +86,21 @@ const CONNUS = {
     licence: { nom: "usage non commercial", credit: "Meta Platforms — Demucs v4 (HT-Demucs), poids fp16", rediffusable: true,
       note: "Mêmes poids que htdemucs-6s, même décision : la réserve scientifique n'est pas tenue pour déterminante, seul l'usage commercial est récusé." },
   },
+  // UN CORPUS ET NON UN MODÈLE, et il entre ici pour la même raison que les modèles : une empreinte,
+  // une adresse sur la release `assets`, et le panneau qui le récupère. Engendré par
+  // `src/audio/corpus-dcml-livre.test.ts`, gardé par `CORPUS_CHORALS`.
+  //
+  // LA SECONDE VERSION, `-2`, porte des tonalités relues avec la basse finale : la première,
+  // `corpus-chorals-bach-dcml.json`, reste sur la release, publiée le 2026-11-22 avec celles de
+  // Krumhansl seul, et plus rien ne la lit. Un asset publié ne se remplace pas, il change de nom.
+  "corpus-chorals-bach-dcml-2.json": {
+    // UN IDENTIFIANT NEUF AUSSI : `--generer` reprend l'adresse connue d'un identifiant, et la
+    // seconde version aurait téléchargé la première sous l'empreinte de la seconde.
+    id: "corpus-chorals-bach-2", nom: "Chorals de Bach (DCML corrigé)", nomEn: "Bach chorales (corrected DCML)",
+    noeuds: ["lire-corpus"],
+    licence: { nom: "CC0-1.0", credit: "Digital and Cognitive Musicology Lab, DCMLab/bach_chorales v2.0, d'après les fichiers Capella d'Ulrich Kaiser ; 489 hauteurs corrigées d'après craigsapp/bach-370-chorales", rediffusable: true,
+      note: "Les 361 tables du DCML sont sous CC0 1.0. 489 hauteurs y ont été corrigées par comparaison avec l'encodage Humdrum de Craig Sapp (CC BY-NC-SA 4.0), là où les deux encodages ont une note à la même place dans la même voix ; chaque correction est écrite dans le fichier, avant et après, et aucune note de Sapp n'est ajoutée. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-11-22 : corriger ces hauteurs d'après Sapp, et livrer tels quels, signalés, les six chorals que Sapp n'apparie pas sûrement." },
+  },
   "model_genre.onnx": {
     id: "genre", nom: "Classement par genre", nomEn: "Genre classifier",
     noeuds: ["classificateur-genre"],
@@ -542,6 +557,16 @@ const CONNUS = {
     id: "magenta-piano-genie", nom: "Improvisation au piano (Piano Genie)", nomEn: "Piano improvisation (Piano Genie)",
     racine: "magenta", noeuds: ["magenta-improvisation"], archive: true,
     licence: { nom: "Apache-2.0", credit: "Google Magenta — Piano Genie, modèle epiano", rediffusable: true },
+  },
+  // COCONET, LE SIXIÈME POINT DE CONTRÔLE, entré le 2026-11-22 pour l'harmonisation à quatre voix.
+  // Sa licence est déclarée « non écrite » parce qu'elle l'est : ni le dossier du point de contrôle
+  // (`magentadata/js/checkpoints/coconet/bach`, sans `config.json` ni fichier de licence), ni la
+  // page des points de contrôle de magenta-js ne la disent. Seul le code est Apache-2.0.
+  "coconet_bach": {
+    id: "magenta-coconet", nom: "Harmonisation de choral (Coconet)", nomEn: "Chorale harmonization (Coconet)",
+    racine: "magenta", noeuds: ["harmoniser-coconet"], archive: true,
+    licence: { nom: "non écrite", credit: "Google Magenta — Coconet (Huang et al., « Counterpoint by Convolution », ISMIR 2017), point de contrôle coconet/bach", rediffusable: true,
+      note: "Aucune licence n'est écrite pour ce point de contrôle : le code de magenta-js est Apache-2.0, les poids ne portent aucune mention, et le corpus d'entraînement (JSB-Chorales-dataset de C. Huang) n'en déclare aucune. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-11-22 : le point de contrôle est rediffusé sur la release `assets`, et cette absence est écrite ici et dans THIRD_PARTY.md." },
   },
 };
 

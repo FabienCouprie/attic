@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **512 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **520 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **512 components** in **7 categories** and **62 families**. Every na
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 89 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 97 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (8) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11219,6 +11219,198 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the MIDI file. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+### Harmonization
+
+| Component | Summary |
+|---|---|
+| [Check a Chorale](#check-a-chorale) | Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat. |
+| [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
+| [Harmonize in Four Parts](#harmonize-in-four-parts) | Writes the alto, tenor and bass under a soprano, following the rules of four-part writing. |
+| [Learn from a Corpus](#learn-from-a-corpus) | Learns from a corpus of four-part chorales a model that scores every column and every passage. |
+| [Make a Corpus (End)](#make-a-corpus-end) | Closes the loop that makes a corpus: every pass lays one piece in it, written to a file when asked. |
+| [Make a Corpus (Start)](#make-a-corpus-start) | Opens a loop that makes a corpus: what feeds the end is computed once per piece. |
+| [Read a Corpus](#read-a-corpus) | Reads a folder of pieces in parts, or the bundled Bach chorales, and returns them as a corpus. |
+| [Read a Score](#read-a-score) | Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer. |
+
+#### Check a Chorale
+
+`verifier-choral` · Other & lab → Harmonization
+
+*Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat.*
+
+This component checks a four-voice chorale, soprano, alto, tenor and bass, against the rules of four-part writing, and names every fault at its bar, its beat and on its voices. The chorale arrives on the « Sequence » input, its first four voices being the soprano, the alto, the tenor and the bass. A chorale missing a voice, or with more than four, is refused, and the message names the voice at issue. The chorale is cut into slices, one at each attack of any voice; motions are judged from one slice to the next, chords on the slices alone that fall on a quarter-note beat. The rules are those of common classroom practice. Errors are: two voices that cross; more than an octave between soprano and alto, or between alto and tenor; parallel fifths and octaves between any two voices, twelfths and unisons included; a leap of more than an octave, and the augmented second of the minor; the leading tone doubled in the dominant chord; the leading tone of the soprano or the bass that does not rise to the tonic; a chord's seventh that the next note of its voice does not take down a step, when the chord changes; a chorale that does not end on the root-position tonic. Advisories are: in minor, the ending on the dominant, the Phrygian cadence of modal chorales; more than a twelfth between tenor and bass; a voice that overlaps the note its neighbour held; fifths and octaves by contrary motion; direct fifths and octaves in the outer voices, the soprano moving by leap; tritone and seventh leaps; an inner leading tone neither resolved nor dropped to the fifth; a beat whose notes form no chord of the key; a chord without a third; a penultimate that is neither the dominant nor the subdominant. The final Picardy third of a minor chorale is admitted. The ranges are those of Johann Sebastian Bach's chorales, in Craig Sapp's encoding: a note outside the range Bach used in its voice is an error, a note outside the range where ninety-eight hundredths of his notes fall is an advisory. « Scale » and « Tonic » give the key. In minor, the dominant and the leading-tone seventh chord are built on the leading tone, the other chords on the natural minor. « Beats per bar » and « Anacrusis » only serve to name the places: the first says how many quarter notes a bar has, the second how many quarter notes come before the first bar line. The sequence's tempo gives the length of a quarter note, 120 when it carries none. A model learned by « Learn from a Corpus » may arrive on the « Model » input. It does not judge: it scores every passage from one column to the next on its grid, the pitches brought to C major or A minor by the smallest interval, and « Edges reported » says how many passages, among those it finds the costliest, the report names. Without a model, this setting has no effect. The « Report » output gives the number of errors and advisories, then for each rule the number of times it was broken and the number of times it could be judged, then every fault, in time order, and with a model the passages it finds the costliest, each at its bar and beat, with its cost and its four notes before and after.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| input | Model | modele-harmonique |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | major | major / minor | The mode of the key. In minor, the dominant and the leading-tone seventh chord take the leading tone. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the key, from which the degrees, the leading tone and the cadence are read. |
+| Beats per bar | number | 4 | 1 – 12, step 1 | The number of quarter notes in a bar. It only serves to name the bar and beat of every fault. |
+| Anacrusis | number | 0 | 0 – 11, step 1 | The number of quarter notes before the first bar line, which form bar zero. It only serves to name the places. |
+| Edges reported | number | 5 | 0 – 50, step 1 | With a model on the « Model » input, the number of passages the report names among those the model finds the costliest. Without a model, no effect. |
+
+#### Harmonize (Coconet)
+
+`harmoniser-coconet` · Other & lab → Harmonization
+
+*Harmonizes a melody in four voices with a network trained on Bach's chorales.*
+
+This component harmonizes a melody in four voices, soprano, alto, tenor and bass, with a convolutional neural network trained on Johann Sebastian Bach's chorales. The model is Coconet (Cheng-Zhi Anna Huang, Tim Cooijmans, Adam Roberts, Aaron Courville and Douglas Eck, « Counterpoint by Convolution », ISMIR 2017). The piece is laid on a grid of one cell per sixteenth note and per voice. The cells to write are drawn several times: at each iteration, a share of them is drawn again, each according to the probability the network gives it knowing all the others. At the first iteration, all of them are; the share then falls from one iteration to the next, down to about one seventh at the last. The melody arrives on the « Sequence » input. Its pitches lie between C2 and A5, that is MIDI 36 to 81, the range of the training corpus: a single note beyond makes the piece refused, and the message names each one with its bar and beat. Starts and ends are brought to the sixteenth note at the sequence's tempo, 120 when it carries none. « Kept voices » decides what remains of the input. « Soprano » keeps the first voice and writes the other three. « All received voices » keeps every voice present among the first four and writes only the missing ones: a bass given under the soprano thus receives its alto and its tenor. A cell where no kept voice sounds stays silent for all. « Temperature » sets the freedom of the draw. At zero, every cell takes the most probable pitch; at one, the draw follows the network's probabilities; beyond, it departs from them. « Iterations » sets the number of passes of the draw. Few iterations leave voices that contradict each other; more bring them into agreement, at the cost of a computation that grows with their number and with the length of the piece. « Tie repeated notes » decides what successive cells of the same pitch in a written voice become. Checked, they form a single held note; unchecked, the note is struck again on every quarter note. « Seed » fixes the draws: the same seed gives the same chorale on the same machine. The « Sequence » output returns the four voices, each one named, the kept voices with their original notes. The « Report » output gives for each voice whether it was kept or written, its number of notes and its range, then the number of notes the grid moved. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Kept voices | choice | Soprano | Soprano / All received voices | « Soprano » keeps the first voice received and writes the other three. « All received voices » keeps every voice present among the first four and writes only the missing ones. |
+| Temperature | slider | 0.99 | 0 – 1.5, step 0.01 | The freedom of the draw. At zero, every cell takes the most probable pitch; at one, the draw follows the network's probabilities; beyond, it departs from them. |
+| Iterations | slider | 96 | 8 – 256, step 1 | The number of passes of the draw. More bring the voices into better agreement, at the cost of a longer computation. |
+| Tie repeated notes | checkbox | 1 | 0 / 1 | Checked, successive cells of the same pitch in a written voice form a single held note. Unchecked, the note is struck again on every quarter note. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draws: the same seed gives the same chorale on the same machine. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Harmonize in Four Parts
+
+`harmoniser-choral` · Other & lab → Harmonization
+
+*Writes the alto, tenor and bass under a soprano, following the rules of four-part writing.*
+
+This component writes the alto, tenor and bass under the received melody, which becomes the soprano of a four-voice chorale, following the rules of four-part writing. The melody arrives on the « Sequence » input; only its first voice is read, and it comes out as received. The chorale is built on a grid, one column per step where the soprano sounds. For each column, the chords offered are those of the key that contain the soprano note, and the voicings those that keep the rules of a single column: each voice within the range where ninety-eight hundredths of Johann Sebastian Bach's notes fall in his chorales, no crossing, soprano and alto, alto and tenor within an octave, tenor and bass within a twelfth, the chord provided with its root and its third. A soprano note that no chord of the key contains receives a secondary dominant or a chord borrowed from the parallel mode. Every column and every passage from one column to the next has a cost. Costing most are parallel fifths and octaves, leaps of more than an octave and the augmented second, the doubled leading tone, the unresolved seventh, and an ending that is not the root-position tonic; costing less are direct fifths and octaves, overlaps, awkward leaps, the six-four chord, chromatic fallbacks; every semitone a voice travels costs a little. Every degree costs the negative logarithm of its frequency in Bach's chorales, the tonic and the dominant least, the seventh degree most. The cheapest succession of columns is found exactly, by the Viterbi algorithm (1967), on the chain the columns form, after Moray Allan and Christopher Williams, « Harmonising Chorales by Probabilistic Inference », NIPS 2004. « Scale » and « Tonic » give the key. In minor, the dominant and the leading-tone seventh chord are built on the leading tone, the other chords on the natural minor. « Step » sets the grid: one column per quarter note, or per eighth note. A soprano note shorter than a step passes over the chord of the step where it falls. « Sevenths » says which chords may carry their seventh: none, the dominant alone, or every degree. Under « None », a soprano note that only the seventh of a secondary dominant contains, such as B flat in A minor, still receives it: a column is never left without a chord. « Inversions » lets the bass carry the third, the fifth or the seventh; unchecked, the bass always carries the root. « Temperature » sets the choice. At zero, the chorale is the cheapest one. Above it, every possible chorale is drawn with a probability proportional to the exponential of minus its cost divided by the temperature: at low temperature the best dominate, at high temperature all are alike. « Seed » fixes the draw when the temperature is above zero; at zero, it has no effect. A model learned by « Learn from a Corpus » may arrive on the « Model » input. It does not propose columns: it scores those the rules allow, every column and every passage receiving as cost the negative of its score, the pitches brought to C major or A minor by the smallest interval. Its grid replaces that of « Step », and the message says so, as it does a learned mode that is not that of « Scale ». « Share of the rules » mixes the two costs: at 100 %, only the rules count; at zero, only the model. Without a model, it has no effect. « Beam » keeps at every step only that number of columns, the cheapest, before the succession is chosen; at zero, all. Without a model, it has no effect. A soprano rest silences the other three voices. A note repeated from one column to the next in the alto, tenor or bass is held. A soprano note too low for an alto to sit under it makes the melody refused, and the message names it with its instant. The « Sequence » output returns the chorale, its four voices named. The « Report » output gives the number of columns, the cost of the chorale, the chords chosen in roman numerals, the number of chromatic fallbacks, with a model the fingerprint of its corpus, its mode, its grid and the two settings that mix it in, and the judgement of the chorale against the rules: its errors and advisories, each at its bar and beat. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| input | Model | modele-harmonique |  |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | major | major / minor | The mode of the key. In minor, the dominant and the leading-tone seventh chord take the leading tone. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the key, from which the degrees, the leading tone and the cadence are read. |
+| Step | choice | quarter note | quarter note / eighth note | One column per quarter note, or per eighth note. A soprano note shorter than a step passes over the chord of the step where it falls. |
+| Sevenths | choice | Dominant | None / Dominant / All | The chords that may carry their seventh: none, the dominant alone, or every degree. Under « None », a note that only the seventh of a secondary dominant contains still receives it. |
+| Inversions | checkbox | 1 | 0 / 1 | Checked, the bass may carry the third, the fifth or the seventh. Unchecked, it always carries the root. |
+| Temperature | slider | 0 | 0 – 2, step 0.05 | At zero, the cheapest chorale. Above it, every chorale is drawn according to the exponential of minus its cost divided by the temperature. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draw when « Temperature » is above zero. At zero, the seed has no effect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Share of the rules | slider | 50 % | 0 – 100 %, step 1 | With a model on the « Model » input, the share of the rules in the cost of every column and every passage, the rest coming from the model. Without a model, no effect. |
+| Beam | number | 0 | 0 – 500, step 1 | With a model, the number of cheapest columns kept at every step, before the succession is chosen; at zero, all. Without a model, no effect. |
+
+#### Learn from a Corpus
+
+`apprendre-corpus` · Other & lab → Harmonization
+
+*Learns from a corpus of four-part chorales a model that scores every column and every passage.*
+
+This component learns from a corpus of four-part chorales a harmonic model: a score for every pitch of every voice, and a score for every pair of pitches that two voices hold together, or one after the other. It is the pairwise field of Gaëtan Hadjeres, Jason Sakellariou and François Pachet, « Style Imitation and Chord Invention in Polyphonic Music with Exponential Families », 2016. The corpus arrives on the « Corpus » input. A corpus still being made, which « Make a Corpus (End) » returns before its last pass, is not learned: the component waits for the last piece, and the message says so. Only the pieces in four voices whose key is of the mode set by « Scale » are learned; each is transposed to C major or A minor, by the smallest interval. They are read on a grid: one column per step, where every voice holds the note sounding at that instant. A column where a voice is silent, or leaves the range of Johann Sebastian Bach in his chorales widened by a minor third, is not learned. « Step » sets the grid: one column per quarter note, or per eighth note. « Vertical », « Horizontal » and « Diagonal » say which pairs are learned: two voices of one column, one voice and itself from one column to the next, one voice and another from one column to the next. Unchecked, those pairs do not count. The learning raises the pseudo-likelihood of Julian Besag (1975): every note of the corpus is predicted by its column neighbours and its neighbours in time, and the model is set so that these predictions are the most probable. The climb follows the accelerated proximal gradient method of Amir Beck and Marc Teboulle (2009). « L1 penalty » pulls every pair score towards zero at every pass: the stronger it is, the fewer pairs the model keeps. The scores of single pitches are not penalised. « Passes » sets the number of passes of the learning. « Validation share » sets this share of the pieces aside, which are not learned and serve to measure the model on chorales it has not seen. « Seed » draws the pieces set aside; at a share of zero, it has no effect. The « Model » output returns the model, with its grid, its mode and a fingerprint of the corpus. The « Report » output gives the pieces learned and set aside, every piece left out with its reason, the number of lost columns, the number of non-zero parameters, and for learning and validation the mean likelihood of every note and the share of notes the model ranks first.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Corpus | corpus | required |
+| output | Model | modele-harmonique |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | major | major / minor | The mode learned: only the pieces of this mode are read, transposed to C major or A minor. |
+| Step | choice | quarter note | quarter note / eighth note | One column per quarter note, or per eighth note. |
+| Vertical | checkbox | 1 | 0 / 1 | Learns the pairs of two voices of one column. |
+| Horizontal | checkbox | 1 | 0 / 1 | Learns the pairs of one voice and itself, from one column to the next. |
+| Diagonal | checkbox | 1 | 0 / 1 | Learns the pairs of one voice and another, from one column to the next. |
+| L1 penalty | slider | 0.0005 | 0 – 0.01, step 0.0001 | Pulls the pair scores towards zero at every pass: the stronger it is, the fewer pairs the model keeps. |
+| Passes | number | 100 | 1 – 2000, step 1 | The number of passes of the learning. |
+| Validation share | slider | 10 % | 0 – 50 %, step 1 | The share of pieces set aside to measure the model on chorales it has not seen. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Draws the pieces set aside. At a « Validation share » of zero, it has no effect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Make a Corpus (End)
+
+`corpus-fabriquer-fin` · Other & lab → Harmonization
+
+*Closes the loop that makes a corpus: every pass lays one piece in it, written to a file when asked.*
+
+This component closes the loop opened by « Make a Corpus (Start) »: at every pass, the received sequence becomes a piece of the corpus, with its voices and its key estimated on its notes. « Format » says whether every piece is also written to a file. « MIDI » writes one track per voice, each on its channel; « MusicXML » writes one part per voice, in bass clef for a voice most of whose notes are below middle C; « None » writes nothing, and the corpus only lives in the graph. Files go to the folder named by « Folder ». « Prefix » begins the name of every file, followed by the number of the piece on at least three digits: piece-001.mid, piece-002.mid. « If the file exists » decides what happens when a file of that name is already in the folder: « Error » leaves the file in place and does not write the piece, « Overwrite » replaces it. The « Rank » input receives the number of the piece returned by the start of the loop; without it, the number is that of the pass. The « Corpus » output returns the pieces made up to the current pass, marked as a corpus being made; at the last one, the whole corpus. A stopped run thus keeps what was done. The « Log » output gives one line per piece: its name, its number of notes and voices, its key, and the file written or the reason for the refusal. The message gives, at the last pass, the number of pieces and a fingerprint of the corpus: two corpora with the same fingerprint are the same.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| input | Rank | text |  |
+| output | Corpus | corpus |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Format | choice | None | None / MIDI / MusicXML | No file, one MIDI track per voice, or one MusicXML part per voice. |
+| Folder | folder | — |  | The folder where files are written. The « … » button opens the system picker. |
+| Prefix | text | `piece` |  | The beginning of the name of every file, before the number of the piece. |
+| If the file exists | choice | Error | Error / Overwrite | « Error » leaves a file of the same name in place and does not write the piece; « Overwrite » replaces it. |
+
+#### Make a Corpus (Start)
+
+`corpus-fabriquer-debut` · Other & lab → Harmonization
+
+*Opens a loop that makes a corpus: what feeds the end is computed once per piece.*
+
+This component opens a loop that makes a corpus: everything that feeds « Make a Corpus (End) » is computed once per piece, generators without input included, and every pass gives one piece. « Pieces » sets their number. « Seeds » says what becomes of the « Seed » settings of the components computed at every pass. « One per piece » mixes the number of the piece into every seed: the pieces differ, and the same seed with the same number of pieces always makes the same corpus again. « Identical » gives the same seed to every piece. Either way, a seed at zero is drawn once for all the pieces, and the message of the component that drew it gives it back: putting it back makes the whole corpus again. The « Rank » output returns the number of the current piece, from one. Connected to the « Rank » input of the end, it links the two ends of the loop. The message gives the number of the piece out of the number asked for.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Rank | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pieces | number | 8 | 1 – no ceiling, step 1 | How many pieces, hence how many times the chain is computed. The number is free; the message gives the number of the piece out of the number asked for, so that a number the total pass limit does not allow shows up. |
+| Seeds | choice | One per piece | One per piece / Identical | « One per piece » mixes the number of the piece into every seed of the body, « Identical » gives them all the same one. A seed at zero is drawn once for the whole corpus, and putting it back makes it whole again. |
+
+#### Read a Corpus
+
+`lire-corpus` · Other & lab → Harmonization
+
+*Reads a folder of pieces in parts, or the bundled Bach chorales, and returns them as a corpus.*
+
+This component reads pieces in several parts and returns them together, each kept apart from the others, with its voices, the name of its file and its key. « Source » chooses where they come from. « Bach chorales (corrected DCML) » takes the 361 chorales of the Digital and Cognitive Musicology Lab, in four parts but one in five (DCMLab/bach_chorales, version 2.0, public domain), bundled with the application and fetched on first use. 489 of their pitches were corrected after Craig Sapp's encoding; six chorales that this encoding does not surely match are delivered unchecked, and the report names them. « Folder » reads the files of the folder named by the setting of the same name. In a folder, every file is read according to its extension: a MIDI file, .mid or .midi, gives one voice per track that carries notes; MusicXML, .musicxml, .xml or .mxl, MEI, Humdrum, .krn, and ABC give one voice per layer of each staff; a DCML notes table, .tsv, one voice per layer of each staff. Files are read in the alphabetical order of their names. « Voices » is the number of voices a piece must have: a piece with another number is left out, and the report names it with that number. « Limit » stops reading after that many kept pieces; at zero, all are read. The key of every piece is estimated on its notes, by the method of Carol Krumhansl and Mark Schmuckler: the duration of every pitch class is compared with the profiles of the twenty-four keys, and the closest is kept, except when the key whose tonic is the lowest note of the last chord stays close to it: that key is then kept. The « Corpus » output returns the kept pieces. The « Report » output gives the number of pieces read and left out, every piece left out with its reason, and for the Bach chorales the number of corrected pitches and the chorales delivered unchecked.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Corpus | corpus |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source | choice | Bach chorales (corrected DCML) | Bach chorales (corrected DCML) / Folder | The Bach chorales bundled with the application, or the files of the folder named by « Folder ». |
+| Folder | folder | — |  | The folder read when « Source » is « Folder ». The « … » button opens the system picker. |
+| Voices | number | 4 | 2 – 4, step 1 | The number of voices a piece must have to be kept. |
+| Limit | number | 0 | 0 – 10000, step 1 | The number of kept pieces after which reading stops. At zero, all are read. |
+
+#### Read a Score
+
+`lire-partition` · Other & lab → Harmonization
+
+*Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer.*
+
+This component reads a written score and returns it as a note sequence, with one voice per layer of each staff. Four notations are read by the Verovio engraving engine: MusicXML, the exchange format of score editors, as text or compressed as .mxl; MEI; Humdrum, the format of analysis corpora, including Bach's chorales encoded by Craig Sapp; and ABC. Added to them are the notes tables of the Digital and Cognitive Musicology Lab, one row per note, which the ms3 library extracts from their scores. The format is recognised from the shape of the text. A voice is a layer of a staff, as the score writes it: on a chorale of two staves with two voices each, the first voice is the soprano, the second the alto, the third the tenor and the fourth the bass. Two voices that cross each keep their own. Tied notes form a single note. Repeats are not unfolded: every bar is read once, as written. The score comes from the « Notation » input when connected, otherwise from the file named by « Path », otherwise from the text of the « Notation » setting. « Path » names a .musicxml, .xml, .mxl, .mei, .krn, .abc or .tsv file. The « … » button opens the system picker. « Tempo » sets the length of a quarter note in seconds. At zero, it is the tempo written in the score, and 120 when it writes none; a DCML table, which carries none, is read at 100. The « Sequence » output returns the notes, each on its voice, the voices named after their staff when the score names it. The « Report » output gives the recognised format, the tempo used, and for each voice its number of notes and its range, then the number of tied notes and the refused rows. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Notation | text (notation) |  |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | fichier | — |  | The score file. Empty, the score comes from the « Notation » setting. |
+| Notation | text | `&lt;?xml version="1.0" encoding="UTF-8"?> &lt;score-partwise ve…` |  | The text of the score, when neither the « Notation » input nor « Path » gives it. |
+| Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Quarter notes per minute. At zero, the tempo written in the score, 120 failing that, and 100 for a DCML table. |
 
 ### Installation
 

@@ -40,7 +40,24 @@ export interface OptionsMusicXML {
   /** Plus petite valeur représentée : 4 = noire, 8 = croche, 16 = double-croche. */
   quantification?: number;
   instrument?: string;
+  /**
+   * Le nombre de mesures au moins. Une partition à plusieurs parties les veut toutes de la même
+   * longueur, et une voix qui se tait avant les autres en écrivait moins.
+   */
+  mesures?: number;
+  /**
+   * La clé, quand elle est imposée. Sans elle, la clé se choisit sur le registre des notes ; une
+   * partition par voix la fixe, pour qu'une voix d'alto qui descend ne change pas de clé d'une pièce
+   * à l'autre.
+   */
+  cle?: "sol" | "fa";
 }
+
+/** Les clés qu'une option peut imposer. */
+const CLES: Record<string, string> = {
+  sol: "<sign>G</sign><line>2</line>",
+  fa: "<sign>F</sign><line>4</line>",
+};
 
 /** Un degré chromatique en nom de note, avec son altération. */
 const DEGRES: { pas: string; alter: number }[] = [
@@ -197,7 +214,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
 
   const voix = voixDepuisNotes(notes, tempo, grille);
   const fin = voix.flat().reduce((m, e) => Math.max(m, e.fin), 0);
-  const nbMesures = Math.max(1, Math.ceil(fin / unitesParMesure));
+  const nbMesures = Math.max(1, options.mesures ?? 1, Math.ceil(fin / unitesParMesure));
 
   const lignes: string[] = [];
   lignes.push('<?xml version="1.0" encoding="UTF-8"?>');
@@ -218,7 +235,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
       lignes.push(`        <divisions>${divisions}</divisions>`);
       lignes.push('        <key><fifths>0</fifths></key>');
       lignes.push(`        <time><beats>${numerateur}</beats><beat-type>${denominateur}</beat-type></time>`);
-      lignes.push(`        <clef>${cleDe(notes.map((n) => n.note))}</clef>`);
+      lignes.push(`        <clef>${CLES[options.cle ?? ""] ?? cleDe(notes.map((n) => n.note))}</clef>`);
       lignes.push('      </attributes>');
       lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${Math.round(tempo)}</per-minute></metronome></direction-type><sound tempo="${Math.round(tempo)}"/></direction>`);
     }
