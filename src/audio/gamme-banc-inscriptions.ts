@@ -26,6 +26,7 @@ export const HORS_DE_PORTEE: Record<string, string> = {
 /** Les réglages tenus par un autre garde, qui sait lire ce que leur nœud rend. */
 export const TENUS_AILLEURS: Record<string, string> = {
   "generateur-accords·Gamme": "gammes-tenues-son.test.ts, par le MIDI que le nœud remet à sa synthèse, capté au passage",
+  "tonal-gamme·Type": "gammes-tenues-tous.test.ts, qui lit ses noms de notes sans octave sous chaque gamme offerte et les douze toniques ; le banc ne lit que des hauteurs",
   "correction-hauteur·Gamme": "gammes-tenues-son.test.ts, par la hauteur suivie au pYIN dans le son corrigé",
   "glissando-de-gamme·Gamme de départ": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue initiale",
   "glissando-de-gamme·Gamme d'arrivée": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue finale",

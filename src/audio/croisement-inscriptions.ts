@@ -23,6 +23,7 @@ import type { CoincidenceInscrite, InertieConditionnee, InertieInscrite } from "
 import { COINCIDENCES_DES_CHOIX, INERTIES_DES_CHOIX } from "./croisement-choix";
 import dette from "./croisement-dette.json";
 import { SIGNATURES } from "./signatures";
+import { GAMMES_DES_ROMAINS } from "./theorie-romains";
 
 /** Les métriques en seizièmes de la table commune, sous lesquelles la grille descend à la double croche. */
 const EN_SEIZIEMES = SIGNATURES.filter((s) => s.endsWith("/16"));
@@ -210,7 +211,7 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Plier", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
-  { ou: "accords-vers-notation·Gamme", valeurs: ["majeur", "mineur"], raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
+  { ou: "accords-vers-notation·Gamme", valeurs: GAMMES_DES_ROMAINS.map((g) => g.id), raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
   ...COINCIDENCES_DES_CHOIX,
 ];
 

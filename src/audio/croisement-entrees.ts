@@ -118,7 +118,9 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
   // sur la « Gamme », que la passe doit pouvoir voir agir.
   "accords-vers-notation": {
     Tonalité: { valeur: () => "A", raison: "une tonique seule, sans quoi la Gamme ne servirait pas" },
-    Progression: { valeur: () => "i VI III VII", raison: "le port lit des chiffres romains, et refuse une phrase" },
+    // SANS VII : la gamme par tons et l'augmentée n'ont que six degrés, et le nœud refuse le chiffre
+    // d'un degré que la gamme n'a pas (2026-11-23).
+    Progression: { valeur: () => "i VI III iv", raison: "le port lit des chiffres romains, et refuse une phrase ; des degrés que les dix-sept gammes offertes ont toutes" },
     "Accords détectés": {
       valeur: () => ["0:00 Am (2 s)", "0:02 F (2 s)", "0:04 C (1 s)", "0:05 G (3 s)", "0:08 Dm"].join(String.fromCharCode(10)),
       raison: "une phrase quelconque n'a aucun accord exploitable ; le dernier accord n'a pas de durée, et c'est la « Durée par accord » qui la lui donne",

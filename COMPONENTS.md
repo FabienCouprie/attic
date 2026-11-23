@@ -2856,7 +2856,7 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 *Converts Harmonic Analysis output into the notation expected by Text → MIDI.*
 
-Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
+Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input; each numeral takes as its root the « Scale » note at its rank, when the key names no mode, and a VII is refused in a six-degree scale.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2868,7 +2868,7 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Source | choice | Detected chords | Detected chords / Progression | « Detected chords » transcribes the actual harmony with its measured durations. « Progression » expands the suggested roman numerals, which requires the Key input. |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. No effect when « Source » is « Detected chords », which reads no degrees. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in, when the Key input names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In « Natural minor », III, VI and VII drop a semitone; in a six-degree scale, VII does not exist. No effect when « Source » is « Detected chords », which reads no degrees. |
 | Octave | number | 3 | 1 – 6, step 1 | Octave of the root note of the generated chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
 | Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
@@ -5798,7 +5798,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 
 *Generates a full accompaniment in text-to-MIDI format.*
 
-Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
+Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Roman numerals are read in the chosen « Scale »: each numeral takes as its root the scale note at its rank, and case decides the quality; in a six-degree scale, VII does not exist, and a numeral naming it is refused. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5808,9 +5808,9 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
-| Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The scale is set in « Scale »; the Progression input wins over the setting when it names a key. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A; in « Dorian », « vi° » gives B° in D. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist. No effect on a list of symbols. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
 | Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -9859,7 +9859,7 @@ This node engraves a piano score from a notation text: two staves joined by a br
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named, and each numeral taking as its root the « Scale » note at its rank, a VII being refused in a six-degree scale; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9871,7 +9871,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 |---|---|---|---|---|
 | Chords | text | `C Am F G` |  | Chords to display, separated by spaces. Also accepts a roman numeral progression if a key is set. |
 | Key | text | `C` |  | Key used to interpret a roman numeral progression. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ». |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in, when the key names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. In « Natural minor », III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A; in a six-degree scale, VII does not exist. |
 | Measures per line | number | 4 | 1 – 8, step 1 | Number of measures per line. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 600 px, step 10 | SVG height. |
@@ -12442,7 +12442,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 *Generates a chord progression from a key and roman numerals.*
 
-Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Numerals are read the way roman-numeral analysis writes them: - case gives the quality: I major, ii minor; ° diminished, ø half-diminished, + augmented; - inversion figures follow the degree: 6 and 64 for a triad, I6 = C/E; 7, 65, 43 and 42 for a seventh, V65 = G7/B; the seventh of a major chord is dominant, that of a minor chord is minor, ii7 = Dm7; - a chord-symbol suffix may also be written: IVmaj7, V9, Vsus4; the added sixth is written Iadd6; - an accidental, bVII, #iv°, is taken on the major scale; - X/Y is chord X built on degree Y, taken as a tonic: V/V = D, V7/IV = C7, vii°/V = F#°. In minor, III, VI and VII drop a semitone, except the diminished or half-diminished vii, built on the leading tone: vii° = G#° in A. A numeral the reading does not know, « X », is refused, and the message names it: nothing is returned.
+Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Numerals are read the way roman-numeral analysis writes them: - case gives the quality: I major, ii minor; ° diminished, ø half-diminished, + augmented; - inversion figures follow the degree: 6 and 64 for a triad, I6 = C/E; 7, 65, 43 and 42 for a seventh, V65 = G7/B; the seventh of a major chord is dominant, that of a minor chord is minor, ii7 = Dm7; - a chord-symbol suffix may also be written: IVmaj7, V9, Vsus4; the added sixth is written Iadd6; - an accidental, bVII, #iv°, is taken on the major scale; - X/Y is chord X built on degree Y, taken as a tonic: V/V = D, V7/IV = C7, vii°/V = F#°. Each numeral takes as its root the « Scale » note at its rank. In « Natural minor », III, VI and VII drop a semitone, except the diminished or half-diminished vii, built on the leading tone: vii° = G#° in A; in « Dorian », vi° = B° in D. « Scale » offers the seventeen scales whose every degree carries a major, minor, diminished or augmented chord. In a six-degree scale, « Whole tone » or « Augmented », VII does not exist, and a numeral naming it is refused. When « Scale » changes, the default progression follows the scale. A numeral the reading does not know, « X », is refused, and the message names it: nothing is returned.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12451,9 +12451,9 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
-| Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The scale is set in « Scale »; the Key input wins over the setting when it names a mode (« A minor »). |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A, except the diminished vii, built on the leading tone; in « Dorian », « vi° » gives B° in D. Case only decides the chord quality. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is taken on the major scale. When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten. |
 
 #### Rhythm Analysis
 
@@ -12480,7 +12480,7 @@ Analyses a rhythm by its geometry on the circle. After Godfried Toussaint, « Th
 
 *Lists the notes of a scale from a tonic and a scale type.*
 
-Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available types include major, minor, dorian, mixolydian, lydian, phrygian and locrian.
+Lists the notes of a scale on a tonic, from the first degree to the last. Example: C and « Major » give C D E F G A B. « Type » offers the twenty-five tempered scales of the common table, from the seven modes to « Chromatic ». Each note carries the letter and accidental of its scale's usual spelling: one letter per degree for a seven-degree scale, C D E F# G# A# for « Whole tone ». The tonic is read from the « Tonic » input when it is connected, otherwise from the « Key » setting. The « Notes » output returns the names separated by spaces.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12490,7 +12490,7 @@ Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Starting tonic. |
-| Type | choice | major | major / minor / dorian / mixolydian / lydian / phrygian / locrian | Scale type. |
+| Type | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale whose notes are listed, among the twenty-five tempered scales of the common table, from the seven modes to the chromatic. |
 
 #### Species Counterpoint
 
