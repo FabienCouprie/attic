@@ -2419,6 +2419,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **« MAGENTA IMPROVISATION » TIRE UN NOMBRE NEUF À CHAQUE PAS, ET SA TEMPÉRATURE VA JUSQU'À 1,5.** Points résiduels relevés par la session du chantier de l'harmonisation, 2026-11-23.
+  - **Ce qui se passait**, lu dans la source de `@magenta/music` 1.23.1 (`piano_genie/model.js`) :
+    - `model.next(bouton, température, graine)` tire par `sampleLogits`, qui passe la graine à `tf.multinomial` ; le noyau recrée `seedrandom.alea(graine)` à chaque appel. Chaque pas tirait donc le même nombre, et chaque note tombait au même rang de sa distribution. Sur un modèle indifférent, les 88 touches également probables, 64 pas rendaient **une seule touche** ;
+    - `sampleLogits` lève au-dessus de 1, quand le réglage « Température » va jusqu'à 1,5 : dans l'application, à 1,5, « Erreur Magenta Improvisation : Invalid temperature specified ».
+  - **Ce qui change** : le tirage se fait dans `plugins/magenta-helpers.ts` (`tirerTouche`), par `nextWithCustomSamplingFunction`, sur le générateur de la graine qui tire déjà les boutons. La température divise les logits, au-dessus de 1 comme en dessous ; à zéro, la touche la plus probable. Une graine donnée rend une autre improvisation qu'avant.
+  - **Mesuré dans l'application** sur le vrai point de contrôle, mode « Montant », 64 pas, graines 1, 2, 3, 42 et 4242 : 10 touches distinctes à 0 pour chaque graine, 12 à 18 à 0,5, 23 à 27 à 1, 22 à 32 à 1,5. Même graine, mêmes octets ; autre graine, autres octets, à 0,5, 1 et 1,5. Le banc `mesurer` à 1,5 et graine 42 rend « graine 42 » sans erreur. `npm run graines` ne compare pas cette sortie, qui est du MIDI.
+  - **Tenu par** `plugins/magenta-improvisation.test.ts`, 6 cas, sur la vraie classe de Piano Genie dont seul le réseau est remplacé par un modèle indifférent : aucun point de contrôle demandé. **Vus rouges** sur l'appel d'origine (une touche sur 64, « Invalid temperature specified »), sur un générateur recréé à chaque pas (une touche) et sur une température bornée à 1 (le seuil lu faux à 1,25).
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; passe complète, 843 fichiers, 12 796 cas verts, aucun rouge, 1 604 s.
+
 - **« DITHER » SE DIT À LA DICTÉE : « ARRONDI AVEC BRUIT ».** Relevé le 2026-11-22 par la session du chantier de l'harmonisation : le garde du lexique vocal jetait « dither ». Le nom parlé a été choisi par Fabien le même jour, parmi trois noms proposés.
   - **Ce qui se passait.** « Dither » est entré au catalogue le 2026-11-15 (PR 366). Le modèle vocal français n'a pas le mot « dither », et c'est le seul mot du nom : le composant ne pouvait pas se dire. Lancé sur les fichiers de `master`, `npm run test:lexique-dictee` tombe, et le moteur jette un seul mot, `["dither"]`.
   - **Ce qui change.** « dither » rejoint `HORS_LEXIQUE_FR` dans `plugins/lexique-vosk.ts`, et la fiche porte le nom parlé « arrondi avec bruit », qui dit le geste du composant : un bruit ajouté avant l'arrondi. La notice ne change pas, elle ne nomme pas la dictée.
