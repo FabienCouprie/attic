@@ -166,6 +166,7 @@ demonstration
 film-application
 partition-verovio
 partition-guitare
+partition-piano
 gout-du-son
 assaisonnement-sonore
 parfum-motif

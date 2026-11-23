@@ -32,7 +32,7 @@ import {
 import {
   ACCORDAGES, accordageDe, cordesMidi, placer, tessiture, type Accordage, type FauteDoigte, type ReglagesDoigte,
 } from "../audio/guitare-doigte";
-import { lireNotes, porteesDe, type FauteHauteur, type Temps } from "../audio/guitare-hauteurs";
+import { lireNotes, porteesDe, sansAlterationsSonnantes, type FauteHauteur, type Temps } from "../audio/guitare-hauteurs";
 import { ecrireTablature } from "../audio/guitare-tablature";
 import { lireNomDeNote } from "../audio/noms-de-notes";
 import { nomNoteRond } from "../audio/nom-note";
@@ -184,6 +184,9 @@ export const fiches: FicheAudio[] = ([
         }
         // 2. La hauteur de chaque note, sa place sur le manche, puis la portée et la tablature en MEI.
         const doc = new DOMParser().parseFromString(mei, "application/xml");
+        // L'import ABC de Verovio pose des altérations sonnantes fausses après un bécarre porté : la
+        // lecture s'en passe, l'armure et les altérations écrites lui suffisant.
+        if (lecture.format === "abc") sansAlterationsSonnantes(doc);
         const portees = porteesDe(doc);
         if (portees.length === 0) return { refus: traduire("msg.guitare.aucune_portee") };
         portee = { rang: Math.min(Math.max(1, voulue), portees.length), nombre: portees.length };
