@@ -1,6 +1,6 @@
 // plugins/electronFetch.ts — Patcher fetch pour télécharger les ressources via le main Electron.
-// Utilisé par les nœuds qui chargent un modèle TensorFlow.js depuis un hébergeur distant (DDSP) et
-// par les images Pollinations.ai.
+// Utilisé par DDSP pour l'adresse qu'on écrit dans « URL modèle », ses quatre instruments et SPICE
+// étant livrés sous `public/magenta/` depuis le 2026-11-23, et par les images Pollinations.ai.
 // Le processus principal n’a pas les contraintes CSP/CORS du renderer, donc on route les requêtes
 // distantes (tfhub.dev, storage.googleapis.com, kaggle.com, pollinations.ai…) par lui.
 //

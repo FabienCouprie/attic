@@ -35,14 +35,12 @@ const HEBERGEURS = /https?:\/\/[^"'`\s]*(?:huggingface\.co|storage\.googleapis\.
  * Ce qui a le droit de nommer un tiers, et pourquoi.
  *
  * CHAQUE LIGNE EST UNE DETTE, pas une permission : elle dit ce qui reste à faire passer par la
- * release. Les deux premières sont des nœuds qui chargent encore leur modèle chez un tiers à
- * l'exécution ; les suivantes ne chargent rien et nomment un tiers pour une autre raison.
+ * release. La première est une dette payée dont l'adresse reste écrite ; les suivantes ne chargent
+ * rien et nomment un tiers pour une autre raison. La dette de `ddsp.ts`, quatre points de contrôle
+ * chargés depuis storage.googleapis.com et SPICE depuis tfhub.dev, est payée le 2026-11-23 : ils
+ * sont au manifeste et sur la release, et sa ligne est retirée.
  */
 const EXCEPTIONS: Record<string, string> = {
-  "ddsp.ts":
-    "DETTE. Les quatre points de contrôle DDSP — violon, flûte, saxophone, trompette — sont chargés "
-    + "depuis storage.googleapis.com à l'exécution. Même traitement à faire que pour Magenta et les "
-    + "deux nœuds de reconnaissance vocale : miroir local, entrée au manifeste, publication.",
   "tts.ts":
     "DETTE PAYÉE LE 2026-10-31, et la ligne reste parce que l'adresse reste. Les deux composants "
     + "tiraient leurs poids de huggingface.co à chaque première exécution, sans figurer au "
@@ -144,5 +142,36 @@ describe("la provenance des modèles", () => {
       expect(entree.source.sha256, id).toMatch(/^[0-9a-f]{64}$/);
       expect(entree.fichiers.length, id).toBeGreaterThan(0);
     }
+  });
+
+  it("DDSP LIT CHAQUE INSTRUMENT ET SPICE DANS UN PAQUET DU MANIFESTE, publié sur la release", async () => {
+    // L'adresse se construit comme à l'exécution, puis chaque fichier que la bibliothèque y lira doit
+    // être au manifeste : un dossier mal nommé rendrait le nœud muet hors ligne, et ce garde-ci, qui
+    // ne cherche qu'un hébergeur tiers dans la source, ne le verrait pas.
+    const ddsp = await import("./ddsp");
+    const manifeste = JSON.parse(
+      fs.readFileSync(path.resolve(RACINE, "..", "scripts", "modeles-manifest.json"), "utf8"),
+    );
+    const fichiersDu = (id: string): Set<string> => {
+      const entree = manifeste.modeles.find((m: { id: string }) => m.id === id);
+      expect(entree?.source.url, id).toMatch(/^https:\/\/github\.com\/FabienCouprie\/attic\/releases\/download\/assets\//);
+      return new Set(entree.fichiers.map((f: { chemin: string }) => f.chemin));
+    };
+    const instruments = fichiersDu("magenta-ddsp");
+    const reglage = ddsp.fiches[0].parametres.find((p) => p.nom === "Instrument")!;
+    const libelles = [...(reglage.optionIds ?? []), ...(reglage.optionsEn ?? [])];
+    expect(libelles.length).toBe(8);
+    for (const instrument of libelles) {
+      const base = ddsp.adresseDdsp(instrument, "");
+      for (const f of ["model.json", "settings.json", "group1-shard1of1.bin"]) {
+        expect(instruments.has(`${base}/${f}`), `${instrument} : ${base}/${f}`).toBe(true);
+      }
+    }
+    const spice = fichiersDu("magenta-spice");
+    for (const f of ["model.json", "group1-shard1of3.bin", "group1-shard2of3.bin", "group1-shard3of3.bin"]) {
+      expect(spice.has(`${ddsp.adresseSpice()}/${f}`), f).toBe(true);
+    }
+    // Et une « URL modèle » écrite garde la main sur l'instrument.
+    expect(ddsp.adresseDdsp("Violon", " https://exemple.org/ddsp/x ")).toBe("https://exemple.org/ddsp/x");
   });
 });
