@@ -260,6 +260,52 @@
       },
       "erreurs": []
     },
+    "deux-corpus-trois-harmonisations.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.01852449334714,
+          "crete": 0.11838122457265854,
+          "trames": 529200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1915.3553158774919,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "par-bach": {
+          "rms": 0.26676974748162247,
+          "crete": 0.7924485802650452,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 291.5154688774755,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.26676974748162247,
+          "crete": 0.7924485802650452,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 291.5154688774755,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "deux-effets-deux-passages.json": {
       "lecteurs": {
         "source": {
