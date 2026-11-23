@@ -49,6 +49,8 @@ const SIGLES = new Set([
   "MOSS",
   // Musique et notation
   "ABC", "BWV", "IPA", "MEI", "I", "II", "III", "IV", "V", "VI", "VII",
+  // DADGAD : l'accordage de guitare se nomme par ses six cordes, comme « Partition guitare » l'offre.
+  "DADGAD",
   // Divers
   "API", "URL", "URI", "ID", "UI", "IA", "SHA", "IEEE", "ISO", "UTC", "LSB", "MSB", "HZ", "KHZ",
   "DB", "MS", "NSIS", "ENV", "PID", "TCP", "UDP", "HTTP", "HTTPS", "OK", "USB", "HRTF",

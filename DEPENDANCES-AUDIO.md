@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 99 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 291 · transposable tel quel
+- **pur** : 294 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -230,6 +230,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | groove-box.ts | pur | — |
 | gtcrn.ts | pur | — |
 | guides-onde.ts | pur | — |
+| guitare-doigte.ts | pur | — |
+| guitare-hauteurs.ts | pur | — |
+| guitare-tablature.ts | pur | — |
 | harmonie-negative.ts | pur | — |
 | harmonie-spectrale.ts | pur | — |
 | hauteur.ts | pur | — |

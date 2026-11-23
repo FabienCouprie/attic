@@ -81,7 +81,7 @@ export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   // L'animation occupe toute la place laissée par l'en-tête, les trois ports et le lecteur : sans
   // hauteur déclarée, le nœud naissait à la hauteur de son seul contenu et l'image recevait 8 px.
   if (def.id === "cercle-pulsant") return { width: 300, height: 500 };
-  if (def.id === "partition-verovio") return { width: 420, height: 320 };
+  if (def.id === "partition-verovio" || def.id === "partition-guitare") return { width: 420, height: 320 };
   // Le rouleau : le dessin fait 190 px a lui seul, et il lui faut encore ses deux regles, son
   // en-tete et la legende des voix. En largeur, c'est le temps qui commande — a 260 px, deux notes
   // voisines se touchent et l'on ne voit plus laquelle attaque la premiere.

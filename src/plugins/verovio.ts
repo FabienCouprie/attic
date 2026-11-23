@@ -5,33 +5,22 @@
 // éditeur de musique. Rien à installer, rien à télécharger : le module de 7 Mo est chargé au
 // premier rendu, puis gardé ; celui qui lit aussi le Humdrum, de 14 Mo, au premier Humdrum.
 //
-// POURQUOI UN IMPORT DYNAMIQUE. Ces 7 Mo n'ont pas à peser sur le démarrage de l'application, ni
-// sur les graphes qui ne gravent rien : `import()` en fait un morceau à part, chargé le jour où ce
-// nœud s'exécute. Le module est ensuite gardé pour les exécutions suivantes.
+// La lecture de la notation, ses refus et la gravure de chaque air sont communs aux graveurs par
+// Verovio, dans `verovio-lecture.ts`. Le moteur se charge par `verovio-outil.ts`, qui dit pourquoi un
+// module neuf est pris à chaque gravure et pourquoi le Humdrum a le sien.
 //
 // La reconnaissance du format et les options de gravure sont dans `audio/verovio.ts`, pur et testé.
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, racineXml, type FormatNotation } from "../audio/verovio";
-import { decouperMorceaux, lireMorceau } from "../audio/abc";
-import { refusAbc } from "../audio/abc-fautes";
-import { abcPourGravure, refusTournures } from "../audio/abc-gravure";
+import { entreeVerovio, optionsGravure } from "../audio/verovio";
 import { choixOuiNon } from "../core/oui-non";
-import { outilVerovio } from "./verovio-outil";
-
-const en = () => langueCourante() === "en";
+import {
+  graverAirs, lireNotation, mentionAir, mentionPage, nomDuFormat, outil, refusDuGraveur, texteAGraver,
+} from "./verovio-lecture";
 
 const EXEMPLE = "X:1\nT:Gamme\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |";
-
-/**
- * Un moteur neuf pour chaque gravure, et le module Humdrum pour une partition Humdrum, par
- * `verovio-outil.ts`, où la raison des deux est écrite : la gravure et « Lire une partition » chargent
- * Verovio par le même chemin.
- */
-const outil = (humdrum: boolean) => outilVerovio(humdrum);
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -86,35 +75,10 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const entree = ctx.entree(0);
       const texte = (typeof entree === "string" && entree.trim()) || ctx.paramTexte("Notation", EXEMPLE);
-      const impose = String(ctx.paramTexte("Format", "auto"));
-      const format: FormatNotation | null = impose === "auto" ? detecterFormat(texte) : (impose as FormatNotation);
-      if (!format) {
-        const racine = texte.trim().startsWith("<") ? racineXml(texte) : null;
-        return { valeurs: [null, null], erreur: true, message: racine ? traduire("msg.verovio.xml_inconnu_var_0", racine) : en()
-          ? "Notation not recognised: expected ABC (X:, K:), MusicXML, MEI or Humdrum."
-          : "Notation non reconnue : attendu ABC (X:, K:), MusicXML, MEI ou Humdrum." };
-      }
-      // CE QUE LE LECTEUR ABC D'ATTIC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées.
-      // Revue des notations en texte, 2026-11-22 : Verovio gravait en vert une durée nulle, un accord
-      // jamais refermé ou une liaison entre deux hauteurs, et tombait sur « divide by zero » pour un
-      // silence de durée nulle. Chaque air du texte est lu, puisque chacun est gravé.
-      // CHAQUE AIR SE GRAVE SEUL, AVEC SON TITRE, quand le texte en porte plusieurs. Décision de Fabien
-      // du 2026-11-22, « Engrave all, titled » : Verovio les gravait à la suite, et n'écrivait que le
-      // titre du premier. Les airs sont ceux que découpe le lecteur ABC, qui écarte aussi ce qui précède
-      // le premier X: et les clôtures de code d'un modèle de langue. Chacun commence sa page, et
-      // « Page » parcourt les pages de tous.
-      const airs = format === "abc" ? decouperMorceaux(texte) : [texte];
-      if (airs.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.abc.aucun_morceau") };
-      const nomAir = (i: number) => traduire("msg.abc.partition_var_0", airs.length > 1 ? `ABC ${i + 1}` : "ABC");
-      if (format === "abc") {
-        for (const [i, air] of airs.entries()) {
-          // Puis ce que Verovio ne sait pas dessiner du tout. Décision de Fabien du 2026-11-22, « Refuse
-          // them, named » : les voix, les fins alternatives, un changement de tonalité, une liaison
-          // dans un accord, un n-olet que son chiffre seul ferait mal lire.
-          const refus = refusAbc(lireMorceau(air, i + 1), nomAir(i), "msg.abc.refusee_gravure_var_0_var_1") ?? refusTournures(air, nomAir(i));
-          if (refus) return { valeurs: [null, null], erreur: true, message: refus };
-        }
-      }
+      // La lecture, ses refus et ses airs sont communs aux graveurs par Verovio (`verovio-lecture.ts`).
+      // Chaque air commence sa page, et « Page » parcourt les pages de tous.
+      const lecture = lireNotation(texte, String(ctx.paramTexte("Format", "auto")));
+      if ("refus" in lecture) return { valeurs: [null, null], erreur: true, message: lecture.refus };
       const options = {
         ...optionsGravure({
           largeur: ctx.paramNombre("Largeur", 1800),
@@ -122,48 +86,21 @@ export const fiches: FicheAudio[] = ([
           marge: 50,
           deroule: String(ctx.paramTexte("Déroulé", "non")) === "oui",
         }),
-        inputFrom: entreeVerovio(format),
-        ...(airs.length > 1 ? { header: "encoded" } : {}),
+        inputFrom: entreeVerovio(lecture.format),
+        ...(lecture.airs.length > 1 ? { header: "encoded" } : {}),
       };
-      const voulue = pageDemandee(ctx.paramNombre("Page", 1), Number.MAX_SAFE_INTEGER);
-      let total = 0, rendu: { svg: unknown; air: number; page: number } | null = null;
-      try {
-        for (const [i, air] of airs.entries()) {
-          let tk: any = null;
-          try {
-            tk = await outil(format === "humdrum");
-            tk.setOptions(options);
-            // Un texte ABC est réécrit là où Verovio lit faux une écriture juste (`abcPourGravure`).
-            if (!tk.loadData(format === "abc" ? abcPourGravure(air) : air)) {
-              const quoi = format === "abc" ? nomAir(i) : format.toUpperCase();
-              return { valeurs: [null, null], erreur: true, message: en()
-                ? `${quoi} refused by the engraver: check the notation.`
-                : `${quoi} refusé par le graveur : vérifiez la notation.` };
-            }
-            const pages = tk.getPageCount();
-            // La page voulue, ou la dernière de la dernière pièce quand on demande au-delà.
-            const ici = voulue <= total + pages ? voulue - total : i === airs.length - 1 ? pages : 0;
-            if (!rendu && ici > 0) rendu = { svg: tk.renderToSVG(ici), air: i + 1, page: total + ici };
-            total += pages;
-          } finally {
-            tk?.destroy?.();
-          }
-        }
-      } catch (e: any) {
-        return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
-      }
-      const svg = rendu?.svg;
-      if (!rendu || typeof svg !== "string" || !svg.includes("<svg")) {
-        return { valeurs: [null, null], erreur: true, message: en() ? "Empty engraving." : "Gravure vide." };
-      }
-      const nom = format === "musicxml" ? "MusicXML" : format.toUpperCase();
-      const air = airs.length > 1 ? (en() ? ` · tune ${rendu.air} of ${airs.length}` : ` · air ${rendu.air} sur ${airs.length}`) : "";
-      const message = en()
-        ? `${nom}${air} · page ${rendu.page}/${total}`
-        : `${nom}${air} · page ${rendu.page} sur ${total}`;
+      const rendu = await graverAirs(lecture, ctx.paramNombre("Page", 1), async (i) => {
+        const tk = await outil(lecture.format === "humdrum");
+        tk.setOptions(options);
+        if (tk.loadData(texteAGraver(lecture, i))) return { tk };
+        tk.destroy?.();
+        return { refus: refusDuGraveur(lecture, i) };
+      });
+      if ("refus" in rendu) return { valeurs: [null, null], erreur: true, message: rendu.refus };
+      const message = `${nomDuFormat(lecture.format)}${mentionAir(lecture, rendu.air)} · ${mentionPage(rendu)}`;
       // Le SVG part sur la SORTIE, et la vue l'y lit : le message reste une ligne lisible sur le
       // nœud, le format reconnu et la page rendue, au lieu d'être un document entier.
-      return { valeurs: [svg, new File([svg], "gravure.svg", { type: "image/svg+xml" })], message };
+      return { valeurs: [rendu.svg, new File([rendu.svg], "gravure.svg", { type: "image/svg+xml" })], message };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

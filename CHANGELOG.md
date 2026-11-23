@@ -84,6 +84,42 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Les gardes du dépôt qui l'ont rencontré** : « ISMIR » entre aux sigles du ton des documentations ; la fiche est déclarée hors du banc de croisement, le banc de node n'ayant ni worker ni WebGL (ses deux lancers y tombaient sur « Worker is not defined »), « Voix gardées » étant éprouvé sur la grille ; l'épreuve est inscrite parmi les appelants du pilote de graphe.
   - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers neufs ; passe complète, 831 fichiers et 12 210 cas, 12 189 verts et un rouge, le garde du pilote qui ne connaissait pas l'épreuve neuve, inscrite depuis et revue verte ; tables régénérées ; l'épreuve dans l'application, deux cas verts en 53,6 s. **Non vérifié** : dans l'application de bureau, et sur la RTX 2060 : Chromium a pris l'Intel UHD.
 
+- **« PARTITION GUITARE » GRAVE UNE PARTITION POUR GUITARE, PORTÉE ET TABLATURE, À PARTIR D'UN TEXTE ABC, MUSICXML, MEI OU HUMDRUM.** Demandé par Fabien le 2026-11-23 : les mêmes entrées que « Partition gravée », et la même sortie, pour se brancher sur « SVG vers PDF ». Famille Visualisation → Notation.
+  - **Ce qu'il fait** : la portée en clé de sol à 8 en bas, et dessous la tablature, qui donne pour chaque note la corde et la case. Réglages neufs, une décision de Fabien chacun :
+    - « Affichage » : « Portée et tablature » par défaut, où le rythme se lit sur la portée, ou « Tablature » seule, avec ses hampes de durée ;
+    - « Accordage » : une liste nommée, dont le nombre de cordes suit l'accordage, de Standard à Standard 7 cordes ;
+    - « Capodastre », dont les cases se comptent ;
+    - « Dernière case » (20), « Écart » (4 cases), « Octave » (0, la hauteur réelle) et « Portée », pour une partition à plusieurs portées.
+
+    Un accordage hors standard et le capodastre sont gravés au-dessus de la première mesure.
+  - **Le placement** : le moindre déplacement de la main sur toute la pièce, par programmation dynamique (`audio/guitare-doigte.ts`). La main couvre « Écart » cases depuis l'index, et ne bouge que si une case appuyée sort de cette fenêtre. Fabien a choisi la fenêtre en cours de route, après une première règle où la main se tenait à la plus basse case appuyée : celle-ci montait si 4, ré 4, sol 4 en case 12 sur trois cordes pour garder le même numéro, là où la main les joue en septième position sans bouger. Deux notes qui sonnent ensemble, accord ou deux voix, prennent deux cordes ; une note tenue garde la sienne.
+  - **Ce qui ne se joue pas est refusé, nommé avec sa mesure** : une note hors de la tessiture de l'accordage, une hauteur entre deux cases, un accord à plus de notes que de cordes, qui exige deux fois la même corde ou qui dépasse l'écart. Les notes d'ornement restent sur la portée, absentes de la tablature, et le message les compte : Verovio 6.3.0 ignore un `tabGrp` dans un `graceGrp`.
+  - **Comment** : Verovio lit le texte et le rend en MEI, avec l'instant de chaque note (`renderToTimemap`). Attic lit la hauteur réelle de chaque note (`audio/guitare-hauteurs.ts`), la place, et écrit la portée et la tablature `tab.guitar` (`audio/guitare-tablature.ts`). Verovio grave ce MEI, chaque temps dans un module neuf. La lecture, ses refus et ses airs sont ceux de « Partition gravée », sortis de `plugins/verovio.ts` vers `plugins/verovio-lecture.ts` sans rien y changer. Les 82 cas de `partition-verovio-norme.test.ts` restent verts. **Aucun paquet** : la tablature est gravée par le Verovio installé, éprouvé dans l'application avant d'écrire le nœud.
+  - **Pourquoi Attic lit lui-même les hauteurs** : celles que Verovio calcule sont fausses en deux cas, relevés à la sonde. Un Humdrum perd l'altération d'armure : `4f#` sous `*k[f#]` se joue 65. Une note liée dans la mesure après un dièse, `^d2- d2`, se joue 75 puis 74.
+  - **Tenu par** `audio/guitare-doigte.test.ts`, 28 cas calculés à la main sur le manche : les cordes de chaque accordage, la gamme de do en première position, la septième position, le capodastre, le Drop D, la sept cordes, les refus.
+
+    Et par `plugins/partition-guitare.test.ts`, 31 cas par `executer`, la gravure relue par `plugins/tablature-lue.ts` (la corde à la ligne, la case au chiffre). La hauteur jouée par chaque case doit être celle du lecteur ABC d'Attic sur six airs, aussi en Drop D sous capodastre et sur sept cordes une octave plus bas. Il y ajoute le Humdrum relu dans le texte du kern, un MEI en si bémol sans `accid.ges`, un MusicXML de guitare, chaque réglage et chaque refus.
+
+    Vus rouges sur sept fautes plantées, une à une :
+    - les cordes numérotées à l'envers, 20 cas ;
+    - le capodastre ignoré, 5 ;
+    - l'armure ignorée, 2 ;
+    - l'altération portée jusqu'à la barre ignorée, 4 ;
+    - la case la plus basse au lieu du déplacement, 3 ;
+    - la règle écartée de la plus basse case appuyée, 4 ;
+    - l'écart non contrôlé, 3.
+  - **La chaîne, dans l'application construite** : `tests-e2e/partition-guitare-dans-application.spec.ts`, deux cas en 17 s, profil jetable. Une gamme ABC entre dans « Partition guitare », sa sortie « Fichier SVG » dans « SVG vers PDF », un titre branché.
+
+    Le PDF relu porte une page A4, le titre en tête et dans ses propriétés, et les chiffres de case restés du texte, ceux que la main calcule :
+    - 3 0 2 3 0 2 0 1 en standard, avec 161 courbes et 72 déplacements ;
+    - 1 3 0 1 3 0 2 3 en « Tablature » seule, en Drop D sous un capodastre en case 2, sous l'indication « Drop D (D A D G B E) · Capo 2 ».
+
+    Vue rouge sur le capodastre ignoré, planté, l'application reconstruite.
+  - **Vu dans l'application**, serveur de développement : une gamme de sol et son accord gravés en portée et tablature, « ABC · Standard · page 1 sur 1 ». Chaque case relue sonne la note du texte, et la main reste en deuxième position sur toute la pièce, l'accord final l'exigeant.
+
+    Au banc, l'exemple par défaut se grave en 1 139 ms au premier rendu, avec un gel du fil de 262 ms au plus, contre 806 ms et 93 ms pour « Partition gravée » sur le même banc. Les messages, en anglais, sont sans un mot français.
+  - **Limite** : le nœud lit et écrit le MEI par le `DOMParser` du navigateur, comme « Lecteur SVG ». Les bancs qui lancent les fiches sous Node, sans navigateur, ne peuvent donc pas l'exercer : la passe du croisement des réglages le relève quinze fois en échec, « DOMParser is not defined », et reste verte. Ses gardes tournent sous jsdom. Un lecteur XML pur, `@xmldom/xmldom`, déjà présent en dépendance transitive, lèverait la limite, mais ce serait un paquet de plus à déclarer.
+
 - **« SVG VERS PDF » IMPRIME UNE PAGE DE PARTITION, SOUS SON TITRE, DANS UN FICHIER PDF.** Demandé par Fabien le 2026-11-23, pour la sortie de « Partition gravée », dont le graveur n'écrit pas de titre. Famille Sorties → Export, qui passe de cinq à six composants.
   - **Ce qu'il fait** : l'entrée « SVG » reçoit une image, l'entrée « Titre » le texte écrit en tête de page, et le réglage du même nom le donne quand rien n'est branché. L'image prend la largeur de la page entre des marges de 15 mm, garde ses proportions, et se réduit si elle est trop haute : le PDF a toujours une page. « Format », A4 ou Lettre US, et « Orientation » font la page ; « Nom » le fichier, en `.pdf`, écrit dans le répertoire de travail comme le fait « Export image », et la sortie « Chemin » rend son chemin. Une image qui n'est pas un SVG, lue sur ses octets, est refusée en nommant ce qu'elle est.
   - **Comment, et sans aucun paquet** : Chromium imprime, celui d'Electron, par `printToPDF` dans le processus principal (`electron/ipc-pdf.cjs`, canal `pdf:depuis-svg`). La page est une vue détachée, qui n'entre pas dans la liste des fenêtres, JavaScript coupé, dans une session à elle qui refuse toute requête sauf la page et les adresses `data:` ; le SVG y est posé en `<img>`, où il ne peut ni lancer de script ni charger de ressource, et sa police musicale embarquée sert aux nuances. Le dessin reste vectoriel et le texte du SVG reste du texte.

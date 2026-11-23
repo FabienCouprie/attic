@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**520 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**521 composants**, dont **99** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -85,6 +85,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Oscillateur | `oscillateur` | VueOscillo | — | 420 × 340 | non | oui | non |
 | Parcours | `parcours` | Parcours | — | 400 × 430 | non | oui | non |
 | Parfum → motif | `parfum-motif` | VueGout | — | 240 × 162 | non | oui | non |
+| Partition guitare | `partition-guitare` | VueGravure | — | 420 × 320 | non | oui | non |
 | Partition gravée | `partition-verovio` | VueGravure | — | 420 × 320 | non | oui | non |
 | Pure Data | `pure-data` | VueUploadPd | — | 240 × 118 | non | oui | non |
 | Python Processor | `python-processor` | VuePythonProcessor | — | 380 × 300 | non | oui | non |

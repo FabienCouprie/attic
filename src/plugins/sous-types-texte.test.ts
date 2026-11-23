@@ -52,14 +52,15 @@ describe("les contenus du flux texte", () => {
     // Relevé sur les 271 ports texte du catalogue. Un chiffre qui bouge dit qu'un port est né ou
     // mort, et c'est exactement ce qu'on veut voir passer dans un diff.
     expect([compte("plan", "sorties"), compte("plan", "entrees")]).toEqual([5, 6]);
-    // La quatrième entrée de notation est celle de « Lire une partition », née le 2026-11-22.
-    expect([compte("notation", "sorties"), compte("notation", "entrees")]).toEqual([4, 4]);
+    // La quatrième entrée de notation est celle de « Lire une partition », née le 2026-11-22 ; la
+    // cinquième celle de « Partition guitare », née le 2026-11-23.
+    expect([compte("notation", "sorties"), compte("notation", "entrees")]).toEqual([4, 5]);
     expect([compte("abc", "sorties"), compte("abc", "entrees")]).toEqual([3, 3]);
     expect([compte("paroles", "sorties"), compte("paroles", "entrees")]).toEqual([2, 3]);
     // PROMPT N'A AUCUN PRODUCTEUR, et il compte quand même : il refuse ce qui VA vers lui. Le
     // huitième est celui de « Texte → image (MOSS) », né le 2026-10-28.
     expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 8]);
-    expect(ports.length).toBe(38);
+    expect(ports.length).toBe(39);
   });
 
   // ─── Le cas fondateur ───
