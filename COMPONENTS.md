@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **522 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **523 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -4162,6 +4162,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Micromontage](#micromontage) | Assembles a sound from thousands of fragments, each cut and laid at its own place. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
+| [MIDI Mixer](#midi-mixer) | Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts, one per instrument, to play them with four different banks. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
 | [Montage](#montage) | Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time. |
@@ -4678,6 +4679,61 @@ Repeats a MIDI file several times in a row. The Fade parameter sets the overlap 
 |---|---|---|---|---|
 | Repeats | number | 4 | 1 – 32, step 1 | Number of times the MIDI file is replayed in a row. |
 | Fade | number | 0 ms | 0 – 1000 ms, step 1 | Overlap between two repetitions. 0 = no overlap (hard join). |
+
+#### MIDI Mixer
+
+`melangeur-midi` · Processing → Editing
+
+*Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition.*
+
+Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition. The node shows two inputs to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to eight. Inputs are numbered: input 3 stays input 3 whatever order the cables were drawn in. Each input has four settings, which only appear for connected inputs. « Velocity » multiplies the velocity of each note of the input, in percent. The result is bounded from 1 to 127: a note never becomes silent, and none exceeds the format's maximum. « Channel » selects the input's MIDI channel: • « Automatic » puts the input on the channel of its number when all its notes fit on one channel. An input played on channel 10, which General MIDI reserves for percussion, stays there. An input whose notes occupy several channels keeps them. • « Keep » leaves every event on its original channel. • A number from 1 to 16 puts all the input's notes on that channel. A channel carries one instrument for the whole file, and two notes of the same pitch on one channel close each other: two inputs left on one channel sound with a single instrument. When an input changes channel, the events of its channels that carry none of its notes are removed. « Transpose » moves the input's pitches, in semitones. Notes on channel 10 are not transposed: their number there names a percussion instrument and not a pitch. A note that would leave the MIDI range, 0 to 127, is removed, and the message gives their number. « Mute » takes the input out of the mix. Inputs are aligned in seconds: each keeps its instants as its own tempo gives them. The rendered file carries the tempo, resolution, time signature and key of the first mixed input that has notes. The instants of inputs of another tempo or resolution are converted to it, each rounded to the nearest tick; those of inputs of the same tempo and resolution are kept as they are. The « MIDI » output carries the file, one track per mixed input, in the order of their numbers. A muted input or one without notes has no track. The message gives the number of tracks, the number of notes, the length and the written tempo, then, for each connected input, its channels in the file and its number of notes, or « muted ».
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI 1 | MIDI |  |
+| input | MIDI 2 | MIDI |  |
+| input | MIDI 3 | MIDI |  |
+| input | MIDI 4 | MIDI |  |
+| input | MIDI 5 | MIDI |  |
+| input | MIDI 6 | MIDI |  |
+| input | MIDI 7 | MIDI |  |
+| input | MIDI 8 | MIDI |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Velocity 1 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 1. The result is bounded from 1 to 127. |
+| Channel 1 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 1. Automatic: channel 1 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 1 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 1's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 1 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 1 | checkbox | 0 | 0 / 1 | Takes input 1 out of the mix. |
+| Velocity 2 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 2. The result is bounded from 1 to 127. |
+| Channel 2 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 2. Automatic: channel 2 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 2 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 2's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 2 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 2 | checkbox | 0 | 0 / 1 | Takes input 2 out of the mix. |
+| Velocity 3 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 3. The result is bounded from 1 to 127. |
+| Channel 3 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 3. Automatic: channel 3 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 3 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 3's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 3 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 3 | checkbox | 0 | 0 / 1 | Takes input 3 out of the mix. |
+| Velocity 4 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 4. The result is bounded from 1 to 127. |
+| Channel 4 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 4. Automatic: channel 4 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 4 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 4's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 4 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 4 | checkbox | 0 | 0 / 1 | Takes input 4 out of the mix. |
+| Velocity 5 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 5. The result is bounded from 1 to 127. |
+| Channel 5 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 5. Automatic: channel 5 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 5 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 5's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 5 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 5 | checkbox | 0 | 0 / 1 | Takes input 5 out of the mix. |
+| Velocity 6 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 6. The result is bounded from 1 to 127. |
+| Channel 6 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 6. Automatic: channel 6 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 6 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 6's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 6 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 6 | checkbox | 0 | 0 / 1 | Takes input 6 out of the mix. |
+| Velocity 7 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 7. The result is bounded from 1 to 127. |
+| Channel 7 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 7. Automatic: channel 7 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 7 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 7's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 7 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 7 | checkbox | 0 | 0 / 1 | Takes input 7 out of the mix. |
+| Velocity 8 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 8. The result is bounded from 1 to 127. |
+| Channel 8 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 8. Automatic: channel 8 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 8 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 8's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 8 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 8 | checkbox | 0 | 0 / 1 | Takes input 8 out of the mix. |
 
 #### MIDI Splitter
 

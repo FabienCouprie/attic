@@ -40,6 +40,7 @@ import { fiches as f_export_sfz } from "../export-sfz";
 import { fiches as f_instrument } from "../instrument-graphe";
 import { fiches as f_clavier_sfz } from "../clavier-sfz";
 import { fiches as f_repartiteur_midi } from "../repartiteur-midi";
+import { fiches as f_melangeur_midi } from "../melangeur-midi";
 import { fiches as f_banque_sfz } from "../banque-sfz";
 import { fiches as f_csound_partition } from "../csound-partition";
 import { fiches as f_csound_orchestre } from "../csound-orchestre";
@@ -81,6 +82,7 @@ export const fiches = [
   ...f_instrument,
   ...f_clavier_sfz,
   ...f_repartiteur_midi,
+  ...f_melangeur_midi,
   ...f_banque_sfz,
   ...f_csound_partition,
   ...f_csound_orchestre,
