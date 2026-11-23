@@ -342,7 +342,12 @@ FAMILLE=Écho npm run ecouter
 ```bash
 GRAPHE=un-son-projete-en-microtonal npm run executer
 GRAPHE=exemples/canon-de-proportions.json npm run executer
+GPU=1 GRAPHE=work/un-graphe-avec-coconet.json npm run executer
 ```
+
+  `GPU=1` lance Chromium avec la carte graphique, sous Windows, comme l'épreuve de Coconet : sans elle,
+  le WebGL de Chromium sans tête est logiciel, et un réseau de Magenta y passe dix fois plus de temps.
+  Un run ne dure pas plus de 180 s : un graphe plus long se découpe.
 
   Il rend l'état et le message de **chaque** nœud — pas seulement de ceux qui ont levé, car un nœud
   « Terminé » qui ne fait rien entendre est le symptôme d'un câble oublié — puis écrit dans
