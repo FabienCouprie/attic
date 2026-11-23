@@ -5811,6 +5811,31 @@
     {"nom":"Marge finale","type":"nombre","defaut":0.5,"min":0,"max":30,"unite":"s"}
    ]
   },
+  "partition-guitare": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Notation","type":"texte","sousType":"notation","requis":false}
+   ],
+   "sorties": [
+    {"nom":"SVG","type":"texte"},
+    {"nom":"Fichier SVG","type":"image"}
+   ],
+   "reglages": [
+    {"nom":"Notation","type":"texte","defaut":"X:1\nT:Gamme\nM:4/4\nL:1/4\nK:G\nG, A, B, C | D E F G | [G,B,D]4 |]"},
+    {"nom":"Format","type":"choix","defaut":"auto","choix":["auto","abc","musicxml","mei","humdrum"]},
+    {"nom":"Affichage","type":"choix","defaut":"portee-tablature","choix":["portee-tablature","tablature"]},
+    {"nom":"Accordage","type":"choix","defaut":"standard","choix":["standard","drop-d","dadgad","open-g","open-d","demi-ton","standard-7"]},
+    {"nom":"Capodastre","type":"curseur","defaut":0,"min":0,"max":12},
+    {"nom":"Dernière case","type":"curseur","defaut":20,"min":12,"max":24},
+    {"nom":"Écart","type":"curseur","defaut":4,"min":2,"max":6},
+    {"nom":"Octave","type":"nombre","defaut":0,"min":-2,"max":2},
+    {"nom":"Portée","type":"nombre","defaut":1,"min":1,"max":16},
+    {"nom":"Largeur","type":"curseur","defaut":1800,"min":600,"max":6000},
+    {"nom":"Échelle","type":"curseur","defaut":40,"min":10,"max":200,"unite":"%"},
+    {"nom":"Déroulé","type":"choix","defaut":"non","choix":["non","oui"]},
+    {"nom":"Page","type":"nombre","defaut":1,"min":1,"max":200}
+   ]
+  },
   "partition-verovio": {
    "version": 1,
    "entrees": [
