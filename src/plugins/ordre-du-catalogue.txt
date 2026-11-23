@@ -335,6 +335,7 @@ frontiere-note
 instrument-fin
 clavier-sfz
 repartiteur-midi
+melangeur-midi
 banque-sfz
 partition-csound
 orchestre-csound

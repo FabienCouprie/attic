@@ -44,8 +44,23 @@ const ZONES_DECRITES = [
   { debut: 1.2, duree: 0.5, sonie: -20, brillance: 500, bruit: 0.2, degreMasse: 2, attaqueMs: 20, irregularite: 0.2 },
 ];
 
+/**
+ * Les huit entrées du mélangeur MIDI, chacune deux notes à elle sur les canaux 1 et 2.
+ *
+ * DEUX CANAUX ET NON UN : sur une entrée d'un seul canal, « Automatique » et « Garder » rendent chacun
+ * ce que rend un numéro écrit, et chaque « Canal » aurait porté deux coïncidences ; sur deux canaux,
+ * il ne reste qu'« Automatique » et « Garder », qui gardent tous deux les canaux d'un arrangement.
+ */
+function entreesDuMelangeurMidi(): Entrees[string] {
+  const raison = "le mélangeur ne rend rien sans entrée, et ses huit ports sont facultatifs : chacun reçoit deux notes à lui, sur les canaux 1 et 2, pour que les réglages de chaque entrée aient prise";
+  return Object.fromEntries(Array.from({ length: 8 }, (_, k) => [`MIDI ${k + 1}`, {
+    valeur: () => midiParCanal([...accord([60 + k], 0, 0.5, 0), ...accord([48 + k], 0.5, 1, 1)]), raison,
+  }]));
+}
+
 /** Par fiche, les ports que la passe nourrit d'une entrée propre, et pourquoi. */
 export const ENTREES_DES_CHOIX: Entrees = {
+  "melangeur-midi": entreesDuMelangeurMidi(),
   "correction-pleurage": {
     Audio: {
       valeur: () => sonDe(3, (t) => 0.3 * Math.sin(deuxPi * 50.5 * t - 0.125 * Math.cos(deuxPi * 4 * t)) + 0.2 * Math.sin(deuxPi * 440 * 1.01 * t)),

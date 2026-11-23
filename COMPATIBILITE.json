@@ -4865,6 +4865,56 @@
     {"nom":"Volume","type":"nombre","defaut":100,"min":0,"max":100,"unite":"%"}
    ]
   },
+  "melangeur-midi": {
+   "version": 1,
+   "entrees": [
+    {"nom":"MIDI 1","type":"midi","requis":false},
+    {"nom":"MIDI 2","type":"midi","requis":false},
+    {"nom":"MIDI 3","type":"midi","requis":false},
+    {"nom":"MIDI 4","type":"midi","requis":false},
+    {"nom":"MIDI 5","type":"midi","requis":false},
+    {"nom":"MIDI 6","type":"midi","requis":false},
+    {"nom":"MIDI 7","type":"midi","requis":false},
+    {"nom":"MIDI 8","type":"midi","requis":false}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Vélocité 1","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 1","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 1","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 1","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 2","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 2","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 2","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 2","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 3","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 3","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 3","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 3","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 4","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 4","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 4","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 4","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 5","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 5","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 5","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 5","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 6","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 6","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 6","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 6","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 7","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 7","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 7","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 7","type":"case","defaut":0,"min":0,"max":1},
+    {"nom":"Vélocité 8","type":"curseur","defaut":100,"min":1,"max":200,"unite":"%"},
+    {"nom":"Canal 8","type":"choix","defaut":"auto","choix":["auto","garder","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"]},
+    {"nom":"Transposition 8","type":"curseur","defaut":0,"min":-24,"max":24,"unite":" ½-ton"},
+    {"nom":"Muet 8","type":"case","defaut":0,"min":0,"max":1}
+   ]
+  },
   "melodie-aleatoire": {
    "version": 1,
    "entrees": [],

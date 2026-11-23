@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**521 composants**, dont **99** avec une vue propre et **7** sans lecteur générique.
+**522 composants**, dont **99** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -365,6 +365,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Mélange des fenêtres | `melange-fenetres` | 240 × 118 |
 | Mélangeur | `melangeur` | 240 × 118 |
 | Mélangeur logistique | `melangeur-logistique` | 240 × 140 |
+| Mélangeur MIDI | `melangeur-midi` | 240 × 140 |
 | Mélodie aléatoire | `melodie-aleatoire` | 240 × 140 |
 | Mélodie sur accords | `melodie-sur-accords` | 240 × 162 |
 | Membrane Synth | `membrane-synth` | 240 × 118 |
