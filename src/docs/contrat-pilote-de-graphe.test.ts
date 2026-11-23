@@ -254,7 +254,7 @@ describe("le pilote de graphe", () => {
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
         "paquet-attic-dans-application.spec.ts", "partition-guitare-dans-application.spec.ts",
-        "prise-midi-dans-application.spec.ts",
+        "partition-piano-dans-application.spec.ts", "prise-midi-dans-application.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
         "sorties-extensibles-dans-application.spec.ts", "svg-vers-pdf-dans-application.spec.ts",

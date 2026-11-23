@@ -48,6 +48,8 @@ const AIRS: [string, string][] = [
   ["des accords de do, sol et la mineur", "X:1\nT:Accords\nM:4/4\nL:1/4\nK:C\n[C,E,G,C]2 [G,,B,,D,G,]2 | [A,,E,A,C]4 |]"],
   ["des silences, en la mineur", "X:1\nT:Silences\nM:4/4\nL:1/4\nK:Am\nA z c z | e2 z2 | ^G2 A2 |]"],
   ["si bémol majeur, deux bémols à l'armure", "X:1\nT:SiBemol\nM:4/4\nL:1/8\nK:Bb\nB,CDE FGAB | cBAG FEDC | B,8 |]"],
+  // L'import ABC de Verovio pose accid.ges="f" sur le second si, que l'altération portée laisse bécarre.
+  ["un bécarre porté sous l'armure de si bémol", "X:1\nT:Becarre\nM:4/4\nL:1/8\nK:Bb\nc=B A2 B2 B,2 |]"],
 ];
 
 describe("la tablature joue ce que lit le lecteur ABC", () => {

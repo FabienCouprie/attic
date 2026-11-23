@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **521 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **522 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **521 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 44 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (8) |
+| [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -9704,6 +9704,7 @@ Counts the number of zero crossings of the signal in each analysis frame using M
 | [Guitar Score](#guitar-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into a guitar score, staff and tablature, as SVG. |
 | [MIDI → ABC](#midi--abc) | Writes a MIDI file in ABC notation: a text score, readable and editable by a language model. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
+| [Piano Score](#piano-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into a piano score, treble clef for the right hand and bass clef for the left hand, as SVG. |
 | [VexFlow Chord Chart](#vexflow-chord-chart) | Displays a chord chart from a list of symbols. |
 | [VexFlow Staff](#vexflow-staff) | Displays a musical staff from a text notation. |
 | [VexFlow Tab](#vexflow-tab) | Displays a tablature from a text notation. |
@@ -9825,6 +9826,32 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values, when the input carries none: the tempo of a sequence or of a MIDI file prevails. A wrong tempo does not change the pitches, but gives wrong durations. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature of the score. It decides how bars are cut. A time signature whose unit is shorter than the value asked for in « Quantization » refines the writing grid accordingly, a bar having to fall on a whole number of units. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. No effect under a « Time signature » in sixteenths, from 5/16 to 15/16: the grid there already goes down to the sixteenth, the finest value offered here. |
+
+#### Piano Score
+
+`partition-piano` · Visualization → Notation
+
+*Engraves an ABC, MusicXML, MEI or Humdrum notation into a piano score, treble clef for the right hand and bass clef for the left hand, as SVG.*
+
+This node engraves a piano score from a notation text: two staves joined by a brace, treble clef for the right hand and bass clef for the left hand. It returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML; MEI; and Humdrum. The format is recognised from the shape of the text; the « Format » setting imposes it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element. An ABC score is read note by note: a zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, as do several voices (V:), an alternative ending, a key change within the tune, a tie inside a chord and a tuplet that its number alone would make read wrongly. The message names each fault and its line. Each note sounds at the pitch the text gives it: its written accidental, otherwise the one that holds until the bar line, otherwise the key signature. A transposing instrument, a clarinet in B♭, is read at concert pitch. A tied note keeps the pitch of the note where the tie starts. A pitch between two keys is refused, and the message names it with its bar. All the staves of the text are combined, then split between the two hands. Each voice keeps its layer, hence its stems: in a chorale, soprano and alto go to the right hand, tenor and bass to the left hand. « Split » gives the rule. - « By hand » splits each instant between the two hands, the lowest notes on the left. Each hand covers « Stretch » semitones and holds at most five notes. The split kept is the one that, over the whole piece, asks the least: first the fewest notes and semitones beyond what the hands hold; then the least hand movement, the fewest notes far from their register, above the split point for the right hand and below it for the left hand, and the fewest changes of hand within a line, a run of single notes in one voice. A line moving by small intervals thus stays in its hand, even when it crosses the split point; a leap wider than the stretch may change hands. The notes of a chord each go where the hands hold them. A held or tied note keeps the hand that struck it. - « Fixed point » gives the right hand every note from the split point up, and the left hand every lower note. A chord no hand can hold, more than five notes in one hand or a hand wider than the stretch, is engraved with the best split, and the message counts these chords and names the first bar. A note outside the keyboard, below A0 or above C8, is engraved, and the message counts it likewise. The clefs stay treble and bass from start to end, and each note is written at its real pitch: a note far from the staff takes ledger lines. A staff silent for a whole bar carries a whole-bar rest; a hand silent while the other plays a note carries a rest. The written accidentals are those that reading each staff calls for: the key signature, then the accidental that holds until the bar line on the same staff and at the same octave. A grace note goes to the hand of the note it ornaments. A slur, a dynamic or a fermata follows the staff of its note; a tempo and a chord symbol are engraved above the right hand. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed. A long piece spans several pages: « Page » says which one to render, and the message gives their number. An ABC text carrying several tunes, one per X: field, engraves them all, each under its title and starting on a new page. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Notation | text (notation) |  |
+| output | SVG | text |  |
+| output | SVG file | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Notation | text | `X:1 T:Menuet M:3/4 L:1/4 K:G [G,,B,,D,] d c \| [C,E,G,] B …` |  | The notation to engrave, when no text is connected to the input. |
+| Format | choice | Auto | Auto / ABC / MusicXML / MEI / Humdrum | « Auto » recognises the format from the shape of the text. The others impose it. |
+| Split | choice | By hand | By hand / Fixed point | « By hand » splits each instant where each hand holds its notes and moves least, over the whole piece. « Fixed point » gives the right hand every note from the split point up, and the left hand every lower note. |
+| Split point | slider | 60 | 21 – 108, step 1 | The note, as a MIDI number, that separates the two hands: 60 is C4, middle C. With a fixed point, it is the lowest note of the right hand; by hand, it is the border between the two registers. |
+| Stretch | slider | 12 semitones | 7 – 17 semitones, step 1 | The number of semitones a hand covers, from its lowest note to its highest: 12 is an octave. By hand, a hand moves only when a note falls outside this span; a wider chord is engraved and reported. |
+| Width | slider | 1800 | 600 – 6000, step 50 | Page width, in tenths of a millimetre: 2100 is an A4 sheet. Wider, more bars per line. No effect in unrolled mode. |
+| Scale | slider | 40 % | 10 – 200 %, step 5 | Size of the engraving. Small, the score fits whole in the node; large, it can be read. |
+| Unrolled | choice | No | No / Yes | The whole piece on a single system, as long as needed, instead of pages. |
+| Page | number | 1 | 1 – 200, step 1 | The page to render. Beyond the last one, the last one is rendered. |
 
 #### VexFlow Chord Chart
 
