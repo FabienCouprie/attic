@@ -546,18 +546,6 @@
     "entreeRequiseAutre": false
   },
   {
-    "id": "vexflow-midi",
-    "vue": "VueVexFlow",
-    "entreeAudio": false,
-    "entreeRequiseAutre": true
-  },
-  {
-    "id": "vexflow-partition",
-    "vue": "VueVexFlow",
-    "entreeAudio": false,
-    "entreeRequiseAutre": false
-  },
-  {
     "id": "vexflow-portee",
     "vue": "VueVexFlow",
     "entreeAudio": false,

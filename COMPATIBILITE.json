@@ -7977,6 +7977,22 @@
     {"nom":"Modulation max","type":"curseur","defaut":50,"min":1,"max":50,"unite":"×"}
    ]
   },
+  "svg-vers-pdf": {
+   "version": 1,
+   "entrees": [
+    {"nom":"SVG","type":"image"},
+    {"nom":"Titre","type":"texte","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Chemin","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Titre","type":"texte","defaut":""},
+    {"nom":"Nom","type":"texte","defaut":"partition.pdf"},
+    {"nom":"Format","type":"choix","defaut":"a4","choix":["a4","lettre"]},
+    {"nom":"Orientation","type":"choix","defaut":"portrait","choix":["portrait","paysage"]}
+   ]
+  },
   "synthese-features": {
    "version": 1,
    "entrees": [
@@ -8578,41 +8594,6 @@
     {"nom":"Hauteur","type":"curseur","defaut":200,"min":100,"max":600,"unite":"px"}
    ]
   },
-  "vexflow-midi": {
-   "version": 1,
-   "entrees": [
-    {"nom":"MIDI","type":"midi"}
-   ],
-   "sorties": [
-    {"nom":"SVG","type":"image"}
-   ],
-   "reglages": [
-    {"nom":"Tempo","type":"nombre","defaut":0,"min":0,"max":300,"unite":"BPM"},
-    {"nom":"Canal","type":"nombre","defaut":-1,"min":-1,"max":15,"unite":"-1 = tous"},
-    {"nom":"Quantification","type":"choix","defaut":"1/16","choix":["1/4","1/8","1/16","1/32","1/1","1/2"]},
-    {"nom":"Clé","type":"choix","defaut":"treble","choix":["treble","bass","alto","tenor"]},
-    {"nom":"Largeur","type":"curseur","defaut":800,"min":200,"max":2000,"unite":"px"},
-    {"nom":"Hauteur","type":"curseur","defaut":200,"min":100,"max":800,"unite":"px"}
-   ]
-  },
-  "vexflow-partition": {
-   "version": 1,
-   "entrees": [
-    {"nom":"Progression","type":"texte","requis":false}
-   ],
-   "sorties": [
-    {"nom":"SVG","type":"texte"},
-    {"nom":"Fichier SVG","type":"image"}
-   ],
-   "reglages": [
-    {"nom":"Progression","type":"texte","defaut":"I V vi IV"},
-    {"nom":"Tonalité","type":"texte","defaut":"C"},
-    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
-    {"nom":"Clé","type":"choix","defaut":"treble","choix":["treble","bass","alto","tenor"]},
-    {"nom":"Largeur","type":"curseur","defaut":500,"min":200,"max":1000,"unite":"px"},
-    {"nom":"Hauteur","type":"curseur","defaut":160,"min":100,"max":400,"unite":"px"}
-   ]
-  },
   "vexflow-portee": {
    "version": 1,
    "entrees": [
@@ -8991,5 +8972,8 @@
    ]
   }
  },
- "retires": {}
+ "retires": {
+  "vexflow-midi": {"version":2,"alias":null},
+  "vexflow-partition": {"version":2,"alias":null}
+ }
 }

@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **513 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **512 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,8 +11,8 @@ Attic ships **513 components** in **7 categories** and **62 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
-| [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
+| [Visualization](#visualization) | 43 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (7) |
+| [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Other & lab](#other--lab) | 89 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
@@ -9702,10 +9702,8 @@ Counts the number of zero crossings of the signal in each analysis frame using M
 | [ABC Constraints](#abc-constraints) | Checks that an edit of an ABC score kept what had to stay fixed: bars, meter, key, melody, rhythm, chords. |
 | [Engraved Score](#engraved-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules. |
 | [MIDI → ABC](#midi--abc) | Writes a MIDI file in ABC notation: a text score, readable and editable by a language model. |
-| [MIDI Score](#midi-score) | Displays a musical staff from a MIDI file. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [VexFlow Chord Chart](#vexflow-chord-chart) | Displays a chord chart from a list of symbols. |
-| [VexFlow Score](#vexflow-score) | Displays a simple score from a chord progression. |
 | [VexFlow Staff](#vexflow-staff) | Displays a musical staff from a text notation. |
 | [VexFlow Tab](#vexflow-tab) | Displays a tablature from a text notation. |
 
@@ -9774,28 +9772,6 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 | Overlaps | choice | Separate voices (exact) | Separate voices (exact) / Shorten into one line | What to do with a note still sounding when the next one starts. Separate voices: it goes into an extra voice, and the score read back gives exactly the same notes. Shorten: it is cut at the next attack, so a legato melody stays on a single line, more readable, and easier for a language model to edit, but the length of the cut notes is lost. Chords are never cut. The Groove Box melody, whose same-pitch notes overlap, comes out on two voices in the first mode and one in the second. |
 | Title | text | — |  | Title written in the T: field. Empty: the file's track name, if any. |
 
-#### MIDI Score
-
-`vexflow-midi` · Visualization → Notation
-
-*Displays a musical staff from a MIDI file.*
-
-Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo, MIDI channel (-1 = all), rhythmic quantization and clef. At 0, the tempo is the file's: durations are read in beats, tempo changes included, and a quarter note stays a quarter note when the tempo slows down. The staff takes the file's time signature, 4/4 if it declares none, and is cut into bars. Each note is placed at its own onset and keeps its length, written in dotted and tied values; a note that overlaps the next onset stops there, the staff having a single voice, and notes starting together form a chord, which lasts as long as the shortest. Each accidental is drawn when it changes what is in force in the bar, naturals included. Under « all », channel 9, the drums, is not engraved, and the message says so; choosing it by its number engraves it. The SVG output can be saved with the « SVG Export » node.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | MIDI | MIDI | required |
-| output | SVG | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | At 0, durations are read in the file's beats, tempo changes included: a quarter note stays a quarter note when the tempo slows down. Another value converts the played seconds at that tempo, for a file played without a meter. |
-| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved. |
-| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it. |
-| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
-| Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
-| Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |
-
 #### MusicXML
 
 `musicxml` · Visualization → Notation
@@ -9841,29 +9817,6 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 | Measures per line | number | 4 | 1 – 8, step 1 | Number of measures per line. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 600 px, step 10 | SVG height. |
-
-#### VexFlow Score
-
-`vexflow-partition` · Visualization → Notation
-
-*Displays a simple score from a chord progression.*
-
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named. Chords are displayed as block chords on the staff, a quarter note each, in root position: their notes stack up from the root, set at octave 4, and a chord with a written bass, « C/E », starts from its bass. They go in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. Symbols are read in their usual spellings (« Bø7 », « CΔ7 », « B♭ »); « N.C. » is a quarter rest. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Progression | text |  |
-| output | SVG | text |  |
-| output | SVG file | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Progression | text | `I V vi IV` |  | Roman numeral progression or chord symbols (e.g. C Am F G). |
-| Key | text | `C` |  | Progression key. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ». |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone. |
-| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
-| Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
-| Height | number | 160 px | 100 – 400 px, step 10 | SVG height. |
 
 #### VexFlow Staff
 
@@ -9917,6 +9870,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 | [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [SFZ Export](#sfz-export) | Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler. |
 | [SVG Export](#svg-export) | Saves an SVG file to disk and returns its path. |
+| [SVG to PDF](#svg-to-pdf) | Prints an SVG into a PDF file, under a title, and returns its path. |
 | [Video Export](#video-export) | Writes a film to disk, in the working directory, and returns its path. |
 
 #### Image Export
@@ -9992,6 +9946,27 @@ Saves an SVG file to disk and returns its path. Connect an 'Image' output produc
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Name | text | `export.svg` |  | Output SVG filename (in the working directory). The extension is forced to .svg. |
+
+#### SVG to PDF
+
+`svg-vers-pdf` · Outputs → Export
+
+*Prints an SVG into a PDF file, under a title, and returns its path.*
+
+This node prints an SVG image into a one-page PDF file, under a title, and writes it to the working directory. Requires Electron. The « SVG » input receives the image to print, a page of a score for instance. Its format is read from its bytes: an image that is not an SVG is refused, and the message says what it is. The « Title » input receives the text written at the top of the page, centred and in bold, on as many lines as it needs. With no text connected, the « Title » setting gives it; empty, the page has no title. This title is also the document's own, in its properties; with no title, it is the file name. The image takes the width of the page, between 15 mm margins, and keeps its proportions. Too tall for the room left under the title, it is scaled down until it fits: the PDF always has a single page. The drawing stays vector, and the text of the image stays text in the PDF. The « Format » setting chooses the page, A4 or US Letter, and the « Orientation » setting its direction, Portrait or Landscape. The « Name » setting gives the file name, whose extension is forced to .pdf. A file of the same name is replaced. The « Path » output gives the path of the written file.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | SVG | image |  |
+| input | Title | text |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Title | text | — |  | Title written at the top of the page, when no text is connected to the « Title » input. Empty, the page has no title. |
+| Name | text | `score.pdf` |  | Name of the file written to the working directory. The extension is forced to .pdf. |
+| Format | choice | A4 | A4 / US Letter | Page format: A4, 210 × 297 mm, or US Letter, 215.9 × 279.4 mm. |
+| Orientation | choice | Portrait | Portrait / Landscape | Page direction: upright, or sideways. |
 
 #### Video Export
 

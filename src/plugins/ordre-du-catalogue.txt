@@ -411,8 +411,6 @@ tonal-analyse
 vexflow-portee
 vexflow-tab
 vexflow-grille
-vexflow-partition
-vexflow-midi
 soundtouch-tempo
 soundtouch-tonalite
 soundtouch-rate
@@ -445,6 +443,7 @@ pure-data
 visualisation-songsee
 export-image
 export-svg
+svg-vers-pdf
 rendu-image
 pixeltone
 palette-harmonique
