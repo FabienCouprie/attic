@@ -7,9 +7,9 @@ import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romain
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
   barreDeDuree, easyScoreDe, jetonsDe, lireNotationVexflow, longueurDe, mettreEnMesures,
-  type ElementGrave, type FauteGravure, type NoteTab,
+  type ElementGrave, type Evenement, type FauteGravure, type NoteTab,
 } from "../audio/notation-vexflow";
-import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
+import { BarNote, GhostNote, Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 
 /**
  * Accords d'une progression écrite pour une partition.
@@ -138,8 +138,13 @@ export function graverNotation(notation: string, clef: string, largeur: number, 
 
 /**
  * Grave une tablature lue, sur autant de lignes que l'instrument a de cordes : mesuré avant, le
- * ukulélé et la basse se dessinaient sur six. La voix compte exactement ses temps : sous quatre,
- * VexFlow levait « IncompleteVoice », et l'erreur brute arrivait au message.
+ * ukulélé et la basse se dessinaient sur six.
+ *
+ * ELLE SE COUPE EN MESURES DE 4/4, PAR LA MÊME COUPE QUE LA PORTÉE, décision de Fabien du 2026-11-22,
+ * « Cut into bars » : neuf noires se gravaient sans une barre. Une note qui passe la barre se coupe en
+ * deux, la seconde frette entre parenthèses, comme une tablature écrit une note tenue ; la dernière
+ * mesure se complète de temps muets. Chaque note porte son rang dans l'octave de sa hauteur fictive,
+ * ce qui la retrouve après la coupe.
  */
 export function genererTab(notes: readonly NoteTab[], titre: string, cordes: number, largeur: number, hauteur: number): string {
   if (notes.length === 0) return "";
@@ -148,10 +153,27 @@ export function genererTab(notes: readonly NoteTab[], titre: string, cordes: num
   const stave = new TabStave(10, 20, largeur - 20, { num_lines: cordes });
   stave.setText(titre, 2);
   stave.setContext(ctx).draw();
-  const tabNotes = notes.map((n) => new TabNote({ positions: [{ str: n.corde, fret: n.frette }], duration: n.duree, dots: n.points }));
-  const temps = notes.reduce((s, n) => s + longueurDe(n.duree, n.points), 0);
-  const voice = new Voice({ num_beats: temps, beat_value: 4 });
-  voice.addTickables(tabNotes);
+  let t = 0;
+  const evenements: Evenement[] = notes.map((n, rang) => {
+    const longueur = longueurDe(n.duree, n.points);
+    const e = { debut: t, longueur, silence: false, hauteurs: [{ lettre: "C", alteration: 0, octave: rang }], ecrite: { duree: n.duree, points: n.points } };
+    t += longueur;
+    return e;
+  });
+  const mesures = mettreEnMesures(evenements);
+  const tickables: (TabNote | BarNote | GhostNote)[] = [];
+  let suite = false;
+  mesures.forEach((mesure, k) => {
+    if (k > 0) tickables.push(new BarNote());
+    for (const e of mesure) {
+      const n = notes[e.hauteurs[0].octave];
+      tickables.push(e.silence ? new GhostNote({ duration: e.duree, dots: e.points })
+        : new TabNote({ positions: [{ str: n.corde, fret: suite ? `(${n.frette})` : n.frette }], duration: e.duree, dots: e.points }));
+      suite = e.lie;
+    }
+  });
+  const voice = new Voice({ num_beats: mesures.length * 4, beat_value: 4 });
+  voice.addTickables(tickables);
   new Formatter().joinVoices([voice]).format([voice], largeur - 40);
   voice.draw(ctx, stave);
   return extraireSvgRendu(div);
@@ -207,4 +229,3 @@ export function accordsDeProgression(progression: string, tonic: string, gamme: 
   // par la fonction partagée.
   return romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
 }
-

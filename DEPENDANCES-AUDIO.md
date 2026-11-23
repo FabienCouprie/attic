@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 98 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 265 · transposable tel quel
+- **récipient** : 99 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 268 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -115,6 +115,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | croisement-registre.ts | pur | — |
 | croisement-reglages.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
+| csound-formules-en.ts | pur | — |
 | csound-formules.ts | pur | — |
 | csound-opcodes.ts | pur | — |
 | csound-orchestre.ts | pur | — |
@@ -342,6 +343,8 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | sequence-percussion.ts | recipient | AudioBuffer |
 | sequence.ts | pur | — |
 | series-intervalles.ts | pur | — |
+| sfz-entete.ts | pur | — |
+| sfz-noms.ts | recipient | AudioBuffer |
 | sfz.ts | recipient | AudioBuffer |
 | signatures.ts | pur | — |
 | silences.ts | pur | — |
@@ -406,5 +409,6 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | vosim.ts | pur | — |
 | vosk-travailleur.ts | pur | — |
 | vumetre.ts | recipient | AudioBuffer |
+| wav-racine.ts | pur | — |
 | wishart.ts | recipient | AudioBuffer |
 | zones-vers-midi.ts | pur | — |

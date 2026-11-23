@@ -240,6 +240,9 @@ export function ClavierSfz({ id, data }: VueProps) {
     source.start();
     return {
       arreter: () => {
+        // `one_shot` ignore le relachement de la touche : la source s'eteint seule, au bout de
+        // son echantillon, comme au rendu.
+        if (p.unCoup) return;
         // Un relachement en douceur : couper la source net laisserait un clic, l'onde etant
         // arretee en pleine periode. Le temps est celui du parametre du noeud.
         const relachement = Math.max(0.005, Number((data.parametres as any)?.["Relâchement"] ?? 150) / 1000);
