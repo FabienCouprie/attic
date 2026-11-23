@@ -24,6 +24,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { spawnSync } = require("child_process");
 
 const DEST = path.join(__dirname, "..", "public", "magenta");
 
@@ -82,7 +83,34 @@ const EMPREINTES = {
   },
 };
 
+/**
+ * DDSP ET SPICE VIENNENT DE LA RELEASE `assets`, et non de Google, depuis le 2026-11-23.
+ *
+ * « DDSP Tone Transfer » les tirait a l'execution, de `storage.googleapis.com` et de `tfhub.dev`.
+ * Ils sont publies en deux archives, `magenta-ddsp` et `magenta-spice`, dont le manifeste porte
+ * chaque fichier et son empreinte : c'est `modeles.cjs --telecharger` qui les prend, les verifie et
+ * les deplie, le meme tuyau que l'application. Les cinq points de controle ci-dessus viennent
+ * encore de Google, comme avant.
+ */
+const DE_LA_RELEASE = ["magenta-ddsp", "magenta-spice"];
+
 const sha256 = (octets) => crypto.createHash("sha256").update(octets).digest("hex");
+
+/** Les paquets de la release dont un fichier manque ou differe du manifeste. */
+function paquetsAPrendre() {
+  const { modeles } = JSON.parse(fs.readFileSync(path.join(__dirname, "modeles-manifest.json"), "utf8"));
+  const conforme = (f) => {
+    const chemin = path.join(__dirname, "..", "public", f.chemin);
+    return fs.existsSync(chemin) && sha256(fs.readFileSync(chemin)) === f.sha256;
+  };
+  return modeles.filter((m) => DE_LA_RELEASE.includes(m.id) && !m.fichiers.every(conforme)).map((m) => m.id);
+}
+
+function prendreALaRelease(ids) {
+  console.log(`[magenta] ${ids.join(", ")} : pris sur la release assets`);
+  const r = spawnSync(process.execPath, [path.join(__dirname, "modeles.cjs"), "--telecharger", ...ids], { stdio: "inherit" });
+  if (r.status !== 0) throw new Error(`modeles.cjs --telecharger a echoue (code ${r.status})`);
+}
 
 /** Le fichier est-il deja la ET conforme ? */
 function dejaBon(modele, relatif) {
@@ -124,6 +152,9 @@ async function main() {
   }
   if (pris === 0) console.log("[magenta] les cinq points de controle sont presents et conformes.");
   else console.log(`[magenta] ${pris} fichier(s), ${(octets / 1e6).toFixed(2)} Mo, empreintes verifiees.`);
+  const aPrendre = paquetsAPrendre();
+  if (aPrendre.length > 0) prendreALaRelease(aPrendre);
+  else console.log("[magenta] DDSP et SPICE sont presents et conformes.");
 }
 
 // Meme decoupage que download-gtcrn.cjs, pour la meme raison : depuis le postinstall
@@ -134,7 +165,7 @@ const tolerant = process.argv.includes("--tolerant");
 
 main().catch((e) => {
   console.error(`[magenta] ECHEC : ${e.message}`);
-  console.error("[magenta] Les sept noeuds Magenta ne fonctionneront pas.");
+  console.error("[magenta] Les sept noeuds Magenta, ou « DDSP Tone Transfer », ne fonctionneront pas.");
   if (tolerant) {
     console.error("[magenta] Installation poursuivie. Relancez : npm run download:magenta");
     return;

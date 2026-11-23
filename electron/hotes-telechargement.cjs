@@ -24,8 +24,9 @@
 /**
  * Les hotes servis, repris MOT POUR MOT du renderer pour ne rien casser.
  *
- * Seul `storage.googleapis.com` sert aujourd'hui — les points de controle DDSP. Les autres
- * viennent du chargement TensorFlow Hub, qui redirige. `kagglesdsdata` etait une sous-chaine
+ * Les points de controle DDSP et SPICE n'y passent plus depuis le 2026-11-23 : ils sont livres,
+ * sous `public/magenta/`. Ces hotes ne servent plus qu'a l'adresse qu'on ecrit dans « URL modele »
+ * de DDSP, un point de controle publie par Magenta ou sur TensorFlow Hub, qui redirige. `kagglesdsdata` etait une sous-chaine
  * cherchee n'importe ou dans l'adresse ; ici c'est un NOM D'HOTE, et si celui de Kaggle differe,
  * le refus le nommera — ce qui est la bonne facon de l'apprendre.
  */

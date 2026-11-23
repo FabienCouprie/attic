@@ -149,6 +149,24 @@ The reference citation, as the project asks it to be given:
 See also Richard Boulanger (ed.), *The Csound Book* (MIT Press, 2000), the standard reference for
 the language.
 
+### DDSP and SPICE checkpoints
+
+« DDSP Tone Transfer » used to load these at run time, from `storage.googleapis.com` and
+`tfhub.dev`. Since 2026-11-23 they ship with the application, under `public/magenta/`, mirrored on
+the `assets` release as `magenta-ddsp.zip` and `magenta-spice.zip`, with every file's SHA-256 in
+`scripts/modeles-manifest.json`.
+
+| Folder | License | Copyright |
+|---|---|---|
+| `magenta/ddsp/` | **Not written** (see note below) | Google Magenta — DDSP (Jesse Engel, Lamtharn Hantrakul, Chenjie Gu, Adam Roberts, « DDSP: Differentiable Digital Signal Processing », ICLR 2020), checkpoints `ddsp/violin`, `ddsp/flute`, `ddsp/tenor_saxophone` and `ddsp/trumpet` from `storage.googleapis.com/magentadata/js/checkpoints`, 17,077,958 bytes |
+| `magenta/spice/` | Apache-2.0 | Google — SPICE (Beat Gfeller, Christian Frank, Dominik Roblek, Matt Sharifi, Marco Tagliasacchi, Mihajlo Velimirović, « SPICE: Self-supervised Pitch Estimation », 2019), TensorFlow.js model `google/spice`, version 2, 8,763,115 bytes. The licence is the one its Kaggle model page declares |
+
+**About `magenta/ddsp/`.** No licence is written for these four checkpoints. Their folders hold the
+weights, `model.json` and `settings.json`, with no licence file; the code that loads them,
+`@magenta/music`, is Apache-2.0. On 2026-11-23 the owner of Attic decided to redistribute them from
+the `assets` release, as for Coconet; this absence is recorded here so that it is not mistaken for
+a cleared licence.
+
 ## Dependencies (npm)
 
 | Package | License | Copyright |

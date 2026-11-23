@@ -367,6 +367,34 @@ function choisirBouton(
   }
 }
 
+/**
+ * La touche tirée parmi les quatre-vingt-huit que le modèle propose, à la température voulue.
+ *
+ * POURQUOI PAS `model.next`. Piano Genie y tire par `sampleLogits` de `@magenta/music`, qui a deux
+ * défauts, lus dans sa source (1.23.1) : il LÈVE au-dessus d'une température de 1, « Invalid
+ * temperature specified », quand le réglage va jusqu'à 1,5 ; et il passe la graine à
+ * `tf.multinomial`, qui recrée son générateur à chaque appel. Chaque pas tirait donc le MÊME nombre,
+ * et chaque note tombait au même rang de sa distribution. Le tirage se fait ici, un nombre neuf par
+ * pas, pris au générateur de la graine.
+ *
+ * LA TEMPÉRATURE DIVISE LES LOGITS : sous 1 la distribution se resserre, au-dessus elle s'aplatit, et
+ * à zéro la touche la plus probable est rendue.
+ */
+export function tirerTouche(logits: ArrayLike<number>, temperature: number, hasard: () => number): number {
+  let meilleure = 0;
+  for (let i = 1; i < logits.length; i++) if (logits[i] > logits[meilleure]) meilleure = i;
+  if (!(temperature > 0)) return meilleure;
+  // Le plus grand logit est retranché avant l'exponentielle, qui déborderait sans cela.
+  const haut = logits[meilleure] / temperature;
+  const poids = Array.from(logits, (l) => Math.exp(l / temperature - haut));
+  let reste = hasard() * poids.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < poids.length; i++) {
+    reste -= poids[i];
+    if (reste < 0) return i;
+  }
+  return poids.length - 1;
+}
+
 export async function improviser(duree: number, tempo: number, temperature: number, mode: string, seed: number): Promise<File> {
   const model = await getModel("improvisation");
   const stepDuration = 60 / tempo / 4; // double-croches
@@ -374,16 +402,15 @@ export async function improviser(duree: number, tempo: number, temperature: numb
   const notes: any[] = [];
   let t = 0;
   let prevButton = 0;
-  const seedVal = seed > 0 ? seed : undefined;
-  // La graine pilotait le modele Magenta mais PAS le choix des boutons, qui
-  // tirait sur Math.random : deux executions a graine egale ne donnaient donc
-  // pas la meme improvisation. Les deux sources partagent desormais la graine.
+  // UN SEUL GÉNÉRATEUR, celui de la graine, pour les boutons et pour les touches : deux exécutions à
+  // graine égale rendent la même improvisation, et chaque pas tire un nombre neuf (`tirerTouche`).
   const hasard = seed > 0 ? creerAleatoire(seed) : Math.random;
+  const tirage = (logits: tf.Tensor) => tf.scalar(tirerTouche(logits.dataSync(), temperature, hasard), "int32");
   model.resetState();
   for (let i = 0; i < steps; i++) {
     const button = choisirBouton(i, mode, prevButton, hasard);
     (model as any).overrideDeltaTime(stepDuration);
-    const pitch = model.next(button, temperature, seedVal);
+    const pitch = model.nextWithCustomSamplingFunction(button, tirage);
     const note = Math.max(0, Math.min(127, pitch + 21));
     const noteDuration = stepDuration * 0.9;
     notes.push({ pitch: note, velocity: 100, startTime: t, endTime: t + noteDuration, isDrum: false });
