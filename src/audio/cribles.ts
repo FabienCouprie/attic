@@ -56,35 +56,71 @@ export function periodeCrible(classes: Classe[]): number {
   }, 1);
 }
 
+/**
+ * Une expression de crible : des classes combinées par réunion, intersection,
+ * différence symétrique et complément, la notation de Christopher Ariza (« The
+ * Xenakis Sieve as Object », Computer Music Journal, 2005).
+ *
+ * `ouex` est la différence symétrique, « ^ » chez Ariza et dans `music21.sieve` :
+ * un degré y est retenu quand un nombre impair de ses termes le retient, ce qui,
+ * pour deux termes, veut dire l'un ou l'autre et pas les deux.
+ */
+export type ExpressionCrible =
+  | { classe: Classe }
+  | { non: ExpressionCrible }
+  | { et: ExpressionCrible[] }
+  | { ouex: ExpressionCrible[] }
+  | { ou: ExpressionCrible[] };
+
+/** Les termes d'une expression composée. */
+const termesDe = (e: { et: ExpressionCrible[] } | { ouex: ExpressionCrible[] } | { ou: ExpressionCrible[] }) =>
+  "et" in e ? e.et : "ouex" in e ? e.ouex : e.ou;
+
+/**
+ * Les classes combinées par une seule opération. La différence garde ce que la
+ * PREMIÈRE classe retient et qu'aucune autre ne reprend : sert à creuser des trous
+ * dans une grille régulière, ce qu'une réunion ne sait pas faire. Elle s'écrit
+ * donc comme l'intersection de la première et du complément des autres.
+ */
+export function combinerClasses(classes: Classe[], operation: OperationCrible): ExpressionCrible {
+  const feuilles = classes.map((classe) => ({ classe }));
+  if (feuilles.length === 1) return feuilles[0];
+  if (operation === "intersection") return { et: feuilles };
+  if (operation === "difference") return { et: [feuilles[0], ...feuilles.slice(1).map((f) => ({ non: f }))] };
+  return { ou: feuilles };
+}
+
+/** Les classes d'une expression, dans l'ordre où elle les écrit. */
+export function classesDe(e: ExpressionCrible): Classe[] {
+  if ("classe" in e) return [e.classe];
+  if ("non" in e) return classesDe(e.non);
+  return termesDe(e).flatMap(classesDe);
+}
+
+const appartient = (n: number, c: Classe) => {
+  const m = Math.max(1, Math.round(c.module));
+  return ((n % m) + m) % m === ((Math.round(c.residu) % m) + m) % m;
+};
+
+function retient(e: ExpressionCrible, n: number): boolean {
+  if ("classe" in e) return appartient(n, e.classe);
+  // Le complément se prend sur les degrés examinés, de 0 à l'étendue exclue.
+  if ("non" in e) return !retient(e.non, n);
+  if ("ouex" in e) return e.ouex.filter((f) => retient(f, n)).length % 2 === 1;
+  return "et" in e ? e.et.every((f) => retient(f, n)) : e.ou.some((f) => retient(f, n));
+}
+
+/** L'expression appliquée : la liste des entiers retenus, de 0 à `etendue` exclu. */
+export function retenirCrible(e: ExpressionCrible, etendue: number): number[] {
+  const retenus: number[] = [];
+  for (let n = 0; n < Math.max(1, Math.round(etendue)); n++) if (retient(e, n)) retenus.push(n);
+  return retenus;
+}
+
 /** Le crible appliqué : la liste des entiers retenus. */
 export function appliquerCrible(options: OptionsCrible): number[] {
-  const etendue = Math.max(1, Math.round(options.etendue));
-  const classes = options.classes
-    .map((c) => ({ module: Math.max(1, Math.round(c.module)), residu: Math.round(c.residu) }))
-    .filter((c) => c.module >= 1);
-  if (!classes.length) return [];
-
-  const appartient = (n: number, c: Classe) => ((n % c.module) + c.module) % c.module === ((c.residu % c.module) + c.module) % c.module;
-
-  const retenus: number[] = [];
-  for (let n = 0; n < etendue; n++) {
-    let garde: boolean;
-    switch (options.operation) {
-      case "intersection":
-        garde = classes.every((c) => appartient(n, c));
-        break;
-      case "difference":
-        // Ce que retient la PREMIÈRE classe et qu'aucune autre ne reprend : sert
-        // à creuser des trous dans une grille régulière, ce qu'une réunion ne
-        // sait pas faire.
-        garde = appartient(n, classes[0]) && !classes.slice(1).some((c) => appartient(n, c));
-        break;
-      default:
-        garde = classes.some((c) => appartient(n, c));
-    }
-    if (garde) retenus.push(n);
-  }
-  return retenus;
+  if (!options.classes.length) return [];
+  return retenirCrible(combinerClasses(options.classes, options.operation), options.etendue);
 }
 
 /**
@@ -129,31 +165,121 @@ export function criblesVersRythme(retenus: number[], dureeSubdivisionSec: number
 }
 
 /**
- * Analyse une expression de crible : une suite de classes « module@résidu »
- * séparées par des espaces, des virgules ou le symbole d'union.
- *
- * Xenakis notait ses cribles ainsi, et c'est la forme la plus courte pour en
- * saisir un : « 3@0 4@1 5@2 » se lit d'un coup d'œil là où trois champs
- * numériques par classe encombreraient l'inspecteur.
- *
- * Les fragments invalides sont IGNORÉS plutôt que de faire échouer l'analyse :
- * on saisit ces expressions à la main, souvent en tâtonnant, et une frappe
- * hésitante ne doit pas vider le crible entier.
+ * Pourquoi un crible ne se lit pas : le fragment, l'opérateur ou la parenthèse en
+ * cause, tel qu'il est écrit.
+ *   - `fragment` : ce qui n'est pas une classe « module@résidu », au module d'au moins 1 ;
+ *   - `classe_manquante` : un opérateur, ou une parenthèse, sans la classe qu'il attend ;
+ *   - `operateur_manquant` : deux termes qui se suivent sans « | », « ^ » ni « & » ;
+ *   - `parenthese` : une parenthèse sans sa paire.
  */
-export function parserCrible(expression: string): Classe[] {
-  const classes: Classe[] = [];
-  for (const morceau of String(expression).split(/[\s,;∪|]+/)) {
-    if (!morceau) continue;
-    const m = morceau.match(/^(\d+)@(-?\d+)$/);
-    if (!m) continue;
-    const module = parseInt(m[1], 10);
-    if (!Number.isFinite(module) || module < 1) continue;
-    classes.push({ module, residu: parseInt(m[2], 10) });
+export type RefusCrible = { genre: "vide" | "fragment" | "classe_manquante" | "operateur_manquant" | "parenthese"; texte: string };
+
+type Jeton = { genre: "classe"; classe: Classe; texte: string } | { genre: "ou" | "ouex" | "et" | "non" | "ouvre" | "ferme"; texte: string };
+
+/** « △ » écrit la différence symétrique dans le message, comme « ∪ » et « ∩ » les deux autres. */
+const SIGNES: Record<string, Exclude<Jeton["genre"], "classe">> = {
+  "|": "ou", "∪": "ou", "^": "ouex", "△": "ouex", "&": "et", "∩": "et", "-": "non", "−": "non", "(": "ouvre", ")": "ferme",
+};
+/** Ce qui termine un fragment. Le tiret n'en est pas : il appartient au résidu de « 5@-2 ». */
+const BORNE = /[\s,;|&^△()∪∩]/;
+
+function decouper(texte: string): Jeton[] | RefusCrible {
+  const jetons: Jeton[] = [];
+  for (let i = 0; i < texte.length;) {
+    const c = texte[i];
+    if (/[\s,;]/.test(c)) { i++; continue; }
+    if (SIGNES[c]) { jetons.push({ genre: SIGNES[c], texte: c }); i++; continue; }
+    let j = i;
+    while (j < texte.length && !BORNE.test(texte[j])) j++;
+    const fragment = texte.slice(i, j);
+    const m = /^(\d+)@([-−]?\d+)$/.exec(fragment);
+    const module = m ? Number(m[1]) : NaN, residu = m ? Number(m[2].replace("−", "-")) : NaN;
+    if (!Number.isSafeInteger(module) || module < 1 || !Number.isSafeInteger(residu)) return { genre: "fragment", texte: fragment };
+    jetons.push({ genre: "classe", classe: { module, residu }, texte: fragment });
+    i = j;
   }
-  return classes;
+  return jetons;
 }
 
-/** Écrit un crible sous la forme « 3@0 ∪ 4@1 ». */
-export function ecrireCrible(classes: Classe[]): string {
-  return classes.map((c) => `${c.module}@${c.residu}`).join(" ∪ ");
+/**
+ * Lit une expression de crible. Elle a deux formes.
+ *
+ * LA LISTE. Des classes « module@résidu » séparées par des espaces, des virgules
+ * ou des points-virgules, que `operation` combine : la forme la plus courte, et
+ * Xenakis notait ses cribles ainsi. « 3@0 4@1 5@2 » se lit d'un coup d'œil là où
+ * trois champs numériques par classe encombreraient l'inspecteur.
+ *
+ * L'EXPRESSION. Dès qu'elle porte un opérateur, elle se combine elle-même, dans la
+ * notation d'Ariza que lit aussi `music21.sieve` : « | » ou « ∪ » pour la réunion,
+ * « & » ou « ∩ » pour l'intersection, « ^ » ou « △ » pour la différence symétrique,
+ * « - » ou « − » devant un terme pour son complément, des parenthèses pour grouper.
+ * Le complément précède l'intersection, qui précède la différence symétrique, qui
+ * précède la réunion, l'ordre de Python. Le tiret n'y est jamais une différence :
+ * « 3@0-4@0 » est refusé, et la différence s'écrit « 3@0 & -4@0 ».
+ *
+ * CE QUI NE SE LIT PAS EST REFUSÉ, et le refus nomme le fragment en cause. Les
+ * fragments mal formés étaient ignorés pour qu'une frappe hésitante ne vide pas le
+ * crible ; mais le crible joué n'était plus celui qu'on avait écrit, sans un mot.
+ * Décision de Fabien du 2026-11-22, revue des notations en texte.
+ */
+export function lireCrible(texte: string, operation: OperationCrible): { expression: ExpressionCrible } | { refus: RefusCrible } {
+  const decoupe = decouper(String(texte));
+  if (!Array.isArray(decoupe)) return { refus: decoupe };
+  const jetons: Jeton[] = decoupe;
+  if (!jetons.length) return { refus: { genre: "vide", texte: "" } };
+  if (jetons.every((j) => j.genre === "classe")) {
+    return { expression: combinerClasses(jetons.map((j) => (j as { classe: Classe }).classe), operation) };
+  }
+
+  let k = 0;
+  let refus: RefusCrible | null = null;
+  const refuser = (genre: RefusCrible["genre"], texteRefus: string) => { refus ??= { genre, texte: texteRefus }; return null; };
+  const suite = (termes: (ExpressionCrible | null)[], faire: (t: ExpressionCrible[]) => ExpressionCrible) =>
+    termes.some((t) => t === null) ? null : termes.length === 1 ? termes[0] : faire(termes as ExpressionCrible[]);
+
+  function reunion(): ExpressionCrible | null {
+    const termes = [difference()];
+    while (!refus && jetons[k]?.genre === "ou") { k++; termes.push(difference()); }
+    return suite(termes, (ou) => ({ ou }));
+  }
+  // « ^ » se lie plus fort que « | » et moins fort que « & », l'ordre de Python, que suit
+  // `music21.sieve` : 2@0|3@0^4@0&6@0 vaut 2@0 | (3@0 ^ (4@0 & 6@0)).
+  function difference(): ExpressionCrible | null {
+    const termes = [intersection()];
+    while (!refus && jetons[k]?.genre === "ouex") { k++; termes.push(intersection()); }
+    return suite(termes, (ouex) => ({ ouex }));
+  }
+  function intersection(): ExpressionCrible | null {
+    const termes = [terme()];
+    while (!refus && jetons[k]?.genre === "et") { k++; termes.push(terme()); }
+    return suite(termes, (et) => ({ et }));
+  }
+  function terme(): ExpressionCrible | null {
+    if (refus) return null;
+    const j = jetons[k];
+    if (!j) return refuser("classe_manquante", jetons[k - 1].texte);
+    k++;
+    if (j.genre === "classe") return { classe: j.classe };
+    if (j.genre === "non") { const t = terme(); return t && { non: t }; }
+    if (j.genre !== "ouvre") return refuser("classe_manquante", j.texte);
+    const dedans = reunion();
+    if (refus) return null;
+    if (jetons[k]?.genre === "ferme") { k++; return dedans; }
+    return jetons[k] ? refuser("operateur_manquant", jetons[k].texte) : refuser("parenthese", j.texte);
+  }
+
+  const expression = reunion();
+  if (!refus && jetons[k]) refuser(jetons[k].genre === "ferme" ? "parenthese" : "operateur_manquant", jetons[k].texte);
+  return refus || !expression ? { refus: refus ?? { genre: "vide", texte: "" } } : { expression };
+}
+
+/**
+ * Écrit une expression : « 3@0 ∪ (4@1 ∩ 5@2) », « 2@0 ∩ −6@0 ». Un terme composé
+ * dans un autre prend ses parenthèses, et ce qui s'écrit se relit tel quel.
+ */
+export function ecrireCrible(e: ExpressionCrible): string {
+  const dedans = (f: ExpressionCrible) => ("classe" in f || "non" in f ? ecrireCrible(f) : `(${ecrireCrible(f)})`);
+  if ("classe" in e) return `${e.classe.module}@${e.classe.residu}`;
+  if ("non" in e) return `−${dedans(e.non)}`;
+  return termesDe(e).map(dedans).join("et" in e ? " ∩ " : "ouex" in e ? " △ " : " ∪ ");
 }

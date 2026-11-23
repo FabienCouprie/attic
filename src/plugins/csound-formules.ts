@@ -41,9 +41,10 @@ export const fiches: FicheAudio[] = ([
       const id = ctx.paramTexte("Formule", FORMULES[0].id);
       const formule = trouverFormule(id) ?? FORMULES[0];
       const en = langueCourante() === "en";
-      const orchestre = texteFormule(formule, { niveau: ctx.paramNombre("Niveau", 100) / 100 });
+      // Les commentaires écrits suivent la langue de l'interface, décision de Fabien du 2026-11-22.
+      const orchestre = texteFormule(formule, { niveau: ctx.paramNombre("Niveau", 100) / 100, en });
       return {
-        valeurs: [orchestre, partitionFormule(formule)],
+        valeurs: [orchestre, partitionFormule(formule, { en })],
         message: traduire("msg.csound.formule",
           en ? formule.en : formule.fr,
           formule.canaux === 2 ? (en ? "stereo" : "stéréo") : "mono",

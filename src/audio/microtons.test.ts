@@ -37,7 +37,6 @@ import { apprendre, tableEnTexte } from "./markov";
 import { hauteurDepuisNom, nomNote as nomNoteLlm } from "./abc-edition-llm";
 import { parametresLecture, voixPourNote, type Banque, type Zone } from "./clavier-banque";
 import { transposerParReechantillonnage } from "./reverbes-etendues";
-import { easyScoreDe, mettreEnMesures, midiVersEvenements } from "./notation-vexflow";
 import { disposition, nomNote } from "../vues-domaine/clavier-disposition";
 
 /** L'écart en cents entre deux fréquences : la seule mesure qui dise si un microton a survécu. */
@@ -146,18 +145,6 @@ describe("ce qui suppose un entier sans le dire", () => {
     for (const h of [69.1, 69.25, 69.4, 68.6, 68.75]) {
       expect(epeler(h, armure).lettre, `hauteur ${h}`).toBe("A");
     }
-  });
-
-  it("LA PARTITION VEXFLOW NE DOIT PAS ÉCRIRE « undefined » POUR UNE NOTE", () => {
-    // Le nom de note passait par `NOMS[note % 12]`, donc `NOMS[9,5]` sur un quart de ton : une
-    // case qui n'existe pas. Le jeton envoyé au dessin devenait « undefined4/q », que VexFlow
-    // refuse : la partition ne s'affichait plus, et rien ne disait pourquoi.
-    // L'écrivain d'alors a été remplacé le 2026-11-22 (revue des notations en texte) ; la garde suit
-    // le nouveau, jusqu'au jeton que la portée reçoit.
-    const [premiere] = mettreEnMesures(midiVersEvenements([{ note: 69.5, debut: 0, fin: 0.5 }], 120, 0.25))[0];
-    const notation = easyScoreDe(premiere);
-    expect(notation).not.toContain("undefined");
-    expect(notation).toBe("A#4/q");
   });
 
   it("LA TRANSPOSITION PAR RÉÉCHANTILLONNAGE EST CONTINUE, elle aussi", () => {

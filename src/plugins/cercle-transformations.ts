@@ -22,7 +22,7 @@ import {
   tourner, type Cercle,
 } from "../audio/cercle";
 import { deployer, lireChamp } from "../audio/matrice-parametres";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { boucleCourante } from "./boucleSequencesGlobal";
 import { avecDoc } from "./notices";
 
@@ -37,15 +37,24 @@ const en = () => langueCourante() === "en";
  *
  * LA BOUCLE LA PLUS INTÉRIEURE EST CELLE QUI COMPTE, comme pour tout ce qui lit une passe dans ce
  * dépôt. Deux boucles emboîtées font varier la quantité au rythme de la seconde.
+ *
+ * VIDE, LE CHAMP REND LE DÉFAUT ; ILLISIBLE, IL EST REFUSÉ, et le refus porte ce qui ne se lit pas.
+ * « abc » rendait le défaut, sans un mot. Revue des notations en texte, 2026-11-22.
  */
-export function quantiteDeLaPasse(texte: string, defaut: number): number {
-  const champ = lireChamp(texte);
-  if (!champ) return defaut;
+export function quantiteDeLaPasse(texte: string, defaut: number): { valeur: number } | { refus: string } {
+  const lu = lireChamp(texte);
+  if ("refus" in lu) return lu;
+  if (!lu.champ) return { valeur: defaut };
   const b = boucleCourante();
   const passes = Math.max(1, b?.morceaux.length ?? 1);
   const rang = Math.min(passes - 1, Math.max(0, b?.index ?? 0));
-  return deployer(champ, passes)[rang] ?? defaut;
+  return { valeur: deployer(lu.champ, passes)[rang] ?? defaut };
 }
+
+/** Le refus d'un réglage écrit en champ, nommé dans la langue de l'interface. */
+const refusDuChamp = (nom: string, nomEn: string, refus: string) => ({
+  valeurs: [null], erreur: true, message: traduire("msg.champ.illisible_var_0_var_1", en() ? nomEn : nom, refus),
+});
 
 /** Le rang de la passe et leur nombre, pour que le message le dise. */
 function rangDeLaPasse(): string {
@@ -79,8 +88,8 @@ const ENTREE_CERCLE = [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }];
 const SORTIE_CERCLE = [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }];
 
 /** La phrase qui explique la syntaxe d'un champ, la même partout. */
-const CHAMP_FR = "Un nombre seul vaut pour toutes les passes ; une suite de nombres donne les premières et répète la dernière ; deux nombres séparés par deux points font une rampe droite étalée sur les passes.";
-const CHAMP_EN = "A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes.";
+const CHAMP_FR = "Un nombre seul vaut pour toutes les passes ; une suite de nombres donne les premières et répète la dernière ; deux nombres séparés par deux points font une rampe droite étalée sur les passes. Ce qui ne s'écrit pas ainsi est refusé, et le message le nomme.";
+const CHAMP_EN = "A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it.";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -101,7 +110,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
-      const pas = Math.round(quantiteDeLaPasse(ctx.paramTexte("Pas", "1"), 0));
+      const q = quantiteDeLaPasse(ctx.paramTexte("Pas", "1"), 0);
+      if ("refus" in q) return refusDuChamp("Pas", "Step", q.refus);
+      const pas = Math.round(q.valeur);
       return {
         valeurs: [rendre(suite.map((c) => tourner(c, pas)))],
         message: `${en() ? "step" : "pas"} ${pas}${rangDeLaPasse()}`,
@@ -126,7 +137,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
-      const axe = Math.round(quantiteDeLaPasse(ctx.paramTexte("Axe", "0"), 0));
+      const q = quantiteDeLaPasse(ctx.paramTexte("Axe", "0"), 0);
+      if ("refus" in q) return refusDuChamp("Axe", "Axis", q.refus);
+      const axe = Math.round(q.valeur);
       return {
         valeurs: [rendre(suite.map((c) => reflechir(c, axe)))],
         message: `${en() ? "axis" : "axe"} ${axe}${rangDeLaPasse()}`,
@@ -166,7 +179,9 @@ export const fiches: FicheAudio[] = ([
         };
       }
       const texte = String(ctx.paramTexte("Axe", "")).trim();
-      const axe = texte === "" ? undefined : quantiteDeLaPasse(texte, 60);
+      const q = texte === "" ? undefined : quantiteDeLaPasse(texte, 60);
+      if (q && "refus" in q) return refusDuChamp("Axe", "Axis", q.refus);
+      const axe = q?.valeur;
       return {
         valeurs: [rendre(suite.map((c) => inverserIntervalles(c, axe)))],
         message: `${en() ? "intervals" : "intervalles"}`
@@ -196,7 +211,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
-      const graine = Math.round(quantiteDeLaPasse(ctx.paramTexte("Graine", "1"), 1));
+      const q = quantiteDeLaPasse(ctx.paramTexte("Graine", "1"), 1);
+      if ("refus" in q) return refusDuChamp("Graine", "Seed", q.refus);
+      const graine = Math.round(q.valeur);
       return {
         valeurs: [rendre(suite.map((c) => permuterEtiquettes(c, graine)))],
         message: `${en() ? "seed" : "graine"} ${graine}${rangDeLaPasse()}`,

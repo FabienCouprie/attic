@@ -8,7 +8,12 @@
 import { describe, expect, it } from "vitest";
 import { EXEMPLES, LONGUEUR_MAX, interpreter, lireRegles, reecrire } from "./lsysteme";
 
-const regles = (s: string) => lireRegles(s);
+/** Les règles d'un texte qui se lit ; un refus fait tomber le test qui l'écrit. */
+const regles = (s: string) => {
+  const lu = lireRegles(s);
+  if ("refus" in lu) throw new Error(`« ${s} » refusé sur « ${lu.refus.texte} »`);
+  return lu.regles;
+};
 const MAJEUR = [0, 2, 4, 5, 7, 9, 11];
 const CONFIG = { degres: MAJEUR, depart: 60, dureePas: 0.25, velocite: 90, noteMin: 21, noteMax: 108 };
 
@@ -21,9 +26,12 @@ describe("lecture des règles", () => {
     expect(regles(" F = F+F \n X=FX ")).toEqual([{ de: "F", vers: "F+F" }, { de: "X", vers: "FX" }]);
   });
 
-  it("ignore ce qui n'est pas une règle plutôt que de planter", () => {
-    expect(regles("n'importe quoi")).toEqual([]);
-    expect(regles("AB=C")).toEqual([]); // le membre gauche doit être une seule lettre
+  it("refuse ce qui n'est pas une règle, et le nomme, sans planter", () => {
+    // Ce test tenait le contraire : « n'importe quoi » et « AB=C » étaient jetés sans un mot. Décision de
+    // Fabien du 2026-11-22, « Refuse it, named », revue des notations en texte.
+    expect(lireRegles("n'importe quoi")).toEqual({ refus: { genre: "mal_formee", texte: "n'importe quoi" } });
+    expect(lireRegles("AB=C")).toEqual({ refus: { genre: "mal_formee", texte: "AB=C" } }); // le membre gauche doit être une seule lettre
+    expect(lireRegles("A=AB, A=B")).toEqual({ refus: { genre: "doublon", texte: "A" } });
     expect(regles("")).toEqual([]);
   });
 });

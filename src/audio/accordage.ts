@@ -163,22 +163,6 @@ export function degrePlusProche(a: Accordage, note: number): { rang: number; eca
   return { rang, ecartCents: (note - hauteurDuDegre(a, rang)) * CENTS_PAR_DEMI_TON };
 }
 
-/**
- * Les rangs de degrés qu'un texte désigne, ou un tour complet quand il n'en désigne aucun.
- *
- * LES RANGS SE PROMÈNENT HORS DE LA PÉRIODE, ce que `hauteurDuDegre` permet : le rang douze d'un
- * accordage à douze degrés est la tonique du tour suivant, et un rang négatif descend sous elle. Un
- * texte de « 0 4 7 12 » décrit donc un arpège qui franchit la période.
- *
- * LA SÉPARATION EST TOUT CE QUI N'EST PAS UN CHIFFRE OU UN MOINS, de sorte qu'une liste séparée par
- * des espaces, des virgules ou des retours à la ligne se lise pareil. Le moins seul est écarté : il
- * ne désigne aucun rang, et `Number("-")` rendrait `NaN`.
- */
-export function rangsDemandes(texte: string, parPeriode: number): number[] {
-  const bruts = texte.split(/[^-\d]+/).filter((m) => m !== "" && m !== "-");
-  if (bruts.length === 0) return Array.from({ length: parPeriode }, (_, i) => i);
-  return bruts.map(Number).filter(Number.isFinite);
-}
 
 /**
  * Une phrase qui décrit un accordage, pour le message d'un nœud.

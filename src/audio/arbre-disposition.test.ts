@@ -126,9 +126,11 @@ describe("retoucher un arbre", () => {
     expect(texte(mettreEtat(trois, [0, 0], "silence"))).toBe("(4/4 (-1 1 1 1))");
   });
 
+  // L'ARBRE RELU A CHANGÉ, NON CE QUI EST TENU. Il liait derrière un silence, ce que la revue des
+  // notations en texte refuse depuis le 2026-11-22 : une liaison ne prolonge qu'une note.
   it("l'état se relit", () => {
-    const m = lireArbre("(4/4 (1 -1 1.0 1))");
-    expect(m[0].contenu.map((n) => etatDe(n))).toEqual(["note", "silence", "liee", "note"]);
+    const m = lireArbre("(4/4 (1 1.0 -1 1))");
+    expect(m[0].contenu.map((n) => etatDe(n))).toEqual(["note", "liee", "silence", "note"]);
   });
 
   it("ajouter insère après, et à l'intérieur d'une division", () => {

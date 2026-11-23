@@ -25,18 +25,21 @@ export const LONGUEUR_MAX = 100_000;
 /**
  * Lit des règles écrites « A=AB, B=A » ou une par ligne.
  * Une lettre sans règle se réécrit en elle-même, comme le veut la convention.
+ *
+ * UNE RÈGLE MAL FORMÉE EST REFUSÉE, ET NOMMÉE : sans « = », ou d'un membre gauche qui n'est pas une seule
+ * lettre, elle était jetée sans un mot. DEUX RÈGLES POUR LA MÊME LETTRE le sont aussi : la dernière gagnait.
+ * Décisions de Fabien du 2026-11-22, « Refuse it, named », revue des notations en texte.
  */
-export function lireRegles(texte: string): RegleL[] {
-  return texte
-    .split(/[\n,;]+/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((l) => {
-      const i = l.indexOf("=");
-      if (i < 0) return null;
-      return { de: l.slice(0, i).trim(), vers: l.slice(i + 1).trim() };
-    })
-    .filter((r): r is RegleL => r !== null && r.de.length === 1);
+export function lireRegles(texte: string): { regles: RegleL[] } | { refus: { genre: "mal_formee" | "doublon"; texte: string } } {
+  const regles: RegleL[] = [];
+  for (const l of texte.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean)) {
+    const i = l.indexOf("=");
+    const de = i < 0 ? "" : l.slice(0, i).trim();
+    if ([...de].length !== 1) return { refus: { genre: "mal_formee", texte: l } };
+    if (regles.some((r) => r.de === de)) return { refus: { genre: "doublon", texte: de } };
+    regles.push({ de, vers: l.slice(i + 1).trim() });
+  }
+  return { regles };
 }
 
 /**

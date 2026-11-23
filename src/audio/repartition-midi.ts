@@ -104,27 +104,28 @@ export function repartirCanaux(
 }
 
 /**
- * Une liste de canaux écrite à la main : « 1,2 », « 1-3 », « 1, 3-5 », vide.
+ * Une liste de numéros écrite à la main : « 1,2 », « 1-3 », « 1, 3-5 », vide. Vide, elle ne retient rien.
  *
- * En numérotation HUMAINE en entrée (1–16), rendue en numérotation d'octets (0–15). Les numéros hors
- * bornes sont écartés en silence : il vaut mieux une partie muette qu'un canal 17 qui filtre tout.
+ * CE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ : un numéro hors de 1 à `max`, une plage qui en sort, un jeton
+ * illisible. Ils étaient écartés en silence, de sorte que « 17 » vidait la partie et que « 1-17 » prenait les
+ * seize canaux. Revue des notations en texte, passe de complétude, 2026-11-22.
  */
-export function analyserListeCanaux(texte: string): number[] {
+export function analyserListeNumeros(texte: string, max = Infinity): { numeros: number[] } | { refus: string } {
   const vus = new Set<number>();
   for (const morceau of String(texte ?? "").split(/[,;\s]+/)) {
     if (!morceau) continue;
     const plage = /^(\d+)\s*[-–]\s*(\d+)$/.exec(morceau);
-    if (plage) {
-      const a = Number(plage[1]), b = Number(plage[2]);
-      for (let c = Math.min(a, b); c <= Math.max(a, b); c++) {
-        if (c >= 1 && c <= 16) vus.add(c - 1);
-      }
-      continue;
-    }
-    const n = Number(morceau);
-    if (Number.isInteger(n) && n >= 1 && n <= 16) vus.add(n - 1);
+    const bornes = plage ? [Number(plage[1]), Number(plage[2])] : /^\d+$/.test(morceau) ? [Number(morceau), Number(morceau)] : null;
+    if (!bornes || bornes.some((n) => n < 1 || n > max)) return { refus: morceau };
+    for (let n = Math.min(...bornes); n <= Math.max(...bornes); n++) vus.add(n);
   }
-  return [...vus].sort((a, b) => a - b);
+  return { numeros: [...vus].sort((a, b) => a - b) };
+}
+
+/** Une liste de canaux, en numérotation HUMAINE en entrée (1–16), rendue en numérotation d'octets (0–15). */
+export function analyserListeCanaux(texte: string): { canaux: number[] } | { refus: string } {
+  const lu = analyserListeNumeros(texte, 16);
+  return "refus" in lu ? lu : { canaux: lu.numeros.map((c) => c - 1) };
 }
 
 /** La même liste, écrite pour être lue — numérotation humaine. */

@@ -19,7 +19,7 @@
 // qu'elle veut dire à l'échelle de l'échantillon — chacune une fois avant qu'aucune ne repasse.
 import { describe, expect, it } from "vitest";
 import {
-  AMPLITUDES_DEFAUT, EST_PRINCIPE, PRINCIPES, TEMPS_DEFAUT, alea, centroideHz, composer,
+  EST_PRINCIPE, PRINCIPES, alea, centroideHz, composer,
   construireSegment, creteDb, lireEnsemble, longueurMoyenneDesPlages, masqueTendance,
   nomPrincipe, selectionner, type OptionsComposition, type Principe,
 } from "./ssp";
@@ -244,16 +244,18 @@ describe("la thèse de Koenig : les mêmes principes à toutes les échelles", (
 
 describe("les ensembles écrits à la main", () => {
   it("se lisent avec des virgules, des espaces ou des points-virgules", () => {
-    expect(lireEnsemble("-1, -0.5, 0, 0.5, 1", [])).toEqual([-1, -0.5, 0, 0.5, 1]);
-    expect(lireEnsemble("5 9 17", [])).toEqual([5, 9, 17]);
-    expect(lireEnsemble("3;7;11", [])).toEqual([3, 7, 11]);
+    expect(lireEnsemble("-1, -0.5, 0, 0.5, 1")).toEqual({ valeurs: [-1, -0.5, 0, 0.5, 1] });
+    expect(lireEnsemble("5 9 17")).toEqual({ valeurs: [5, 9, 17] });
+    expect(lireEnsemble("3;7;11")).toEqual({ valeurs: [3, 7, 11] });
   });
 
-  it("une saisie vide ou illisible retombe sur l'ensemble par défaut", () => {
-    for (const saisie of ["", "   ", "bonjour", ",,,"]) {
-      expect(lireEnsemble(saisie, AMPLITUDES_DEFAUT), saisie).toEqual(AMPLITUDES_DEFAUT);
-    }
-    expect(lireEnsemble("abc 12 def", TEMPS_DEFAUT)).toEqual([12]);
+  it("une saisie vide ou illisible est refusée, et le refus nomme ce qui ne se lit pas", () => {
+    // Ce test tenait le contraire : une saisie vide ou illisible retombait sur l'ensemble d'origine, et
+    // « abc 12 def » se lisait « 12 ». Décision de Fabien du 2026-11-22, « Refuse it, named », revue des
+    // notations en texte.
+    for (const saisie of ["", "   ", ",,,"]) expect(lireEnsemble(saisie), saisie).toEqual({ refus: "" });
+    expect(lireEnsemble("bonjour")).toEqual({ refus: "bonjour" });
+    expect(lireEnsemble("abc 12 def")).toEqual({ refus: "abc" });
   });
 });
 

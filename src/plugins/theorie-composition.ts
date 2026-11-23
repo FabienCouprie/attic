@@ -12,6 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesDuMidi } from "../audio/midi";
+import { refusDeSuite } from "../audio/noms-de-notes";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 import {
   PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2,
@@ -143,8 +144,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Série", nomEn: "Row", type: "texte", defaut: "G Bb D F# A C E G# B C# D# F",
         defautEn: "G Bb D F# A C E G# B C# D# F",
-        doc: "La série, en noms de notes ou en chiffres de 0 à 11, séparés par des espaces. La valeur par défaut est celle du Concerto pour violon de Berg. Un MIDI branché en entrée l'emporte : ses hauteurs sont lues dans l'ordre.",
-        docEn: "The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order." },
+        doc: "La série, en noms de notes ou en chiffres de 0 à 11, séparés par des espaces. La valeur par défaut est celle du Concerto pour violon de Berg. Un MIDI branché en entrée l'emporte : ses hauteurs sont lues dans l'ordre. Les noms se lisent en lettres ou en noms français, avec #, b, ♯ ou ♭ ; un mot illisible est refusé, et nommé.",
+        docEn: "The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named." },
       { nom: "Forme", nomEn: "Form", type: "choix",
         options: ["Originale", "Rétrograde", "Inversion", "Rétrograde de l'inversion", "Les quatre à la suite"],
         optionsEn: ["Original", "Retrograde", "Inversion", "Retrograde inversion", "All four in turn"],
@@ -170,10 +171,16 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const entree = await notesDuMidi(ctx.entree(0));
-      const serie = entree && entree.length > 0
+      const recue = !!entree && entree.length > 0;
+      const ecrite = ctx.paramTexte("Série", "G Bb D F# A C E G# B C# D# F");
+      // UN MOT ILLISIBLE EST REFUSÉ, ET NOMMÉ, revue des notations en texte du 2026-11-22 : il était
+      // jeté, et la série se calculait sur onze classes sans un mot.
+      const refus = recue ? null : refusDeSuite(ecrite, true);
+      if (refus) return { valeurs: [null, null, null], erreur: true, message: refus };
+      const serie = entree && recue
         ? [...entree].sort((a, b) => a.debut - b.debut || a.note - b.note).map((n) => ((n.note % 12) + 12) % 12)
-        : lireSuite(ctx.paramTexte("Série", "G Bb D F# A C E G# B C# D# F"));
-      if (serie.length === 0) return { valeurs: [null, null, null], message: traduire("msg.serie.vide") };
+        : lireSuite(ecrite);
+      if (serie.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.serie.vide") };
 
       const choix = ctx.paramTexte("Forme", "originale");
       const niveau = Math.round(ctx.paramNombre("Transposition", 0));
@@ -218,8 +225,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Notes", nomEn: "Notes", type: "texte", defaut: "C E G B",
         defautEn: "C E G B",
-        doc: "Les notes à analyser, en noms ou en chiffres de 0 à 11. Une séquence branchée en entrée l'emporte, puis un MIDI.",
-        docEn: "The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file." },
+        doc: "Les notes à analyser, en noms ou en chiffres de 0 à 11. Une séquence branchée en entrée l'emporte, puis un MIDI. Les noms se lisent en lettres ou en noms français, avec #, b, ♯ ou ♭ ; un mot illisible est refusé, et nommé.",
+        docEn: "The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named." },
       { nom: "Découpage", nomEn: "Grouping", type: "choix",
         options: ["Tout l'extrait", "Accord par accord"], optionsEn: ["Whole excerpt", "Chord by chord"],
         optionIds: ["tout", "accords"], defaut: "Tout l'extrait", defautEn: "Whole excerpt",
@@ -231,8 +238,11 @@ export const fiches: FicheAudio[] = ([
       const entree = recu?.notes ?? null;
       const en = langueCourante() === "en";
       if (!entree || entree.length === 0) {
-        const notes = lireSuite(ctx.paramTexte("Notes", "C E G B"));
-        if (notes.length === 0) return { valeurs: [null], message: traduire("msg.serie.vide") };
+        const ecrites = ctx.paramTexte("Notes", "C E G B");
+        const refus = refusDeSuite(ecrites, true);
+        if (refus) return { valeurs: [null], erreur: true, message: refus };
+        const notes = lireSuite(ecrites);
+        if (notes.length === 0) return { valeurs: [null], erreur: true, message: traduire("msg.serie.vide") };
         const a = analyser(notes);
         return {
           valeurs: [rapportAnalyse(a, en ? "Set" : "Ensemble")],
@@ -292,14 +302,14 @@ export const fiches: FicheAudio[] = ([
         options: ["Classes, registre gardé", "Miroir vrai"],
         optionsEn: ["Classes, register kept", "True mirror"],
         optionIds: ["registre", "miroir"], defaut: "Classes, registre gardé", defautEn: "Classes, register kept",
-        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, la ligne garde son contour ; c'est ce qu'on veut pour substituer un accord. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens et la mélodie se retourne.",
-        docEn: "« Classes » reflects each note within its octave: the harmony changes, the line keeps its contour; this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over." },
+        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, et chaque note garde son registre, la basse restant la basse ; c'est ce qu'on veut pour substituer un accord. La ligne s'y retourne aussi, comme toute réflexion : do ré mi fa sol devient sol fa mi bémol ré do. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens, la mélodie se retourne, et le grave passe à l'aigu.",
+        docEn: "« Classes » reflects each note within its octave: the harmony changes, and each note keeps its register, the bass staying the bass; this is what one wants to substitute a chord. The line turns over there too, as any reflection does: C D E F G becomes G F E flat D C. « True mirror » reflects everything around a single axis: intervals change direction, the melody turns over, and the low register moves to the high." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
-      if (!notes) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      if (!notes) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_note") };
       const tonique = parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0;
       const mode = ctx.paramTexte("Réflexion", "registre") as ModeReflet;
       const reflete = refleterNotes(notes, tonique, mode);
@@ -352,9 +362,9 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
-      if (!recu) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (!recu) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const notes = recu.notes;
-      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      if (notes.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_note") };
       const groupes = accords(notes);
       const renversement = Math.round(ctx.paramNombre("Renversement", 0));
       const type = ctx.paramTexte("Disposition", "serre") as TypeVoicing;

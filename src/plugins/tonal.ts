@@ -10,6 +10,7 @@ import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } from "../audio/symboles-accords";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { lireNomDeNote, nomAnglais, refusDeSuite } from "../audio/noms-de-notes";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
   accordsDepuisRomains, accordsInconnus, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
@@ -89,14 +90,21 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Nom", nomEn: "Name", type: "texte" }],
     parametres: [
       { nom: "Notes", nomEn: "Notes", type: "texte", defaut: "C E G",
-        doc: "Notes de l'accord séparées par des espaces (ex : C E G, F A C E).",
-        docEn: "Chord notes separated by spaces (e.g. C E G, F A C E).", defautEn: "C E G" },
+        doc: "Notes de l'accord séparées par des espaces (ex : C E G, F A C E). Les noms se lisent en lettres ou en noms français, avec #, b, ♯ ou ♭ ; un mot illisible est refusé, et nommé.",
+        docEn: "Chord notes separated by spaces (e.g. C E G, F A C E). Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named.", defautEn: "C E G" },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
       const notesTexte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notes", "C E G");
-      const notes = parserNotes(notesTexte);
+      // LES NOMS SE LISENT PAR LE SEUL LECTEUR, français compris, et un mot illisible est refusé en
+      // le nommant : revue des notations en texte du 2026-11-22.
+      const refus = refusDeSuite(notesTexte);
+      if (refus) return { valeurs: [null], erreur: true, message: refus };
+      const notes = parserNotes(notesTexte).flatMap((n) => {
+        const lu = lireNomDeNote(n);
+        return lu ? [nomAnglais(lu)] : [];
+      });
       // L'ÉCHEC SE DIT DANS LE STATUT, ET NON DANS LA VALEUR.
       //
       // Ce nœud émettait la chaîne « Accord inconnu » SUR SA SORTIE et annonçait « Terminé » : un
@@ -154,8 +162,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Transposé", nomEn: "Transposed", type: "texte" }],
     parametres: [
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "C4",
-        doc: "Note à transposer (ex : C4, D#3, F#5).",
-        docEn: "Note to transpose (e.g. C4, D#3, F#5).", defautEn: "C4" },
+        doc: "Note à transposer (ex : C4, D#3, F#5). En lettres ou en noms français, avec ou sans octave ; un nom illisible est refusé, et nommé.",
+        docEn: "Note to transpose (e.g. C4, D#3, F#5). As letters or French names, with or without an octave; an unreadable name is refused and named.", defautEn: "C4" },
       { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defaut: "2M",
         doc: "Intervalle de transposition (2M = ton, 3m = tierce mineure, 3M = tierce majeure, etc.).",
         docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.).", optionsEn: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defautEn: "2M" },
@@ -165,8 +173,12 @@ export const fiches: FicheAudio[] = ([
       const note = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Note", "C4");
       const intervalle = ctx.paramTexte("Intervalle", "2M");
-      const transposee = Note.transpose(note, intervalle);
-      if (!transposee) return { valeurs: [null], message: traduire("msg.transposition_impossible") };
+      // UN NOM ILLISIBLE EST REFUSÉ, ET NOMMÉ, revue des notations en texte du 2026-11-22 : le nœud
+      // rendait une sortie vide sans erreur, et ne lisait pas « Ré#3 ». La classe sans octave reste lue.
+      const lue = lireNomDeNote(note);
+      if (!lue) return { valeurs: [null], erreur: true, message: traduire("msg.note.illisible_var_0", note.trim()) };
+      const transposee = Note.transpose(nomAnglais(lue), intervalle);
+      if (!transposee) return { valeurs: [null], erreur: true, message: traduire("msg.transposition_impossible") };
       return { valeurs: [transposee], message: transposee };
    },
  }),

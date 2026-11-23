@@ -80,16 +80,24 @@ export function seriesTousIntervalles(limite = Infinity): number[][] {
   return trouvees;
 }
 
+/** Le nombre des séries à tous les intervalles qui commencent sur zéro, publié et éprouvé par la recherche. */
+export const NOMBRE_SERIES_TOUS_INTERVALLES = 3856;
+
+/** Le rang dans le catalogue : il boucle, 3856 revenant à 0. */
+export const rangDansLeCatalogue = (rang: number): number =>
+  ((Math.floor(rang) % NOMBRE_SERIES_TOUS_INTERVALLES) + NOMBRE_SERIES_TOUS_INTERVALLES) % NOMBRE_SERIES_TOUS_INTERVALLES;
+
 /**
  * La série de rang donné, transposée sur la note de départ voulue.
  *
  * LE RANG BOUCLE PLUTÔT QUE DE SORTIR DU CATALOGUE : un réglage qui dépasse rend la première, et
- * non rien. La recherche s'arrête au rang demandé, sans dérouler les 3856 pour en prendre une.
+ * non rien. La recherche s'arrête au rang demandé, sans dérouler les 3856 pour en prendre une. Elle
+ * rendait la dernière, ce que la documentation ne disait pas : revue des notations en texte, 2026-11-22.
  */
 export function serieTousIntervalles(rang: number, depart = 0): number[] {
-  const n = Math.max(0, Math.floor(rang));
+  const n = rangDansLeCatalogue(rang);
   const lot = seriesTousIntervalles(n + 1);
-  const choisie = lot[Math.min(n, lot.length - 1)] ?? [];
+  const choisie = lot[n] ?? [];
   const d = ((Math.round(depart) % 12) + 12) % 12;
   return choisie.map((x) => (x + d) % 12);
 }

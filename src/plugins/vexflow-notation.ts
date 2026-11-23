@@ -6,10 +6,10 @@
 import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
-  barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
-  type ElementGrave, type Evenement, type FauteGravure, type Hauteur, type NoteTab,
+  barreDeDuree, easyScoreDe, jetonsDe, lireNotationVexflow, longueurDe, mettreEnMesures,
+  type ElementGrave, type Evenement, type FauteGravure, type NoteTab,
 } from "../audio/notation-vexflow";
-import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
+import { BarNote, GhostNote, Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 
 /**
  * Accords d'une progression écrite pour une partition.
@@ -84,23 +84,8 @@ function extraireSvgRendu(div: HTMLDivElement): string {
   return svgs.map((svg) => svg.outerHTML).join("");
 }
 
-/**
- * Les grilles de quantification de la partition MIDI, en noires. Sans triolet : une attaque posée
- * sur une grille de triolet tomberait entre deux valeurs que la portée sait écrire. Les points et
- * les liaisons, eux, s'écrivent depuis le 2026-11-22.
- */
-export const GRILLES_NOTATION: Record<string, number> = {
-  "1/4": 1,
-  "1/8": 0.5,
-  "1/16": 0.25,
-  "1/32": 0.125,
-  "1/1": 4,
-  "1/2": 2,
-};
-
-/** Une métrique, « 3/4 », « 6/8 » ; la mesure dure `4 × numérateur / dénominateur` noires. */
+/** Une métrique, « 3/4 », « 6/8 ». */
 export type Signature = { numerateur: number; denominateur: number };
-export const longueurDeMesure = (s: Signature) => (4 * s.numerateur) / s.denominateur;
 
 /**
  * Grave des mesures sur une portée : une barre entre deux mesures, une liaison entre deux éléments
@@ -153,8 +138,13 @@ export function graverNotation(notation: string, clef: string, largeur: number, 
 
 /**
  * Grave une tablature lue, sur autant de lignes que l'instrument a de cordes : mesuré avant, le
- * ukulélé et la basse se dessinaient sur six. La voix compte exactement ses temps : sous quatre,
- * VexFlow levait « IncompleteVoice », et l'erreur brute arrivait au message.
+ * ukulélé et la basse se dessinaient sur six.
+ *
+ * ELLE SE COUPE EN MESURES DE 4/4, PAR LA MÊME COUPE QUE LA PORTÉE, décision de Fabien du 2026-11-22,
+ * « Cut into bars » : neuf noires se gravaient sans une barre. Une note qui passe la barre se coupe en
+ * deux, la seconde frette entre parenthèses, comme une tablature écrit une note tenue ; la dernière
+ * mesure se complète de temps muets. Chaque note porte son rang dans l'octave de sa hauteur fictive,
+ * ce qui la retrouve après la coupe.
  */
 export function genererTab(notes: readonly NoteTab[], titre: string, cordes: number, largeur: number, hauteur: number): string {
   if (notes.length === 0) return "";
@@ -163,10 +153,27 @@ export function genererTab(notes: readonly NoteTab[], titre: string, cordes: num
   const stave = new TabStave(10, 20, largeur - 20, { num_lines: cordes });
   stave.setText(titre, 2);
   stave.setContext(ctx).draw();
-  const tabNotes = notes.map((n) => new TabNote({ positions: [{ str: n.corde, fret: n.frette }], duration: n.duree, dots: n.points }));
-  const temps = notes.reduce((s, n) => s + longueurDe(n.duree, n.points), 0);
-  const voice = new Voice({ num_beats: temps, beat_value: 4 });
-  voice.addTickables(tabNotes);
+  let t = 0;
+  const evenements: Evenement[] = notes.map((n, rang) => {
+    const longueur = longueurDe(n.duree, n.points);
+    const e = { debut: t, longueur, silence: false, hauteurs: [{ lettre: "C", alteration: 0, octave: rang }], ecrite: { duree: n.duree, points: n.points } };
+    t += longueur;
+    return e;
+  });
+  const mesures = mettreEnMesures(evenements);
+  const tickables: (TabNote | BarNote | GhostNote)[] = [];
+  let suite = false;
+  mesures.forEach((mesure, k) => {
+    if (k > 0) tickables.push(new BarNote());
+    for (const e of mesure) {
+      const n = notes[e.hauteurs[0].octave];
+      tickables.push(e.silence ? new GhostNote({ duration: e.duree, dots: e.points })
+        : new TabNote({ positions: [{ str: n.corde, fret: suite ? `(${n.frette})` : n.frette }], duration: e.duree, dots: e.points }));
+      suite = e.lie;
+    }
+  });
+  const voice = new Voice({ num_beats: mesures.length * 4, beat_value: 4 });
+  voice.addTickables(tickables);
   new Formatter().joinVoices([voice]).format([voice], largeur - 40);
   voice.draw(ctx, stave);
   return extraireSvgRendu(div);
@@ -217,19 +224,8 @@ export function accordsDeProgression(progression: string, tonic: string, gamme: 
   const romains = estProgressionRomaine(tokens);
   // `accordsPourPartition` et non Tonal brut : appelé directement, il rendait un
   // accord MAJEUR pour un degré en minuscules (« vi » → La majeur) et résolvait
-  // les degrés d'un mode mineur sur la gamme majeure. La partition imprimait
+  // les degrés d'un mode mineur sur la gamme majeure. La gravure imprimait
   // donc d'autres accords que ceux joués par les nœuds audio, qui passent tous
   // par la fonction partagée.
   return romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
 }
-
-/** Grave des accords reconnus, une noire chacun, leurs notes posées à l'octave 4 ; « N.C. » est un soupir. */
-export function genererPartition(accords: string[], clef: string, largeur: number, hauteur: number): string {
-  const evenements: Evenement[] = accords.map((a, k) => ({
-    debut: k, longueur: 1, silence: estSansAccord(a),
-    hauteurs: estSansAccord(a) ? [{ lettre: "B", alteration: 0, octave: 4 }]
-      : (accordDuSymbole(a)?.notes ?? []).map((n) => lireHauteur(`${n}4`)).filter((h): h is Hauteur => h !== null),
-  }));
-  return genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur);
-}
-

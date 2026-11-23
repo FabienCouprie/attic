@@ -25,7 +25,13 @@ export interface Triade {
   type: TypeTriade;
 }
 
-export type Operation = "P" | "L" | "R";
+/**
+ * Les trois opérations, et leurs trois composées de la littérature, chacune un seul pas du chemin : N, le
+ * Nebenverwandt, vaut RLP et mène do majeur à fa mineur ; S, le glissement, vaut LPR et le mène à do dièse
+ * mineur ; H, le pôle hexatonique, vaut LPL et le mène à la bémol mineur.
+ */
+export type Operation = "P" | "L" | "R" | "N" | "S" | "H";
+const COMPOSEES: Record<"N" | "S" | "H", ("P" | "L" | "R")[]> = { N: ["R", "L", "P"], S: ["L", "P", "R"], H: ["L", "P", "L"] };
 
 const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -61,6 +67,7 @@ export function reconnaitre(classes: number[]): Triade | null {
  * voix : P et L d'un demi-ton, R d'un ton.
  */
 export function appliquer(t: Triade, op: Operation): Triade {
+  if (op === "N" || op === "S" || op === "H") return COMPOSEES[op].reduce(appliquer, t);
   if (op === "P") {
     return { fondamentale: t.fondamentale, type: t.type === "majeur" ? "mineur" : "majeur" };
   }
@@ -88,9 +95,21 @@ export function parcourir(depart: Triade, operations: Operation[]): Triade[] {
   return suite;
 }
 
-/** Lit « P L R » ou « PLR » ; ignore ce qui n'est pas une opération. */
-export function lireOperations(texte: string): Operation[] {
-  return [...texte.toUpperCase()].filter((c): c is Operation => c === "P" || c === "L" || c === "R");
+/**
+ * Lit « P L R », « PLR » ou « P-L, R », et les composées N, S et H.
+ *
+ * CE QUI N'EST PAS UNE OPÉRATION EST REFUSÉ, et le refus nomme le caractère : il était jeté, « PLX » jouant
+ * « PL » sans un mot. Les espaces, virgules, points-virgules et tirets séparent. Décision de Fabien du
+ * 2026-11-22, « Read N, S, H too », revue des notations en texte.
+ */
+export function lireOperations(texte: string): { operations: Operation[] } | { refus: string } {
+  const operations: Operation[] = [];
+  for (const c of [...String(texte ?? "").toUpperCase()]) {
+    if (/[\s,;-]/.test(c)) continue;
+    if (!"PLRNSH".includes(c)) return { refus: c };
+    operations.push(c as Operation);
+  }
+  return { operations };
 }
 
 /**

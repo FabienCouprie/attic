@@ -67,7 +67,7 @@ export async function genererMusiqueFractale(
   const sampleRate = frequenceDeTravail();
   const pMax = Math.min(profondeur, 6);
   const motif = typeMotif === "Personnalisé"
-    ? intervallesPerso.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
+    ? intervallesPerso.split(",").map((s) => s.trim()).filter(Boolean).map(Number).filter((n) => Number.isFinite(n))
     : (MOTIFS_PREDEFINIS[typeMotif] ?? intervallesDaccord("maj"));
   if (motif.length === 0) motif.push(0);
 

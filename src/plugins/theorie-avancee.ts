@@ -13,7 +13,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   cheminLePlusCourt, lireOperations, nomTriade, notesDe, parcourir, reconnaitre,
-  voixParcimonieuses, type Triade,
+  voixParcimonieuses, type Operation, type Triade,
 } from "../audio/tonnetz";
 import { bilan, verifier } from "../audio/contrepoint";
 import { canonEnNotes, canonEnTexte, chercherMotifs, construire } from "../audio/canon-pavage";
@@ -23,6 +23,8 @@ import {
 } from "../audio/auto-similarite";
 import { parUneFois } from "./hors-lot";
 import { notesDuMidi } from "../audio/midi";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
+import { lireListe } from "../audio/listes-musicales";
 import { Note as NoteTonal } from "tonal";
 import { accordDuSymbole } from "../audio/symboles-accords";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
@@ -124,11 +126,11 @@ export const fiches: FicheAudio[] = ([
         options: ["Suite d'opérations", "Chemin vers un accord"],
         optionsEn: ["Sequence of operations", "Path to a chord"],
         optionIds: ["suite", "chemin"], defaut: "Suite d'opérations", defautEn: "Sequence of operations",
-        doc: "« Suite » applique les opérations qu'on écrit. « Chemin » cherche le plus court trajet vers l'accord d'arrivée : c'est la mesure de distance propre à l'espace de Riemann, et aucune distance tonale ne la donne.",
-        docEn: "« Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives." },
+        doc: "« Suite » applique les opérations qu'on écrit. « Chemin » cherche le plus court trajet vers l'accord d'arrivée, en P, L et R : c'est la mesure de distance propre à l'espace de Riemann, et aucune distance tonale ne la donne. Une arrivée qui est le départ rend l'accord seul, en zéro opération.",
+        docEn: "« Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord, in P, L and R: the distance measure proper to Riemann's space, which no tonal distance gives. A destination that is the start returns the chord alone, in zero operations." },
       { nom: "Opérations", nomEn: "Operations", type: "texte", defaut: "PLRLPR", defautEn: "PLRLPR",
-        doc: "Les opérations à appliquer, dans l'ordre. P échange majeur et mineur sur la même fondamentale, L et R conduisent vers les accords voisins. « PLPLPL » parcourt le cycle hexatonique et revient au départ.",
-        docEn: "The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start." },
+        doc: "Les opérations à appliquer, dans l'ordre. P échange majeur et mineur sur la même fondamentale, L et R conduisent vers les accords voisins. « PLPLPL » parcourt le cycle hexatonique et revient au départ. Les composées N, S et H valent chacune un pas : N, « RLP », mène do majeur à fa mineur ; S, « LPR », à do dièse mineur ; H, « LPL », à la bémol mineur, et elles déplacent plus d'une voix. Espaces, virgules et tirets séparent ; une autre lettre fait refuser le composant, et le message la nomme.",
+        docEn: "The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. The compounds N, S and H each count as one step: N, « RLP », leads C major to F minor; S, « LPR », to C sharp minor; H, « LPL », to A flat minor, and they move more than one voice. Spaces, commas and hyphens separate; any other letter makes the node refused, and the message names it." },
       { nom: "Accord d'arrivée", nomEn: "Destination chord", type: "texte", defaut: "G#m", defautEn: "G#m",
         doc: "En mode « Chemin », l'accord à atteindre, une triade majeure ou mineure écrite comme l'accord de départ ; un autre accord est refusé, et le message le nomme. Do majeur et sol dièse mineur n'ont aucune note commune et sont pourtant à trois opérations l'un de l'autre : c'est le pôle hexatonique.",
         docEn: "In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole." },
@@ -153,7 +155,9 @@ export const fiches: FicheAudio[] = ([
           message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteDepart, en ? "Starting chord" : "Accord de départ") };
       }
       const mode = ctx.paramTexte("Mode", "suite");
-      let operations = lireOperations(ctx.paramTexte("Opérations", "PLRLPR"));
+      // LE NOMBRE D'OPÉRATIONS S'ACCORDE : « 1 opérations » s'écrivait, et zéro en est une en français.
+      const compte = (n: number) => `${n} ${en ? (n === 1 ? "operation" : "operations") : (n <= 1 ? "opération" : "opérations")}`;
+      let operations: Operation[] = [];
       let entete = "";
       if (mode === "chemin") {
         const texteArrivee = ctx.paramTexte("Accord d'arrivée", "G#m");
@@ -163,12 +167,21 @@ export const fiches: FicheAudio[] = ([
             message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteArrivee, en ? "Destination chord" : "Accord d'arrivée") };
         }
         const chemin = cheminLePlusCourt(depart, arrivee);
-        if (!chemin) return { valeurs: [null, null, null], message: traduire("msg.tonnetz.sansChemin") };
+        if (!chemin) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.sansChemin") };
+        // UNE ARRIVÉE QUI EST LE DÉPART REND L'ACCORD SEUL, en zéro opération : elle répondait « Aucune
+        // opération lisible ». Décision de Fabien du 2026-11-22, « The chord alone ».
         operations = chemin;
-        entete = `${nomTriade(depart)} → ${nomTriade(arrivee)} : ${chemin.length} ${
-          en ? "operations" : "opérations"}`;
+        entete = `${nomTriade(depart)} → ${nomTriade(arrivee)} : ${compte(chemin.length)}`;
+      } else {
+        // CE QUI N'EST PAS UNE OPÉRATION EST REFUSÉ, ET NOMMÉ ; un texte vide l'est aussi. Revue des
+        // notations en texte, 2026-11-22.
+        const lu = lireOperations(ctx.paramTexte("Opérations", "PLRLPR"));
+        if ("refus" in lu) {
+          return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.operation_illisible_var_0", lu.refus) };
+        }
+        if (lu.operations.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.sansOperation") };
+        operations = lu.operations;
       }
-      if (operations.length === 0) return { valeurs: [null, null, null], message: traduire("msg.tonnetz.sansOperation") };
 
       const suite = parcourir(depart, operations);
       const accords = voixParcimonieuses(suite, Math.round(ctx.paramNombre("Note de base", 60)));
@@ -186,7 +199,7 @@ export const fiches: FicheAudio[] = ([
       const [audio, midi] = await rendre(ctx, notes);
       return {
         valeurs: [audio, midi, [entete, ...lignes].filter(Boolean).join("\n")],
-        message: traduire("msg.tonnetz.resultat", suite.length, operations.join("")),
+        message: traduire("msg.tonnetz.resultat", suite.length, operations.join("") || compte(0)),
       };
     },
   }),
@@ -200,12 +213,12 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Voix grave", nomEn: "Lower voice", type: "texte", defaut: "C4 D4 E4 F4 E4 D4 C4",
         defautEn: "C4 D4 E4 F4 E4 D4 C4",
-        doc: "Le cantus firmus, une note par temps. Un MIDI branché en entrée l'emporte : ses notes sont réparties en deux voix par leur hauteur.",
-        docEn: "The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch." },
+        doc: "Le cantus firmus, une note par temps. Un MIDI branché en entrée l'emporte : ses notes sont réparties en deux voix par leur hauteur. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Voix aiguë", nomEn: "Upper voice", type: "texte", defaut: "G4 F4 G4 A4 G4 B4 C5",
         defautEn: "G4 F4 G4 A4 G4 B4 C5",
-        doc: "Le contrepoint, une note par temps, autant de notes que la voix grave. La valeur par défaut est un exercice juste : le composant ne doit rien y trouver.",
-        docEn: "The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it." },
+        doc: "Le contrepoint, une note par temps, autant de notes que la voix grave. La valeur par défaut est un exercice juste : le composant ne doit rien y trouver. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Unissons intérieurs", nomEn: "Inner unisons", type: "choix",
         options: ["Interdits", "Permis"], optionsEn: ["Forbidden", "Allowed"],
         optionIds: ["interdits", "permis"], defaut: "Interdits", defautEn: "Forbidden",
@@ -213,15 +226,17 @@ export const fiches: FicheAudio[] = ([
         docEn: "Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard." },
     ],
     async executer(ctx) {
-      const lire = (texte: string): number[] => {
-        const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-        return texte.split(/[\s,]+/).filter(Boolean).map((mot) => {
-          const m = /^([a-gA-G])([#b]?)(-?\d+)?$/.exec(mot.trim());
-          if (!m) return NaN;
-          const alteration = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
-          const octave = m[3] === undefined ? 4 : parseInt(m[3], 10);
-          return base[m[1].toLowerCase()] + alteration + (octave + 1) * 12;
-        }).filter((n) => Number.isFinite(n));
+      // LE SEUL LECTEUR DES NOMS DE NOTES, revue des notations en texte du 2026-11-22. Un nom illisible
+      // était jeté, et l'exercice jugé sur une voix amputée, « C4 X4 E4 F4 » sur trois notes contre
+      // quatre ; un nom sans octave prenait l'octave 4. Décision de Fabien : il est refusé, et nommé.
+      const lire = (texte: string): { hauteurs: number[] } | { refus: string } => {
+        const hauteurs: number[] = [];
+        for (const mot of texte.split(/[\s,]+/).filter(Boolean)) {
+          const lue = hauteurOuRefus(mot);
+          if ("refus" in lue) return lue;
+          hauteurs.push(lue.midi);
+        }
+        return { hauteurs };
       };
       let basse: number[], haute: number[];
       const entree = await notesDuMidi(ctx.entree(0));
@@ -236,11 +251,15 @@ export const fiches: FicheAudio[] = ([
         basse = instants.map((i) => Math.min(...parInstant.get(i)!));
         haute = instants.map((i) => Math.max(...parInstant.get(i)!));
       } else {
-        basse = lire(ctx.paramTexte("Voix grave", "C4 D4 E4 F4 E4 D4 C4"));
-        haute = lire(ctx.paramTexte("Voix aiguë", "G4 F4 G4 A4 G4 B4 C5"));
+        const grave = lire(ctx.paramTexte("Voix grave", "C4 D4 E4 F4 E4 D4 C4"));
+        if ("refus" in grave) return { valeurs: [null], erreur: true, message: grave.refus };
+        const aigue = lire(ctx.paramTexte("Voix aiguë", "G4 F4 G4 A4 G4 B4 C5"));
+        if ("refus" in aigue) return { valeurs: [null], erreur: true, message: aigue.refus };
+        basse = grave.hauteurs;
+        haute = aigue.hauteurs;
       }
       if (basse.length === 0 || haute.length === 0) {
-        return { valeurs: [null], message: traduire("msg.contrepoint.vide") };
+        return { valeurs: [null], erreur: true, message: traduire("msg.contrepoint.vide") };
       }
       const infractions = verifier(basse, haute, {
         unissonsInterieurs: ctx.paramTexte("Unissons intérieurs", "interdits") === "permis",
@@ -273,8 +292,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Longueur du cycle. Le motif et les entrées doivent le paver exactement : leur produit vaut donc toujours ce nombre.",
         docEn: "Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number." },
       { nom: "Motif", nomEn: "Motif", type: "texte", defaut: "0 1 2", defautEn: "0 1 2",
-        doc: "Les positions frappées par une voix, en numéros de pulsation. Laissez vide pour que le composant cherche lui-même un motif qui pave.",
-        docEn: "The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself." },
+        doc: "Les positions frappées par une voix, en numéros de pulsation entiers, de 0 à « Pulsations » moins un, séparés par des espaces, des virgules ou des points-virgules. Vide, le composant cherche lui-même un motif qui pave. Un motif dont un jeton ne se lit pas, ou qui sort du cycle, est refusé, et le message le nomme ; un motif qui ne pave pas est refusé aussi.",
+        docEn: "The positions struck by one voice, as whole pulse numbers, from 0 to « Pulses » minus one, separated by spaces, commas or semicolons. Empty, the node searches for a tiling motif itself. A motif with an unreadable token, or one that leaves the cycle, is refused, and the message names it; a motif that does not tile is refused too." },
       { nom: "Taille cherchée", nomEn: "Searched size", type: "nombre", plage: [2, 12], pas: 1, defaut: 3,
         doc: "Nombre de frappes par voix, quand le motif est laissé vide. Il doit diviser le nombre de pulsations.",
         docEn: "Number of onsets per voice, when the motif is left empty. It must divide the number of pulses." },
@@ -283,29 +302,48 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 4,
         doc: "Nombre de tours joués.", docEn: "Number of cycles played." },
       { nom: "Hauteurs", nomEn: "Pitches", type: "texte", defaut: "60 64 67 72", defautEn: "60 64 67 72",
-        doc: "Une hauteur MIDI par voix. C'est ce qui rend le pavage audible : à hauteur unique, on n'entendrait qu'une pulsation régulière, ce qu'est justement tout canon par pavage, sans entendre qu'elle est partagée.",
-        docEn: "One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared." },
+        doc: "Une hauteur par voix, en numéro MIDI de 0 à 127 ou en nom de note avec son octave, « C4 », « Do4 ». C'est ce qui rend le pavage audible : à hauteur unique, on n'entendrait qu'une pulsation régulière, ce qu'est justement tout canon par pavage, sans entendre qu'elle est partagée. Une hauteur décimale sonne telle quelle ; le fichier MIDI, qui ne porte que des entiers, l'arrondit, et le message le dit. Une liste vide, ou dont un jeton ne se lit pas, est refusée.",
+        docEn: "One pitch per voice, as a MIDI number from 0 to 127 or a note name with its octave, « C4 ». This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. A decimal pitch sounds as written; the MIDI file, which carries whole numbers only, rounds it, and the message says so. An empty list, or one with an unreadable token, is refused." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
       const n = Math.round(ctx.paramNombre("Pulsations", 12));
+      // LE MOTIF, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 : « 0;1;2 »
+      // se lisait « 0 », « 1.5 » se lisait 1, un jeton illisible était jeté, et un motif tout
+      // illisible lançait la recherche comme s'il était vide. Une position hors du cycle se repliait :
+      // décision de Fabien du même jour, « Refuse it, named ». Le vide seul, que la documentation
+      // définit, fait chercher.
+      const reglageMotif = "Motif";
       const texte = ctx.paramTexte("Motif", "0 1 2").trim();
-      let motif = texte.split(/[\s,]+/).filter(Boolean).map((x: string) => parseInt(x, 10))
-        .filter((x: number) => Number.isFinite(x));
-      if (motif.length === 0) {
+      let motif: number[];
+      if (!texte) {
         const trouves = chercherMotifs(n, Math.round(ctx.paramNombre("Taille cherchée", 3)), 1);
-        if (trouves.length === 0) return { valeurs: [null, null, null], message: traduire("msg.canon.introuvable") };
+        if (trouves.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.canon.introuvable") };
         motif = trouves[0];
+      } else {
+        const lu = lireListe(texte, "positions", reglageMotif);
+        if ("refus" in lu) return { valeurs: [null, null, null], erreur: true, message: lu.refus };
+        const hors = lu.valeurs.filter((p) => p >= n);
+        if (hors.length) {
+          return { valeurs: [null, null, null], erreur: true, message: traduire("msg.motif.hors_cycle_var_0_var_1_var_2", reglageMotif, hors.slice(0, 3).map((p) => `« ${p} »`).join(", "), n - 1) };
+        }
+        motif = lu.valeurs;
       }
+      // UN MOTIF QUI NE PAVE PAS EST UN REFUS, en erreur : il partait sans le drapeau, et le nœud
+      // s'annonçait vert sans rien rendre.
       const canon = construire(motif, n);
-      if (!canon) return { valeurs: [null, null, null], message: traduire("msg.canon.nePavePas", motif.join(" "), n) };
-      const hauteurs = ctx.paramTexte("Hauteurs", "60 64 67 72").split(/[\s,]+/).filter(Boolean)
-        .map((x: string) => parseInt(x, 10)).filter((x: number) => Number.isFinite(x));
-      const notes = canonEnNotes(
-        canon, ctx.paramNombre("Durée d'un pas", 0.2),
-        hauteurs.length > 0 ? hauteurs : [60], Math.round(ctx.paramNombre("Répétitions", 4)),
-      );
+      if (!canon) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.canon.nePavePas", motif.join(" "), n) };
+      // LES HAUTEURS, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 :
+      // « 60;64;67;72 » mettait les quatre voix sur do, un jeton illisible décalait les voix, 200
+      // s'écrivait dans le fichier MIDI, et une liste vide jouait do. Décision de Fabien du même jour,
+      // « Keep it in the sound » : une hauteur décimale sonne telle quelle, et le fichier MIDI, qui ne
+      // porte que des entiers, l'arrondit ; le message le dit.
       const en = langueCourante() === "en";
+      const lue = lireListe(ctx.paramTexte("Hauteurs", "60 64 67 72"), "hauteurs", en ? "Pitches" : "Hauteurs");
+      if ("refus" in lue) return { valeurs: [null, null, null], erreur: true, message: lue.refus };
+      const hauteurs = lue.valeurs;
+      const notes = canonEnNotes(canon, ctx.paramNombre("Durée d'un pas", 0.2), hauteurs, Math.round(ctx.paramNombre("Répétitions", 4)));
+      const arrondies = [...new Set(hauteurs.filter((h) => !Number.isInteger(h)))].map((h) => `${h} → ${Math.round(h)}`);
       const grille = [
         `${en ? "Motif" : "Motif"} : ${canon.rythme.join(" ")}`,
         `${en ? "Entries" : "Entrées"} : ${canon.entrees.join(" ")}`,
@@ -319,7 +357,8 @@ export const fiches: FicheAudio[] = ([
       const [audio, midi] = await rendre(ctx, notes);
       return {
         valeurs: [audio, midi, grille],
-        message: traduire("msg.canon.resultat", canon.entrees.length, canon.rythme.length, canon.n),
+        message: traduire("msg.canon.resultat", canon.entrees.length, canon.rythme.length, canon.n)
+          + (arrondies.length ? ` · ${traduire("msg.canon.midi_arrondi_var_0", arrondies.join(", "))}` : ""),
       };
     },
   }),

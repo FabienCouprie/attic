@@ -76,6 +76,648 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Les gardes du dépôt qui l'ont rencontré** : « ISMIR » entre aux sigles du ton des documentations ; la fiche est déclarée hors du banc de croisement, le banc de node n'ayant ni worker ni WebGL (ses deux lancers y tombaient sur « Worker is not defined »), « Voix gardées » étant éprouvé sur la grille ; l'épreuve est inscrite parmi les appelants du pilote de graphe.
   - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers neufs ; passe complète, 831 fichiers et 12 210 cas, 12 189 verts et un rouge, le garde du pilote qui ne connaissait pas l'épreuve neuve, inscrite depuis et revue verte ; tables régénérées ; l'épreuve dans l'application, deux cas verts en 53,6 s. **Non vérifié** : dans l'application de bureau, et sur la RTX 2060 : Chromium a pris l'Intel UHD.
 
+- **« SVG VERS PDF » IMPRIME UNE PAGE DE PARTITION, SOUS SON TITRE, DANS UN FICHIER PDF.** Demandé par Fabien le 2026-11-23, pour la sortie de « Partition gravée », dont le graveur n'écrit pas de titre. Famille Sorties → Export, qui passe de cinq à six composants.
+  - **Ce qu'il fait** : l'entrée « SVG » reçoit une image, l'entrée « Titre » le texte écrit en tête de page, et le réglage du même nom le donne quand rien n'est branché. L'image prend la largeur de la page entre des marges de 15 mm, garde ses proportions, et se réduit si elle est trop haute : le PDF a toujours une page. « Format », A4 ou Lettre US, et « Orientation » font la page ; « Nom » le fichier, en `.pdf`, écrit dans le répertoire de travail comme le fait « Export image », et la sortie « Chemin » rend son chemin. Une image qui n'est pas un SVG, lue sur ses octets, est refusée en nommant ce qu'elle est.
+  - **Comment, et sans aucun paquet** : Chromium imprime, celui d'Electron, par `printToPDF` dans le processus principal (`electron/ipc-pdf.cjs`, canal `pdf:depuis-svg`). La page est une vue détachée, qui n'entre pas dans la liste des fenêtres, JavaScript coupé, dans une session à elle qui refuse toute requête sauf la page et les adresses `data:` ; le SVG y est posé en `<img>`, où il ne peut ni lancer de script ni charger de ressource, et sa police musicale embarquée sert aux nuances. Le dessin reste vectoriel et le texte du SVG reste du texte.
+  - **Relevé à la sonde avant d'écrire le nœud**, sur une gamme gravée avec tempo, deux nuances et paroles : une page de 36 Ko en 230 ms ; le lecteur du nœud « Extraction PDF » y relit le titre, « Allegro » et les huit syllabes, et ses flux portent 174 courbes et 38 déplacements. L'en-ligne et l'`<img>` rendent le même texte.
+  - **Tenu par** `electron/ipc-pdf.test.ts`, 17 cas sur la demande acceptée et la page imprimée, relue comme un document : le SVG octet pour octet, le titre échappé, la taille de chaque page. Vu rouge sur deux fautes plantées, le titre écrit sans échappement et l'orientation inversée. `plugins/svg-vers-pdf.test.ts`, 10 cas, pont simulé : ce qui part à l'impression, le titre branché qui l'emporte, le fichier écrit, les refus. Vu rouge sur le réglage qui l'emporte sur l'entrée, et sur le format lu sur l'étiquette du fichier plutôt que sur ses octets. Et l'épreuve `tests-e2e/svg-vers-pdf-dans-application.spec.ts`, deux cas en 17 s dans l'application construite, profil jetable : la gamme gravée puis imprimée en A4 portrait sous le titre branché, puis en Lettre US paysage sous le titre réglé. Le PDF relu porte une page aux dimensions réglées, le titre en tête et dans ses propriétés, « Allegro ♩ = 120 » et les huit syllabes, 209 courbes et 47 déplacements. Vue rouge sur trois fautes plantées dans `ipc-pdf.cjs` : l'image retirée de la page, où il ne reste qu'une courbe et aucun déplacement, le titre retiré, l'orientation inversée.
+  - **Vu dans l'application**, le PDF ouvert : la gamme sous « Gamme d'essai, épreuve », nuances et paroles comprises ; une pièce de quarante mesures gravée à l'échelle 100 %, dix systèmes, tient sur une page A4 sous un titre de deux lignes.
+
+- **CSOUND RELIT CE QUE LES NŒUDS ÉCRIVENT, PAR UN SPEC PERMANENT.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, septième lot.
+  - **Ce qui manquait** : les gardes unitaires du onzième format vérifient le texte écrit, et rien ne vérifiait ce que Csound en lit ; la sonde qui l'avait fait pendant la revue avait été supprimée.
+  - **Ce qui change** : `tests-e2e/csound-relit.spec.ts`, sur un serveur de vérification au port 5253, que seul il emploie, charge les modules de l'application dans la page et passe tout par `executer` :
+    - chaque formule de « Formules Csound » sonne par le nœud « Csound », sans erreur, plus d'une seconde, et sous les 0,95 du limiteur ;
+    - les partitions de « Partition Csound », « Matrice de paramètres », « Partition aléatoire Csound » et la partition d'essai d'« Orchestre Csound » sont relues par un orchestre qui imprime ses p-fields par `prints` : Csound lit chaque note, et chaque champ tel que le texte l'écrit, à 10⁻⁴ près.
+  - Décision de Fabien : « Add the spec ». Il ne tourne pas en CI, qui ne lance que les empreintes ; il se lance à la demande, en dix secondes une fois le serveur prêt.
+  - Vu vert sur le code, six passes sur six, et rouge sur une instruction de tempo « t 0 120 » glissée en tête de la partition écrite, plantée : « note 1, p3 : écrit 0.5, lu 0.25 », deux passes sur deux. Une première faute plantée, « t 0 60 », restait verte, et c'est juste : 60 est le tempo par défaut de Csound.
+  - **Trouvé en mesurant, et laissé hors du spec** : sur le premier rendu d'une page neuve, les messages de Csound sont arrivés une fois en double, chaque ligne deux fois, une passe sur trois. Un rendu à blanc ouvre la mesure. La sonde a écarté un écouteur oublié d'un rendu à l'autre : trois rendus successifs rendent chacun leurs seules lignes. La cause n'est pas cherchée.
+  - Le premier port, 5231, était déjà celui de `verovio.spec.ts`, et `src/docs/contrat-serveur-de-specs.test.ts` a fait tomber la CI ; le spec a pris le 5253.
+
+- **LES FORMULES CSOUND ÉCRIVENT LEURS COMMENTAIRES DANS LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, sixième lot.
+  - **Ce qui se passait** : « Formules Csound » écrivait l'orchestre et la partition avec leurs commentaires en français, interface anglaise comprise, « ; Le même la, avec un indice de plus en plus fort… », et l'en-tête « sortie mono ». Les orchestres d'exemple des autres nœuds Csound avaient déjà leur version anglaise.
+  - **Ce qui change** : sous l'interface anglaise, les trente-deux commentaires des huit formules, leur en-tête et leurs p-fields s'écrivent en anglais. La table vit dans `audio/csound-formules-en.ts`, ligne pour ligne.
+  - Décision de Fabien : « The interface language ». Le commentaire de tête d'un `.sfz` exporté suivra, avec les points SFZ, quand la #442 sera fusionnée.
+  - Tenu par neuf cas de plus dans `plugins/points-ouverts.test.ts`, un par formule et un témoin français ; les huit vus rouges sur le code d'avant, et rouge aussi sur une traduction retirée, plantée. Une formule neuve sans traduction ferait tomber le cas.
+
+- **L'ÉDITEUR DES ARBRES RYTHMIQUES NE PROPOSE PLUS UNE LIAISON SANS NOTE DEVANT ELLE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, cinquième lot.
+  - **Ce qui se passait** : l'éditeur de dessin liait la première feuille, ou celle qui suit un silence, et écrivait « (4/4 (1.0 1 1 1)) », que le lecteur refuse ensuite : « une liaison sans note devant elle ne prolonge rien ».
+  - **Ce qui change** : `peutEtreLiee` (`audio/arbre-disposition.ts`) dit si la feuille désignée suit ce qui sonne, à travers la barre comprise ; le bouton ⌣ et l'entrée « Liée » du menu s'éteignent sinon, et leur bulle dit pourquoi. `mettreEtat` laisse l'arbre tel quel devant une telle liaison, et le refus à l'exécution reste en second garde.
+  - Décision de Fabien : « Forbid it in the editor ». Non vérifié dans l'application : la vue n'a été éprouvée que par ses fonctions.
+  - Tenu par trois cas de plus dans `plugins/points-ouverts.test.ts`, vus rouges sur le code d'avant, et rouges aussi sur une liaison de nouveau toujours permise, plantée.
+
+- **LA GRAVURE VEXFLOW LIT EN TEMPS, ÉCRIT SES ACCORDS À L'ÉTAT FONDAMENTAL ET COUPE LA TABLATURE EN MESURES.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` sur les objets que VexFlow dessine :
+    - « Partition MIDI » convertissait les secondes au premier tempo du fichier : huit noires, le tempo passant de 120 à 60 après la quatrième, se gravaient en quatre noires et quatre blanches ;
+    - « Partition VexFlow » posait toutes les notes à l'octave 4 : en do, V sonnait ré–sol–si et vi do–mi–la, des renversements que le chiffre ne disait pas ;
+    - « Tablature VexFlow » gravait neuf noires sans une barre.
+  - **Ce qui change** :
+    - à « Tempo » 0, les durées se lisent en temps du fichier, changements de tempo compris ; une autre valeur garde la conversion des secondes à ce tempo ;
+    - chaque accord s'empile depuis sa fondamentale, posée à l'octave 4, et un accord à basse écrite commence par sa basse ;
+    - la tablature se coupe en mesures de 4/4 par la même coupe que la portée ; une note qui passe la barre se coupe en deux, la seconde frette entre parenthèses.
+  - Décisions de Fabien : « Root position », « Cut into bars ». Cinq cas de `plugins/vexflow-gravure.test.ts` attendaient les notes à l'octave 4 ; ils attendent l'état fondamental.
+  - Tenu par `plugins/points-ouverts-gravure.test.ts`, sept cas, six vus rouges sur le code d'avant, le septième en témoin ; vus rouges aussi sur les trois réparations retirées, plantées.
+
+- **UN SÉQUENCEUR REFUSE LES RANGÉES QU'IL NE JOUE PAS, ET UN CERCLE NE JETTE PLUS QUE LES SÉPARATEURS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze rangées sur les huit voix de la batterie avancée en perdaient quatre, et trente sur le séquenceur mélodique en perdaient dix-sept, sans un mot ;
+    - un Cercle rythmique ou mélodique écartait tout ce qui n'est ni 0 ni 1 : « 1002 » donnait trois places, et une adresse collée y perdait ses lettres mais gardait ses chiffres, « ?tempo=120 » ajoutant « 10 » au motif.
+  - **Ce qui change** :
+    - un motif qui porte plus de rangées que le séquenceur n'en joue, 8 pour la batterie, 13 pour le mélodique, 21 pour les accords, est refusé en erreur, et le message dit combien il en a ; une rangée qui manque reste muette ;
+    - le motif d'un Cercle écarte ses espaces, tirets, points et barres, et d'une adresse il ne lit que ce qui suit le dernier « # ». Tout autre caractère est refusé et nommé avec son rang. La vue lit le motif de la même façon.
+  - Décisions de Fabien : « Refuse it, named » pour les rangées ; « Clean separators only », puis « Read after the # » pour l'adresse, que la notice promet de lire.
+  - Tenu par douze cas de plus dans `plugins/points-ouverts.test.ts`. Rouges sur le code d'avant : les trois refus de rangées, les deux de « 1002 » et les deux de l'adresse ; les autres sont des témoins. Vu rouge aussi sur le contrôle des rangées retiré et sur l'adresse de nouveau lue entière, plantés.
+
+- **LE CRIBLE LIT « ^ », LA DIFFÉRENCE SYMÉTRIQUE D'ARIZA.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, deuxième lot.
+  - **Ce qui se passait** : « 3@0^4@0 » était refusé comme un signe hors de la notation, alors que `music21.sieve` le lit, et que le relevé du dixième format l'avait oublié.
+  - **Ce qui change** : « ^ », ou « △ », retient ce que l'un des termes retient et pas l'autre ; de 0 à 11, 3@0 ^ 4@0 donne 3, 4, 6, 8 et 9. Il se lie comme en Python : le complément d'abord, puis « & », puis « ^ », puis « | », si bien que 2@0|3@0^4@0&6@0 vaut 2@0 | (3@0 ^ (4@0 & 6@0)). Le message l'écrit « △ », et ce qu'il écrit se relit.
+  - Décision de Fabien : « Read it ». Le cas de `plugins/crible-notation.test.ts` qui tenait le refus de « ^ » prend « % », un signe toujours hors de la notation.
+  - Tenu par quatre cas de plus dans `plugins/points-ouverts.test.ts`, vus rouges sur le code d'avant, et rouges aussi sur « ^ » de nouveau lu comme une réunion, planté.
+
+- **QUATRE NŒUDS QUI REFUSAIENT EN RESTANT VERTS REFUSENT EN ERREUR.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` : « Opérations sérielles » sur une série vide, « Classes de hauteurs » sur des notes vides, « Contrepoint (espèces) » sur deux voix vides, et « Renversements et voicings » sans MIDI ou sur un MIDI sans note, disaient leur refus et restaient verts, sans le drapeau d'erreur. Un graphe passait alors sur une sortie vide.
+  - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
+  - Tenu par `plugins/points-ouverts.test.ts`, quatre cas vus rouges sur le code d'avant, et rouge aussi sur le drapeau de nouveau retiré au Contrepoint, planté.
+
+- **CHAQUE `<CONTROL>` POSE SON `DEFAULT_PATH`, ET L'EN-TÊTE D'UN .SFZ EXPORTÉ SUIT LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, neuvième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un seul `default_path` valait pour tout le fichier, celui du dernier `<control>` : deux en-têtes, `A/` puis `B/`, envoyaient les régions du premier chercher dans `B/`, et l'échantillon était déclaré manquant. sfzformat.com dit qu'un nouveau `<control>` remet `default_path` à zéro ;
+    - l'en-tête d'un `.sfz` exporté s'écrivait en français, interface anglaise comprise.
+  - **Ce qui change** : chaque région garde le `default_path` de son `<control>`, et un `<control>` qui n'en porte pas le remet à zéro ; l'en-tête s'écrit dans la langue de l'interface, depuis `audio/sfz-entete.ts`.
+  - Décision de Fabien : « The interface language » ; `default_path` suit la référence.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, trois vus rouges sur le code d'avant et deux témoins ; rouges aussi sur un `default_path` de nouveau gardé d'un `<control>` à l'autre et sur l'en-tête de nouveau toujours français, plantés.
+
+- **`PITCH_KEYCENTER=SAMPLE` PREND LA RACINE QUE DÉCLARE LE WAV.** Revue des notations en texte, le format SFZ, 2026-11-22, quatrième lot.
+  - **Ce qui se passait** : la référence dit de `pitch_keycenter=sample` qu'il « causes the SFZ player to look in the sample file metadata for the keycenter value », et la note 0 sans métadonnée. La valeur ne se lisait pas comme une note, et la région prenait la racine 60, sans un mot, quel que soit le fichier.
+  - **Ce qui change** :
+    - la racine se lit dans le bloc `smpl` du WAV, la « MIDI unity note », sur les octets bruts, avant le décodage qui ne garde que le son (`audio/wav-racine.ts`) ;
+    - un WAV sans ce bloc est joué depuis la note 0, comme le veut la référence, et « Banque SFZ » comme « Clavier SFZ » le disent en nommant le fichier ;
+    - le décalage de <control> et `transpose` s'ajoutent à la racine lue, et elle se résout avant le tri des doublons, qui la compare ;
+    - `pitch_keycenter=sample` l'emporte sur `key`, comme chez rgc et Cakewalk ; ARIA garde `key`.
+  - Le décodeur des deux nœuds rend maintenant le son avec la racine de son fichier : un cas de `plugins/clavier-sfz.test.ts` lit le son dans ce résultat, et non plus le résultat lui-même.
+  - Décision de Fabien : lire la racine du WAV.
+  - Tenu par trois cas de plus dans `plugins/sfz-format.test.ts`, sur de vrais octets de WAV. Les trois vus rouges sur le code d'avant, et deux vus rouges sur une lecture du mauvais champ du bloc `smpl`, plantée.
+
+- **L'EXPORT SFZ GARDE LE VOLUME, LE TEMPÉRAMENT ET LE KIT, ET N'ÉCRIT PLUS UN SON PAR-DESSUS UN AUTRE.** Revue des notations en texte, le format SFZ, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` en exportant par « Export SFZ » et en relisant par « Banque SFZ » :
+    - le gain d'une zone et son tempérament n'étaient pas écrits : une zone à 0,5, soit −6,02 dB, et une zone à 63,16 cents par touche, dix-neuf degrés par octave, se relisaient au gain plein et au demi-ton ;
+    - un kit à régions larges perdait `pitch_keytrack=0` et se relisait en instrument de hauteurs ;
+    - le nom d'un WAV ne dit que la racine et la couche : deux zones à la même racine, sur 0–59 et 60–127, s'écrivaient toutes deux dans `zone-060.wav`, la seconde par-dessus la première, et la région basse jouait le son de la haute ;
+    - un nom de fichier portant `=`, que la référence interdit dans un chemin d'échantillon, s'écrivait quand même ; notre propre lecteur y relisait zéro région.
+  - **Ce qui change** :
+    - `volume`, en décibels, et `pitch_keytrack`, en cents par touche, s'écrivent, et une zone qui ne suit pas la touche s'écrit `pitch_keytrack=0` ;
+    - deux sons à la même racine reçoivent deux noms, `zone-060.wav` et `zone-060-2.wav`, et un son partagé par deux zones ne s'écrit qu'une fois. Les noms viennent d'un seul endroit, `audio/sfz-noms.ts`, que lisent le texte et l'écriture des WAV ;
+    - un nom portant `=` est refusé, nommé, et rien n'est écrit.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, tous par l'aller-retour entre les deux nœuds. Quatre vus rouges sur le code d'avant ; le cinquième, un son partagé qui reste un seul fichier, sert de témoin. Vu rouge aussi sur `pitch_keytrack=0` de nouveau omis, et sur des noms de nouveau confondus, plantés.
+
+- **`ONE_SHOT` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, ET LA FIN D'UNE BOUCLE SFZ EST INCLUSE.** Revue des notations en texte, le format SFZ, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` contre sfzformat.com :
+    - `loop_mode=one_shot`, « from start to end, ignoring note off », était éteint au relâchement. La crash du kit intégré, déclarée `one_shot` et longue de 1,2 s, rendait 0,35 s par « Séquence sur banque » sous une note de 0,1 s, et plus rien après 0,25 s ;
+    - `loop_end` est inclus dans le format : `loop_start=1000 loop_end=1999` boucle sur mille échantillons. Il était lu comme une fin exclue, 999 par tour, et l'export écrivait `loop_end=2000` pour une boucle de mille, soit 1 001 dans un autre lecteur ;
+    - l'export écrivait `loop_mode=no_loop` pour chaque zone sans boucle, celles d'un kit comprises.
+  - **Ce qui change** :
+    - une zone `one_shot` sonne jusqu'au bout de son échantillon, au rendu comme au jeu en direct des deux claviers, où le relâchement de la touche ne l'arrête plus ;
+    - la crash du kit sonne ses 1,2 s, et le tampon rendu s'allonge pour la contenir ; une zone ordinaire garde son relâchement, et la durée du rendu sans `one_shot` est celle d'avant, au bit près ;
+    - `loop_end` se lit et s'écrit inclus, et une zone `one_shot` s'écrit `loop_mode=one_shot`.
+  - Décision de Fabien : jouer `one_shot` jusqu'au bout, les queues de la batterie s'allongeant dans les graphes qui jouent le kit. Aucune empreinte versionnée ne passe par un nœud SFZ.
+  - Tenu par quatre cas de plus dans `plugins/sfz-format.test.ts`. Trois vus rouges sur le code d'avant ; le quatrième, une zone ordinaire qui se tait après son relâchement, sert de témoin. Vu rouge aussi sur une fin de boucle de nouveau lue exclue, et sur un relâchement de nouveau appliqué à `one_shot`, plantés.
+
+- **UN SFZ SE LIT COMME SA RÉFÉRENCE LE DÉFINIT, ET CE QUI EN EST ÉCARTÉ EST NOMMÉ.** Revue des notations en texte, le format SFZ, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` sur « Banque SFZ » et « Clavier SFZ » contre sfzformat.com :
+    - une région à `lokey=-1 hikey=-1`, ou `key=-1`, que SFZ 2 réserve à un contrôleur, jouait sur les 128 touches ;
+    - une touche illisible ou hors de 0 à 127 (`lokey=foo`, `lokey=200`, `key=h4`, `key=g#9`) faisait une région de 0 à 127, sans un mot ; `volume=fort`, `tune=abc` prenaient leur défaut, `hivel=200` et `lovel=-5` passaient ;
+    - `lokey=72 hikey=60` était lu 60–72, une supposition que la référence ne fait pas ;
+    - `amp_veltrack=-100` était ramené à 0 : la vélocité 127 sonnait comme la vélocité 20, à 0,283 de RMS, au lieu de se taire ;
+    - une redéfinition de `#define` valait pour tout le fichier : `$K` à 60 puis à 72 donnait deux régions à 72, l'une comptée comme doublon, et le fichier passait pour un kit d'un son ;
+    - un `#include` non suivi et une région sans `sample` étaient rangés dans les données de lecture, et aucun des deux nœuds ne les disait ;
+    - `*sine`, générateur d'ARIA, était compté comme échantillon manquant ;
+    - `octave_offset` et `note_offset` n'étaient que comptés parmi les ignorés, souvent au-delà des trois noms que montre le message.
+  - **Ce qui change** :
+    - une région dont une valeur est illisible ou hors de la plage de la référence, dont `lokey` dépasse `hikey`, dont une touche vaut -1, dont le `sample` est un générateur, ou que le décalage sort du clavier, est écartée ; le message la nomme par son rang, `#2 lokey=foo` ;
+    - `amp_veltrack` va de −100 à 100, et négatif il joue à rebours ;
+    - un `#define` vaut à partir de sa ligne ;
+    - `octave_offset` et `note_offset` décalent les touches et la racine des régions qui suivent, `octave_offset=-1` mettant `c4` à la touche 48 ;
+    - les deux nœuds disent les `#include`, les régions sans `sample` et les régions écartées.
+  - Décision de Fabien pour `lokey` au-dessus de `hikey` : refuser, nommé ; pour les décalages : les appliquer.
+  - Tenu par `plugins/sfz-format.test.ts`, treize cas tirés des pages de sfzformat.com. Onze vus rouges sur le code d'avant, deux tenus déjà (les noms de notes, l'alias `pitch`). Vu rouge aussi sur une touche -1 de nouveau lue comme absente, et sur une redéfinition de nouveau appliquée à tout le fichier, plantées.
+
+- **LE MUSICXML VENU D'UN MIDI CHOISIT SA CLÉ SUR LE REGISTRE, ET DÉCOUPE SES VALEURS SELON LES TEMPS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, huitième lot.
+  - **Ce qui se passait**, mesuré par `executer` du MIDI au texte MusicXML :
+    - le chemin du MIDI écrivait toujours la clé de sol : do 2 à fa 2 se lisaient sur des lignes supplémentaires ; le chemin de l'arbre, lui, choisissait la sienne ;
+    - une durée composée se découpait la plus grande valeur d'abord, exacte mais aveugle aux temps : une blanche pointée du deuxième temps cachait le troisième, une blanche partie sur la croche du deuxième temps cachait le milieu de la mesure, et en 6/8 une noire passait d'un temps à l'autre.
+  - **Ce qui change** :
+    - une seule règle de clé, `cleDe` dans `audio/musicxml.ts`, sert l'arbre et le MIDI : la clé de fa sous le do central, par la médiane, et le message la nomme ;
+    - `audio/musicxml-temps.ts` découpe selon l'usage qu'Elaine Gould expose dans « Behind Bars » : une mesure à quatre temps montre son milieu, une valeur hors du temps ne passe pas le temps suivant, et deux syncopes sont admises, la blanche du deuxième temps entre deux noires et la noire entre deux croches. Une mesure composée compte ses temps en noires pointées.
+  - Décisions de Fabien : « Choose by register », « Follow the beats ».
+  - Tenu par `plugins/musicxml-temps.test.ts`, dix cas : six vus rouges sur le code d'avant, quatre témoins des syncopes admises et du 3/4. Rouges aussi sur la clé de sol de nouveau imposée et sur le découpage de nouveau aveugle, plantés. La gravure par Verovio, `plugins/musicxml-grave.test.ts`, reste verte.
+
+- **LE MUSICXML PREND LE TEMPO QUE PORTE SON ENTRÉE, ET SES REFUS SONT DES ERREURS.** Revue des notations en texte, douzième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - sur le chemin d'une seule portée, une séquence ou un fichier MIDI à 90 se quantifiait au réglage « Tempo », 120 par défaut. Ses noires se lisaient en cinq doubles croches. Le chemin à plusieurs portées prenait, lui, le tempo de la séquence ;
+    - une entrée absente, une séquence vide et un arbre sans mesure donnaient leur message sans le drapeau d'erreur ;
+    - une séquence vide était annoncée « Le fichier MIDI ne contient aucune note ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « The input's tempo » :
+    - le tempo d'une séquence, ou celui qu'écrit un fichier MIDI, lu par `lireMidiEnSequence`, l'emporte, et le réglage ne sert qu'à défaut. Le chemin de l'arbre écrit aussi celui de la séquence qui le porte ;
+    - les refus portent le drapeau d'erreur, et une séquence vide dit « Aucune note fournie ».
+
+    La documentation de « Tempo » et la notice le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`, qui en compte 27.
+    - Vu rouge sur le code d'avant : 4 cas ; la séquence sans tempo prenait déjà le réglage.
+    - Vu rouge aussi sur le réglage qui l'emporte de nouveau, planté.
+
+- **LA POLYPHONIE D'UN MIDI S'ÉCRIT EN VOIX DANS LE MUSICXML, ET AUCUNE NOTE NE SE PERD.** Revue des notations en texte, douzième format, 2026-11-22, troisième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<backup>` et `<forward>` sont « required to coordinate multiple voices in one part ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure. Les notes étaient groupées par attaque :
+    - un accord prenait la plus longue de ses durées ;
+    - une note qui commençait pendant une autre était perdue. Une basse ronde sous quatre noires donnait deux notes sur cinq, le mi allongé en ronde, et le message annonçait « 5 notes ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Write voices » :
+    - `voixDepuisNotes` pose chaque note dans la première voix libre, les plus aiguës d'abord, pour que la première voix porte le dessus ;
+    - des notes de même attaque et de même fin y forment un accord ;
+    - les voix d'une mesure s'écrivent l'une après l'autre, séparées par `<backup>`. Les altérations s'y décident dans l'ordre du temps, toutes voix confondues, puisqu'elles valent pour la portée.
+
+    La notice le dit.
+  - **Les tests du regroupement** de `audio/musicxml.test.ts` portent sur `voixDepuisNotes`, et tiennent les mêmes quatre règles.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 4 cas polyphoniques ; l'accord de même longueur était déjà juste.
+    - Vu rouge aussi sur une note de nouveau perdue au lieu d'ouvrir une voix, plantée.
+
+- **UNE DURÉE SE DESSINE EXACTE DANS LE MUSICXML, EN NOTES LIÉES QUAND IL LE FAUT, ET UNE NOTE LIÉE DE L'ARBRE GARDE SA HAUTEUR.** Revue des notations en texte, douzième format, 2026-11-22, deuxième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<duration>` est la durée voulue et `<type>` la valeur dessinée. `<tie>` lie pour le son et `<tied>` pour la gravure, et une liaison joint deux notes « of the same pitch ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - depuis un MIDI, une note qui passait la barre était tronquée : un ré de 3 à 5 temps se lisait de 3 à 4. Le code disait « faute de pouvoir la lier » ;
+    - cinq doubles croches se dessinaient en noire, sept en noire pointée, et un silence de cinq doubles croches en soupir. Tout ce qui suivait se lisait décalé ;
+    - depuis un arbre, une liaison par-dessus la barre n'écrivait que sa fin, et le graveur refrappait la note ;
+    - une feuille liée prenait la hauteur suivante, et la liaison joignait deux notes différentes. `derouler`, lui, la fond dans la précédente.
+  - **Ce qui change** :
+    - une note qui passe la barre, ou une durée qu'aucune valeur ne nomme, s'écrit en notes liées, la plus grande valeur d'abord. Un silence s'écrit en silences successifs ;
+    - chaque note porte sa voix, `<voice>`, ce qui prépare les voix du troisième lot ;
+    - la liaison de l'arbre commence sur la dernière note de la mesure, et une feuille liée garde la hauteur de la note qu'elle prolonge.
+
+    La notice le dit, et ne promet plus de tronquer.
+  - **Le garde** : 9 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 9.
+    - Vu rouge aussi sur une liaison de barre de nouveau perdue, plantée.
+
+- **LE MUSICXML DESSINE SES ALTÉRATIONS, QUARTS DE TON COMPRIS, ET LA PARTITION GRAVÉE SE LIT COMME ELLE SONNE.** Revue des notations en texte, douzième format, 2026-11-22, premier lot.
+  - **La référence** : le référentiel MusicXML 4.0 du W3C. `<alter>` « represents chromatic alteration » ; `<accidental>` « represents actual notated accidentals ».
+  - **Ce qui se passait** : les trois chemins du nœud, depuis un MIDI, depuis un arbre et depuis plusieurs voix, n'écrivaient que `<alter>`. Mesuré par `executer`, gravé par la Partition gravée et relu par `lireGravure` :
+    - fa dièse, si bémol et do dièse se lisaient fa, si et do ;
+    - un fa dièse puis un fa se lisaient deux fa ;
+    - un quart de ton au-dessus du do se lisait do.
+  - **Ce qui change** :
+    - `signesDeLaMesure` écrit `<accidental>` selon l'usage. Un signe se pose à la première tête d'une ligne qui change d'altération dans la mesure, et vaut jusqu'à la barre ; un bécarre défait l'altération ; la suite d'une note liée n'en porte pas. Les deux écrivains l'emploient ;
+    - selon la décision de Fabien du 2026-11-22, « Nearest quarter-tone sign », un quart de ton prend son signe. Un autre écart prend celui du quart de ton le plus proche, et `<alter>` garde la valeur exacte pour le son.
+
+    La notice le dit.
+  - **L'instrument de lecture avait un angle mort** : `lireGravure` lisait les quarts de ton de Stein et Zimmermann, que Verovio dessine, comme un bécarre, sans les rendre dans `inconnus`. Il les lit maintenant, et rend tout signe inconnu au lieu de le compter pour rien. Le garde de la Partition gravée reste vert, 82 cas.
+  - **Le garde** : `plugins/musicxml-grave.test.ts`, 8 cas.
+    - Vu rouge sur le code d'avant : les 8.
+    - Vu rouge aussi sur une mesure qui oublie ses signes, plantée.
+
+- **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
+    - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
+    - le MusicXML gravait « (3/4 (1 1 1)) » en triolet de noires pointées ;
+    - dans un triolet, les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient leur modification de temps.
+  - **Ce qui change** : une seule règle, dans `derouler` et dans `feuillesDeMesure` (`audio/musicxml-arbre.ts`). Un groupe est un n-olet quand la durée écrite de son unité n'est pas binaire. Cette durée est allongée du rapport des n-olets qui l'englobent. Une note reste dans le n-olet qui l'englobe, même sous une division binaire.
+  - **Le garde** : 12 cas dans `plugins/arbres-rythmiques.test.ts`, le compte du Rythme sur hauteurs et l'écriture du MusicXML.
+    - Vu rouge sur le code d'avant : 5 cas, dont la note de triolet sans modification de temps, faute antérieure.
+    - Vu rouge aussi sur deux fautes plantées : trois parts recomptées en triolet, et la note de nouveau retirée de son n-olet.
+
+- **UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE DANS ATTIC.** Revue des notations en texte, neuvième format, décision de Fabien du 2026-11-22 : « Read them ».
+  - **Ce qui se passait** : le module `audio/arbre-rythmique.ts` et la documentation du réglage « Arbre » promettent qu'un arbre venu d'ailleurs s'y colle. Mais les formes que donne le manuel d'OpenMusic étaient toutes refusées : « métrique attendue, de la forme 4/4 ». C'était le cas de la voix « (? ((4//4 (1 1 1 1)))) », comme de la métrique « 4//4 » ou « (4 4) ».
+  - **Ce qui change** :
+    - `lireArbre` lit ces formes, comme « 4/4 » ;
+    - le premier élément d'une voix est « ? » ou le nombre de ses mesures, et un nombre qui ne les compte pas est refusé en le nommant ;
+    - une mesure à métrique en liste, « ((4 4) (1 1 1 1)) », se distingue d'une liste englobante de mesures ;
+    - les écrivains gardent « 4/4 ».
+
+    Les documentations des réglages « Arbre » le disent.
+  - **Le garde** : 9 cas dans `plugins/arbres-rythmiques.test.ts`. Chaque forme d'OpenMusic se déroule exactement comme son équivalent « 4/4 ».
+    - Vu rouge sur le code d'avant : 8 cas. Le neuvième, le nombre de mesures faux, n'était refusé que parce que toute la forme l'était.
+    - Vu rouge aussi sur « n//n » de nouveau illisible, planté.
+
+- **UN ARBRE RYTHMIQUE QUE LA NOTATION N'ACCEPTE PAS, OU NE DÉFINIT PAS, EST REFUSÉ EN NOMMANT LE JETON.** Revue des notations en texte, neuvième format, 2026-11-22, premier lot. La référence est le manuel d'OpenMusic.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « (4/4 (1 0 1 1)) » rendait une note de durée nulle, et « 0.5 », une valeur que le manuel n'accepte pas, se lisait comme une liaison d'un demi-poids ;
+    - une liaison derrière un silence prolongeait le silence, et un silence lié, « -1.0 », prolongeait la note d'avant : **le silence écrit sonnait** ;
+    - une liaison en tête devenait une note, une division négative ou liée perdait son signe ;
+    - « 4/0 » se lisait 4/1, seize temps, « 0/4 » rendait des notes de durée nulle, et « (4/4 ()) » quatre temps de rien.
+  - **Ce qui change** : `lireArbre` refuse tout cela, et le message nomme le jeton et sa position. Pour ce que le manuel ne définit pas, c'est la décision de Fabien du 2026-11-22, « Refuse them, named ». Les documentations des réglages « Arbre » le disent.
+  - **Des tests tenaient le contraire**. Dans `audio/arbre-rythmique.test.ts` :
+    - la division négative ou liée était corrigée, et la liaison en tête lue comme une note ;
+    - « (4/4 ()) » était lu.
+
+    Dans `audio/arbre-disposition.test.ts`, une donnée liait derrière un silence. Ils tiennent maintenant le refus, ou un arbre que la notation définit.
+  - **Le garde** : `plugins/arbres-rythmiques.test.ts`, 19 cas, tout par `executer`. Il relit aussi les 340 arbres du catalogue, cent tirages et l'arbre du Quantifier : aucun n'écrit ce qui est refusé.
+    - Vu rouge sur le code d'avant : les 10 refus.
+    - Vu rouge aussi sur un silence lié de nouveau admis, planté.
+
+- **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
+    - le Répartiteur refusait un MIDI absent ou sans note sans le drapeau d'erreur ;
+    - dans le SSP, un jeton illisible était jeté, une amplitude hors de −1 à 1 était bornée, une durée nulle, négative ou décimale arrondie et portée à un échantillon, et une liste vide remplacée par celle d'origine.
+  - **Ce qui change** :
+    - un canal hors de 1 à 16, une piste nulle ou un jeton illisible fait refuser le Répartiteur, et le message nomme la partie et le jeton. `analyserListeNumeros` lit canaux et pistes ;
+    - selon la décision de Fabien du 2026-11-22, « Allow it, said », une partie vide n'a pas de canal, et ses notes vont au « Reste » ;
+    - selon sa décision « Refuse it, named », contre la documentation qui défendait le repli, le SSP refuse un jeton illisible, une amplitude hors de −1 à 1, une durée qui n'est pas un nombre entier d'au moins un échantillon, et une liste vide ;
+    - les refus portent le drapeau d'erreur.
+
+    Les documentations des parties, d'« Amplitudes » et de « Durées » le disent.
+  - **Trois tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/repartition-midi.test.ts`, « 0 », « 17 » et « bonjour » étaient écartés ;
+    - dans `plugins/repartiteur-midi.test.ts`, la piste « 0 » l'était aussi ;
+    - dans `audio/ssp.test.ts`, une saisie illisible retombait sur l'ensemble d'origine.
+  - **Le garde** : 17 cas de plus dans `plugins/lecteurs-oublies.test.ts`, qui en compte 48.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur un jeton illisible de nouveau admis, planté.
+
+- **LA TONALITÉ D'UN PLAN DE CHANSON S'ÉCRIT EN MAJEUR OU EN MINEUR, ET LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « Gm » et « G mixolydian » passaient tels quels dans le plan, quand la documentation et le moteur attendent « G major » ou « A minor » ;
+    - dans le L-système, une règle sans « = », ou dont la gauche n'était pas une seule lettre (« AB=C », « =B »), était jetée sans un mot ;
+    - de deux règles pour la même lettre, la dernière gagnait sans un mot ;
+    - un axiome vide, ou un mot sans note, partait sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read Gm, refuse modes » et « Refuse it, named » :
+    - « Gm » s'écrit « G minor » et « G » « G major », la forme longue comme l'abrégée. Un autre mode est refusé, et le message le nomme ;
+    - une règle mal formée, ou une seconde règle pour la même lettre, fait refuser le L-système, et le message la nomme ;
+    - un axiome vide ou un mot sans note est refusé en erreur.
+
+    « > » et « < », qui allongent et raccourcissent le pas, se lisent comme avant. Les documentations de « Tonalité », d'« Axiome » et de « Règles » le disent.
+  - **Un test tenait le contraire** : dans `audio/lsysteme.test.ts`, « n'importe quoi » et « AB=C » étaient jetés. Il est réécrit avec sa raison.
+  - **Le garde** : 16 cas de plus dans `plugins/lecteurs-oublies.test.ts`.
+    - Vu rouge sur le code d'avant : les 12 qui changent.
+    - Vu rouge aussi sur un mode de nouveau admis, planté.
+
+- **LE MASQUE DU CERCLE À RETOUCHER NE PORTE QUE DES ZÉROS ET DES UNS, ET LA ROUE DE CAMELOT REFUSE UN CODE QU'ELLE NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, premier lot. La passe a relu le registre entier : ces deux nœuds lisent une notation que le recensement n'avait pas listée.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le masque du Cercle à retoucher, une espace prenait une place, « 1 0 0 1 0 0 1 0 » éteignant la place 3 ;
+    - un caractère qui n'était ni 0 ni 1 éteignait la sienne : « x..x..x. » éteignait les trois attaques ;
+    - la Roue de Camelot rendait un nœud vert, « 0 accords · 0 notes », sur « 13A », « 0B », « 4C », « b4 » ou un départ vide.
+  - **Ce qui change** :
+    - un caractère du masque qui n'est ni 0 ni 1, une espace comprise, est refusé, et le message nomme sa place. C'est la règle des grilles que la vue écrit, décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un masque trop court ou trop long se complète ou se coupe toujours, comme la notice le dit ;
+    - un code de départ qui n'est pas un nombre de 1 à 12 suivi de A ou de B est refusé et nommé, en erreur.
+
+    Les documentations de « Retouche » et de « Départ » le disent.
+  - **Le garde** : `plugins/lecteurs-oublies.test.ts`, 15 cas.
+    - Vu rouge sur le code d'avant : les 8 refus.
+    - Vu rouge aussi sur une espace de nouveau admise dans le masque, plantée.
+
+- **L'HARMONIE NÉGATIVE DIT CE QUE FAIT SA RÉFLEXION, ET LA SÉRIE À TOUS LES INTERVALLES REVIENT À LA PREMIÈRE AU-DELÀ DE LA DERNIÈRE.** Revue des notations en texte, les tables et les suites, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la documentation et la notice de « Réflexion » promettaient que « Classes » garde le contour de la ligne. Do ré mi fa sol y devient sol fa mi bémol ré do : la ligne se retourne, comme sous « Miroir vrai » ;
+    - un MIDI absent ou sans note était refusé sans le drapeau d'erreur ;
+    - la série de rang 3856 rendait la 3855, alors que la documentation et le code promettent de revenir à la première, et le message disait « numéro 3856 ».
+
+    La réflexion, elle, est juste : six paires, et ré majeur devient ré mineur en ré.
+  - **Ce qui change** :
+    - selon la décision de Fabien du 2026-11-22, « Correct the doc », la documentation et la notice disent que « Classes » garde chaque note dans son registre, la basse restant la basse, et que la ligne s'y retourne aussi ;
+    - les refus portent le drapeau d'erreur ;
+    - le rang boucle sur les 3856 séries, et le message nomme la série rendue.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`, qui en compte 22.
+    - Vu rouge sur le code d'avant : les 4 cas qui changent. Les 2 cas de la ligne tiennent ce que la documentation dit maintenant.
+    - Vu rouge aussi sur le rang de nouveau borné à la dernière série, planté.
+
+- **LA TABLE DE LA CHAÎNE DE MARKOV ÉCRIT SES COMPTES, ET DIT QU'ELLE N'EN MONTRE QU'UNE PARTIE.** Revue des notations en texte, les tables et les suites, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - les pourcentages arrondis ne faisaient pas toujours 100 : trois suites également probables s'écrivaient 33 %, 33 %, 33 % ;
+    - la table s'arrêtait à vingt contextes sans le dire, sous un en-tête qui en annonçait trente-neuf ;
+    - un MIDI absent, sans note ou trop court pour l'ordre était refusé sans le drapeau d'erreur.
+
+    Les comptes, eux, sont justes.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Add the counts » :
+    - chaque pourcentage porte son compte, « D4 67% (2) » ;
+    - une table coupée dit « Les 20 contextes les plus fréquents, sur 39 » ;
+    - les refus portent le drapeau d'erreur.
+
+    La notice le dit.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`.
+    - Vu rouge sur le code d'avant : les 6.
+    - Vu rouge aussi sur les comptes de nouveau perdus, plantés.
+
+- **LE TONNETZ LIT LES COMPOSÉES N, S ET H, REFUSE CE QUI N'EST PAS UNE OPÉRATION EN LE NOMMANT, ET REND L'ACCORD SEUL QUAND L'ARRIVÉE EST LE DÉPART.** Revue des notations en texte, dernière section du recensement, les tables et les suites, 2026-11-22, premier lot.
+  - **La référence** : les transformations néo-riemanniennes, P, L et R, et leurs composées de la littérature. N, le Nebenverwandt, mène do majeur à fa mineur ; S, le glissement, à do dièse mineur ; H, le pôle hexatonique, à la bémol mineur.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une lettre qui n'était pas P, L ou R était jetée : « PLX » jouait « PL » ;
+    - « S » et « N » étaient refusés comme illisibles ;
+    - le chemin de do à do répondait « Aucune opération lisible : écrivez P, L et R », alors que rien n'avait été écrit ;
+    - ces refus partaient sans le drapeau d'erreur, et le message disait « 1 opérations ».
+
+    P, L et R, eux, sont justes : « PLRLPR » depuis do donne do, do mineur, la bémol, fa mineur, ré bémol, ré bémol mineur, mi.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read N, S, H too » et « The chord alone » :
+    - N, S et H se lisent, chacune un seul pas du chemin, et toute autre lettre est refusée et nommée. Les espaces, virgules et tirets séparent ;
+    - une arrivée qui est le départ rend l'accord seul, « 0 opération » ;
+    - les refus portent le drapeau d'erreur, et le nombre d'opérations s'accorde.
+
+    La notice et les documentations de « Mode » et d'« Opérations » le disent.
+  - **Un test tenait le contraire** : dans `audio/tonnetz.test.ts`, « P-X-L » se lisait « PL ». Il est réécrit avec sa raison.
+  - **Le garde de style** compte « RLP », « LPR » et « LPL » parmi les suites d'opérations, comme « PLPLPL ».
+  - **Le garde** : `plugins/tables-et-suites.test.ts`, 10 cas.
+    - Vu rouge sur le code d'avant : 9 cas.
+    - Vu rouge aussi sur une lettre de nouveau jetée, plantée.
+
+- **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;
+    - un doublon était compté comme un inconnu ;
+    - une liste vide partait sans le drapeau d'erreur ;
+    - dans l'interface anglaise, le message disait « stéréo », et l'orchestre écrivait ses commentaires en français.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - un identifiant inconnu fait refuser l'orchestre. Le message le nomme, avec la liste des identifiants ;
+    - un doublon est toujours ignoré, et le message dit « doublon ignoré » en le nommant ;
+    - une liste vide est refusée en erreur ;
+    - le message et les commentaires de l'orchestre suivent la langue de l'interface.
+
+    La documentation du réglage « Instruments » le dit.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison : dans `audio/csound-orchestre.test.ts`, « chaise » était écarté ; dans `plugins/csound-orchestre.test.ts`, « trompette » était compté.
+  - **Le garde** : `plugins/orchestre-ecrit.test.ts`, 6 cas.
+    - Vu rouge sur le code d'avant : 5 cas.
+    - Vu rouge aussi sur un identifiant inconnu de nouveau écarté, planté.
+
+- **UNE PARTITION ÉCRITE POUR CSOUND GARDE CHAQUE VALEUR À SON P-FIELD, ET N'ÉCRIT RIEN QUE CSOUND LIRAIT AUTREMENT.** Revue des notations en texte, onzième format, 2026-11-22, deuxième lot : la Matrice de paramètres et la Partition Csound. Csound lui-même a relu ces partitions dans le navigateur pendant le relevé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un champ vide de la Matrice entre deux champs remplis sautait sa place : p4 « 0.3 », p5 vide et p6 « 7 » écrivaient « 0.3 7 », que Csound lit p4 = 0,3 et p5 = 7. La notice promettait le contraire ;
+    - dans la Partition Csound, « Rien » en p4 faisait lire l'amplitude en p4 et la note en p5 ;
+    - « Décimales » à 0 arrondissait 0,4 s à « 0 », que Csound lit comme une initialisation sans son, et le message annonçait 0,40 s ;
+    - une durée négative s'écrivait, que Csound tient comme une note sans fin, et un départ négatif, que le manuel ne définit pas ;
+    - la Partition Csound refusait un MIDI absent ou sans note sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Write 0 in the gap » et « Refuse it, named » :
+    - un champ vide, ou « Rien », entre deux champs écrits s'écrit 0, et n'est omis qu'après le dernier ;
+    - une durée nulle ou négative une fois écrite, et un départ négatif, font refuser la Matrice. Le message nomme l'événement et la valeur telle qu'elle serait écrite ;
+    - les deux refus de la Partition Csound portent le drapeau d'erreur.
+
+    La notice de la Matrice et la documentation de ses champs, et celles de p4 à p7 dans la Partition Csound, le disent.
+  - **Un test tenait le contraire** : dans `audio/csound-partition.test.ts`, « rien » en p6 était sauté, et la durée tombait en p6. Il est réécrit avec sa raison.
+  - **Le garde** : `plugins/partitions-ecrites.test.ts`, 13 cas.
+    - Vu rouge sur le code d'avant : 10 cas.
+    - Vu rouge aussi sur une durée nulle de nouveau admise, plantée.
+
+- **UN CHAMP ÉCRIT À LA MAIN SE LIT DES TROIS FAÇONS QUE DISENT LES NOTICES, ET CE QUI NE SE LIT PAS EST REFUSÉ EN NOMMANT LE RÉGLAGE.** Revue des notations en texte, onzième format, Csound, 2026-11-22, premier lot. Un champ s'écrit d'un nombre, d'une suite ou d'une rampe « de:à » : la structure du class-array d'OMChroma. Un seul lecteur, `lireChamp`, le lit pour sept nœuds :
+  - la Matrice de paramètres ;
+  - le Début de boucle par créneau ;
+  - Tourner, Miroir, Inverser et Permuter le cercle.
+
+  Le recensement n'avait vu que la Matrice.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté : « 200 abc 300 » écrivait 200 puis 300 ;
+    - un champ illisible était pris pour un champ vide : « x » en Départs mettait tous les départs à zéro, « 1.2.3 » en Durées toutes les durées à 1, et « abc » en « Pas » rendait le défaut ;
+    - « 0x10 » se lisait 16, et « 0x2 » en « Axe » donnait l'axe 2 ;
+    - « 200~2000 », forme qu'aucune notice ne nomme, écrivait 1100 pour chaque événement, aucun de ces nœuds ne tirant au sort.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Refuse it, named » :
+    - un nombre s'écrit en décimal, l'écriture scientifique comprise, comme Csound la lit ;
+    - ce qui ne se lit pas fait refuser le nœud, et le message nomme le réglage et le jeton ;
+    - la forme « de~à » est refusée. Le Micromontage, qui tire au sort, construit ses champs de ses glissières et ne lisait pas ce texte.
+
+    Les notices de la Matrice et de la boucle, et la documentation des quatre transformations, le disent.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/matrice-parametres.test.ts`, « abc » rendait `null` comme un champ vide ;
+    - dans `plugins/cercle-transformations.test.ts`, il rendait le défaut.
+
+    Les tests du tirage, dans `audio/micromontage.test.ts`, construisent leurs champs comme le composant.
+  - **Le garde** : `plugins/champs-ecrits.test.ts`, 18 cas.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur l'hexadécimal de nouveau admis, planté.
+
+- **UN MOTIF DE SÉQUENCEUR NE PORTE QUE CE QUE SA GRILLE ÉCRIT, ET UN CARACTÈRE QUI N'EN VIENT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, quatrième lot : le Séquenceur mélodique, le Séquenceur d'accords et le Séquenceur de batterie avancé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace prenait une case : « 1000 1000 1000 1000 » décalait d'un pas chaque note après la première ;
+    - un caractère que la grille n'écrit jamais se lisait comme un silence : « 2 » dans le séquenceur mélodique, « x » dans celui de batterie, où « x...x...x...x... » ne jouait rien ;
+    - la notice du séquenceur de batterie disait « 16 ou 32 » pas, quand le réglage offre 8, 16 et 32.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - une case que la grille n'écrit pas, 0 et 1, ou de 0 à 9 pour la batterie, fait refuser le motif, une espace comprise. Le message nomme le caractère, l'espace se montrant « ␣ », sa rangée et son pas ;
+    - une rangée plus courte ou plus longue que le nombre de pas se complète ou se coupe toujours, et un motif de l'ancien séquenceur de batterie, cinq pistes de 0 et de 1, se lit toujours ;
+    - les grilles des trois nœuds lisent le motif comme avant pour le dessiner : le refus se fait à l'exécution.
+
+    Les documentations des trois réglages « Motif » le disent, et la notice du séquenceur de batterie dit 8, 16 ou 32 pas.
+  - **Le garde** : `plugins/grilles-sequenceurs.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 6 refus.
+    - Vu rouge aussi sur une espace de nouveau admise, plantée.
+
+- **LE CRIBLE DE XENAKIS LIT LA NOTATION D'ARIZA, ET UN FRAGMENT QUI NE SE LIT PAS FAIT REFUSER LE CRIBLE EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer`, les degrés retenus lus dans le son :
+    - un fragment mal formé était jeté : « 5@0 pouet 7@2 » jouait « 5@0 7@2 », et la documentation le défendait ;
+    - « & » était jeté et « | » n'était qu'un séparateur : « 3@0 & 4@0 » jouait une réunion, et « 3@0|4@1 » une intersection sous l'« Opération » du même nom ;
+    - « -5@0 » était refusé comme vide, et les parenthèses ne se lisaient pas ;
+    - le message écrivait toujours l'union, « 3@0 ∪ 4@0 », même en intersection.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read them » et « Refuse it, named » :
+    - l'expression lit la notation de Christopher Ariza, « The Xenakis Sieve as Object » (Computer Music Journal, 2005), celle de `music21.sieve` : « | » ou « ∪ » pour la réunion, « & » ou « ∩ » pour l'intersection, « - » ou « − » en préfixe pour le complément, des parenthèses pour grouper. Le complément se lit avant l'intersection, qui se lit avant la réunion. Comme chez Ariza, « 3@0-4@0 » est refusé, et la différence s'écrit « 3@0 & -4@0 » ;
+    - « Opération » combine toujours une liste sans opérateur, « 5@0 7@2 11@3 » ;
+    - un fragment mal formé, un module nul, un opérateur sans classe, un opérateur manquant ou une parenthèse sans paire font refuser le crible, et le message nomme ce qui ne se lit pas ;
+    - le message écrit l'expression appliquée, « 2@0 ∩ −6@0 » pour une différence, et elle se relit telle quelle.
+
+    « ^ », la différence symétrique d'Ariza, n'est pas lue : elle est refusée et nommée comme tout signe hors de ceux-là.
+
+    Les documentations de « Crible » et d'« Opération » le disent.
+  - **Un test tenait le contraire** : dans `audio/cribles.test.ts`, « 3@0 pouet 4@ @2 0@1 4@1 » gardait ses deux classes valides. Le fragment est maintenant refusé et nommé.
+  - **Le garde** : `plugins/crible-notation.test.ts`, 23 cas, dont chaque expression relue depuis le message.
+    - Vu rouge sur le code d'avant : 21 cas.
+    - Vu rouge aussi sur deux fautes plantées : « & » lu comme une réunion, et un fragment de nouveau jeté.
+
+- **UN CERCLE SANS ZÉRO NI UN EST REFUSÉ, ET LA TRESSE NE LIT QUE DES CROISEMENTS DÉCIMAUX.** Revue des notations en texte, dixième format, 2026-11-22, deuxième lot : le Cercle rythmique, le Cercle mélodique et la Tresse.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un motif de cercle qui ne portait ni 0 ni 1, « x..x..x. » ou le texte vide, devenait le motif par défaut sans un mot, dans les deux cercles ;
+    - la Tresse lisait « 0x1 » comme le croisement 1, en hexadécimal ;
+    - un mot de tresse vide était refusé « près de « vide » », en français même dans l'interface anglaise.
+  - **Ce qui change** :
+    - un motif de cercle qui ne porte ni 0 ni 1 est refusé, en erreur. Ce qui n'est ni 0 ni 1 reste écarté : la notice promet qu'un motif se colle tel quel depuis l'adresse d'un cercle rythmique en ligne, et « https://exemple.org/#1001001000101000 » se lit toujours en seize places ;
+    - un croisement de tresse s'écrit en entier décimal, et un mot vide a son propre message, dans la langue de l'interface.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/motifs-rythmiques.test.ts`.
+    - Vu rouge sur le code d'avant : 4 cas.
+    - Vu rouge aussi sur un cercle qui retombe de nouveau sur le motif par défaut, planté.
+
+- **UN MOTIF RYTHMIQUE SE LIT EN CASES OU EN POSITIONS COMME SA DOCUMENTATION LE DIT, ET CE QUI NE SE LIT PAS EST REFUSÉ.** Revue des notations en texte, dixième format, 2026-11-22, premier lot : l'Analyse rythmique et le motif du Canon par pavage.
+  - **Ce qui se passait**, mesuré par `executer`, dans l'Analyse rythmique :
+    - « 0 1 », deux positions, se lisait comme un cycle de deux cases ;
+    - un jeton illisible était jeté et « 0.5 » arrondi ;
+    - « x··x··x· », la forme qu'écrit le Canon, ne se lisait pas. Le texte vide non plus, et les deux recevaient le message d'une série dodécaphonique, sans le drapeau d'erreur.
+
+    Dans le Canon par pavage :
+    - « 0;1;2 » se lisait « 0 », et « 1.5 » se lisait 1 ;
+    - un motif tout illisible lançait la recherche ;
+    - un motif qui ne pave pas partait sans le drapeau d'erreur.
+
+    Dans les deux, une position hors du cycle se repliait : 20 devenait 4 sur seize pas.
+  - **Ce qui change** :
+    - un motif est en cases quand il porte x . - _ ou · sans chiffre de 2 à 9, ou n'est qu'une suite de 0 et de 1 sans espace ;
+    - autrement, ce sont des positions, lues par `lireListe`, au genre neuf « positions ». Une position hors du cycle est refusée et nommée, selon la décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un motif vide ou sans frappe est refusé, et un motif qui ne pave pas l'est en erreur. Le Canon cherche toujours un motif quand le sien est vide, comme le dit sa documentation.
+
+    Les documentations des deux réglages le disent.
+  - **Un test tenait le contraire** : dans `plugins/theorie-rythme-voix.test.ts`, un texte vide ne donnait aucune frappe. Il est maintenant refusé.
+  - **Le garde** : `plugins/motifs-rythmiques.test.ts`, 19 cas.
+    - Vu rouge sur le code d'avant : 15 cas.
+    - Vu rouge aussi sur une position hors du cycle de nouveau admise, plantée.
+
+- **LES ACCORDS EN CLASSES DE LA DISTANCE DE CONDUITE DE VOIX SE LISENT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS.** Revue des notations en texte, huitième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté sans un mot ;
+    - « 16 » se lisait 4, quand la documentation dit « de 0 à 11 » ;
+    - « C E G | A C E » faisait dire « Il faut au moins deux accords », alors que deux accords étaient écrits ;
+    - ce refus, comme celui d'un réglage vide, partait sans le drapeau d'erreur, et le nœud s'annonçait vert sans rien rendre.
+  - **Ce qui change** :
+    - `lireAccords` lit chaque accord par `lireListe`, et rend ses accords ou son refus. Les décisions de Fabien du 2026-11-22 : les noms de notes se lisent, une classe hors de 0 à 11 est refusée et nommée, un réglage vide est refusé ;
+    - les classes décimales restent lues, une progression microtonale se mesurant telle quelle ;
+    - moins de deux accords est un refus, en erreur.
+
+    La documentation du réglage le dit.
+  - **Le garde** : 9 cas dans `plugins/listes-musicales.test.ts`. Les cas de `plugins/theorie-rythme-voix.test.ts` tiennent les mêmes séparations, lues par `{ accords }`.
+    - Vu rouge sur le code d'avant : 7 cas.
+    - Vu rouge aussi sur une borne des classes portée à 12, plantée.
+
+- **UN RANG EST UN ENTIER, ET UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON.** Revue des notations en texte, huitième format, 2026-11-22, troisième lot : l'Accordage en notes et le Crible harmonique.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - l'Accordage lisait « 1.5 » comme les rangs 1 et 5, et « C4 » comme le rang 4 ;
+    - un texte illisible y jouait un tour complet, et le rang 200 rendait un MIDI 260 ;
+    - le Crible employait la borne des intervalles pour ses rangs : le rang 100, une harmonique de 11 kHz sur 110 Hz, était jeté sans un mot ;
+    - le Crible arrondissait aussi le rang 2,5 en 3, jetait un jeton illisible, et rendait du silence pour une liste vide.
+  - **Ce qui change** :
+    - les deux nœuds lisent par `lireListe` ;
+    - l'Accordage prend des entiers de tout signe, joue toujours un tour complet quand « Degrés » est vide, comme sa documentation le dit, et refuse un rang qui tombe hors de 0 à 127 en le nommant ;
+    - le Crible prend des entiers à partir de 1, sans autre borne, et refuse une liste vide.
+
+    `rangsDemandes` (`audio/accordage.ts`) et `lireIntervalles` (`plugins/concret.ts`) disparaissent : ils n'ont plus de lecteur. Les documentations le disent.
+  - **Des tests tenaient le contraire** : dans `audio/accordage.test.ts`, un texte illisible jouait un tour complet, et un moins seul était écarté. Ils avaient été écrits avec `rangsDemandes`, sans décision. Les deux cas sont refusés en les nommant, et le reste de ces tests est tenu par `lireListe`.
+  - **Le garde** : 14 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 11 cas.
+    - Vu rouge aussi sur des rangs décimaux admis, plantés.
+
+- **UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON, BORNÉE À ±96 DEMI-TONS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, deuxième lot : les Peignes accordés, les Résonateurs, la Musique fractale.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la Musique fractale ne coupait sa liste qu'aux virgules, et « 0 3 7 10 » rendait une seule note ;
+    - un jeton illisible était jeté sans un mot dans les trois nœuds, un intervalle au-delà de 96 demi-tons aussi dans les Peignes et les Résonateurs, et une liste vide y jouait l'unisson ;
+    - « 0,200 » faisait écrire à la Musique fractale un MIDI 247, et la troncature par `parseInt` changeait 3,5 en 3.
+  - **Ce qui change** :
+    - les trois nœuds lisent par `lireListe` (`audio/listes-musicales.ts`), selon la décision de Fabien du 2026-11-22, « Refuse them, named » : au-delà de ±96, l'intervalle est refusé et nommé, et la borne est écrite ;
+    - une liste vide est refusée ;
+    - les Résonateurs ne lisent leurs intervalles que pour la structure accord, et la Musique fractale pour le seul motif personnalisé ;
+    - un motif fractal dont le dépliage sort de 0 à 127 est refusé, en disant la plage atteinte.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 25 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 16 cas.
+    - Vu rouge aussi sur une borne portée à ±200, plantée.
+
+- **UNE LISTE DE HAUTEURS SE LIT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, premier lot : le Rythme sur hauteurs, le Canon par pavage et le Contrepoint (solveur).
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace en tête ou un retour à la ligne final ajoutait un MIDI 0 au Rythme sur hauteurs ;
+    - son réglage jetait « x » et « 200 » sans un mot, alors que son entrée les refusait ;
+    - « 60;64;67;72 » mettait les quatre voix du Canon sur do, un jeton illisible y décalait les voix, 200 s'écrivait dans le fichier MIDI, et une liste vide jouait do ;
+    - le Contrepoint raccourcissait un cantus dont une note ne se lisait pas, et en engendrait un quand aucune ne se lisait ;
+    - « C4 E4 G4 » n'était lu nulle part.
+  - **Ce qui change** : `audio/listes-musicales.ts` est le seul lecteur des listes. Il sépare par espaces, virgules, points-virgules et retours à la ligne, et ignore les espaces en tête et en fin.
+    - Les décisions de Fabien du 2026-11-22 :
+      - « Read them » : les noms de notes se lisent, avec leur octave ;
+      - « Keep it in the sound » : le Canon joue 60,5 dans son son, et son fichier MIDI l'arrondit en le disant ;
+      - « Refuse it, said » : une liste vide que la documentation ne définit pas est refusée.
+    - Un jeton illisible, ou hors de 0 à 127, fait refuser la liste, et le message le nomme. Le Contrepoint engendre toujours son cantus quand le réglage est vide, comme sa documentation le dit.
+
+    Les documentations des trois réglages le disent.
+  - **Un test tenait l'ancien message** : `plugins/arbre-chaine.test.ts` exigeait son exemple, « 60 62 64 65 67 ». Il tient celui du lecteur neuf ; la règle, nommer la forme attendue, ne change pas.
+  - **Le garde** : `plugins/listes-musicales.test.ts`, 21 cas, tout par `executer`, dont la hauteur du Canon mesurée dans le son, et `audio/listes-musicales.test.ts`, 22 cas.
+    - Vu rouge sur le code d'avant : 18 cas.
+    - Vu rouge aussi sur des noms de notes que le lecteur ne lisait plus, plantés.
+
+- **CHAQUE AIR D'UN TEXTE ABC SE GRAVE, SOUS SON TITRE.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave all, titled ».
+  - **Ce qui se passait** : deux airs se gravaient à la suite, comme une seule pièce. Seul le titre du premier aurait pu paraître, et l'en-tête de page était caché. « ABC → MIDI », lui, n'en joue que le premier, et le dit.
+  - **Ce qui change** :
+    - les airs sont ceux que découpe `decouperMorceaux`, le lecteur ABC ;
+    - chacun se grave seul, sous son titre, à partir d'une page neuve ;
+    - « Page » parcourt les pages de tous les airs, et le message dit quel air est rendu : « ABC · air 2 sur 2 · page 2 sur 2 ».
+
+    Un air seul se grave comme avant, sans en-tête. La notice le dit, en français et en anglais.
+  - **Le garde** : 4 cas dans `plugins/partition-verovio-norme.test.ts`.
+    - Vu rouge sur le code d'avant : 2 cas. L'air seul et la phrase d'un modèle de langue autour de l'air passaient déjà, et restent gardés.
+    - Vu rouge aussi sur un en-tête oublié, planté.
+
+- **LA PARTITION GRAVÉE LIT LE HUMDRUM, COMME SA NOTICE LE PROMET.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Load the Humdrum module ».
+  - **Ce qui se passait** : le module chargé, `verovio/wasm`, ne connaît pas le Humdrum. Un fichier `**kern` correct était refusé par « HUMDRUM refusé par le graveur : vérifiez la notation », qui accusait le texte.
+  - **Ce qui change** : `verovio/wasm-hum`, déjà dans le paquet installé, est importé pour le seul Humdrum ; les autres notations gardent leur module. Mesuré par Vite le 2026-11-22, sur les deux morceaux émis :
+    - le morceau du Humdrum pèse 14 317 004 octets, et 2 797 312 compressés en LZMA ;
+    - le module habituel pèse 8 207 951 octets, et 1 853 804 compressés.
+
+    L'installeur v5.1.2 pèse 476 829 403 octets, sous un plafond NSIS de 2 147 483 648.
+  - **Le garde** : 3 cas dans `plugins/partition-verovio-norme.test.ts`, d'après la référence de **kern, où une hauteur s'écrit absolue. Vu rouge sur le code d'avant, les 3 cas.
+
+- **LA PARTITION GRAVÉE GRAVE LE TEMPO D'UN ABC.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave the tempo ».
+  - **Ce qui se passait**, relu sur la gravure : Verovio ne dessine un tempo que par son texte. « Q:1/4=60 » se gravait en texte vide, et « Q:"Allegro" 1/4=60 » ne gravait que « Allegro ».
+  - **Ce qui change** : `tempoGrave` (`audio/abc-gravure.ts`) donne à chaque Q:, en tête ou en ligne, le texte de son mouvement, par exemple « Allegro ♩ = 120 ».
+    - La figure est écrite en Unicode, ♩, ♪, 𝅗𝅥, avec son point s'il y en a un. Un glyphe SMuFL de la zone privée serait resté un carré dans le texte.
+    - L'ancienne forme « Q:120 » se compte en unités L, comme le lecteur ABC la compte.
+    - Un Q: sans chiffre garde son seul texte.
+
+    La notice le dit, en français et en anglais.
+  - **Le garde** : 9 cas dans `plugins/partition-verovio-norme.test.ts`, dont un tempo en cours de morceau, et 2 dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : 7 cas. Un mouvement sans chiffre et l'absence de Q: passaient déjà.
+    - Vu rouge aussi sur une noire pointée privée de son point, plantée.
+
+- **CE QUE LA PARTITION GRAVÉE NE SAIT PAS DESSINER EN ABC EST REFUSÉ, ET NOMMÉ.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Refuse them, named ».
+  - **Ce qui se passait**, relu sur la gravure, sous toutes les écritures que la norme ABC 2.1 permet :
+    - deux voix se gravaient bout à bout sur une seule portée, qu'elles soient déclarées en tête, en ligne, par %%score ou %%staves. « MIDI → ABC » écrit une seconde voix dès qu'une basse tient sous une mélodie ;
+    - une fin alternative, « |1 », « [1 » ou « |[1 », se gravait sans son crochet : un musicien jouait les deux fins ;
+    - « [K:G] » ou une ligne « K:G » en cours de morceau se gravaient comme un changement de clé de sol, sans armure. Le fa suivant se lisait naturel ;
+    - la liaison d'une seule note d'un accord ne se dessinait pas, et « [CE]2- » n'en dessinait qu'une sur deux ;
+    - (5, (6, (7 et (9, que la norme (§4.13) joue dans le temps de deux en mesure simple, se gravaient avec leur seul chiffre, qu'un musicien lit cinq pour quatre, six pour quatre, sept pour quatre et neuf pour huit. Le groupe se lisait deux fois trop long, quatre fois pour (9.
+  - **Ce qui change** : `tournuresNonGravees` (`audio/abc-gravure.ts`) relève ces cinq tournures, et le nœud refuse l'air, le message nommant chacune, sa ligne et le fragment. Ce que le graveur dessine juste reste gravé :
+    - un changement de clé seule, « [K:clef=bass] » ;
+    - une seule voix déclarée ;
+    - (5:4:5, cinq pour quatre ;
+    - (4 en mesure simple, quatre pour trois.
+
+    Le second nombre d'un n-olet est celui du lecteur ABC, `qParDefaut`, désormais exporté. La notice le dit, en français et en anglais.
+  - **Le garde** : 19 cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et 5 cas dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : les 15 refus.
+    - Vu rouge aussi sur des fins alternatives que le relevé ne voyait plus, plantées.
+
+- **UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` et relu sur la gravure : Verovio gravait « [CEG]2 » à l'unité, en noires au lieu de blanches en L:1/4. La norme ABC 2.1 (§4.17) applique pourtant à chaque note la durée qui suit le crochet. C'est la forme qu'écrit « MIDI → ABC » : deux accords de blanches, « [CEG]4 [DFA]4 » en L:1/8, se gravaient en deux croches.
+  - **Ce qui change** : `dureesDansLesAccords` (`audio/abc-gravure.ts`) écrit cette durée dans chaque note avant la gravure, « [C2E2G2] ». Une note qui a déjà sa durée la voit multipliée, « [C2E]2 » valant « [C4E2] ». L'en-tête, les champs, les chaînes, les ornements, les notes d'ornement et les commentaires ne sont pas touchés.
+  - **Le garde** : quatre cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et `audio/abc-gravure.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 4 cas.
+    - Vu rouge aussi sur une durée ignorée dès qu'elle porte une barre de fraction, plantée.
+
+- **LA PARTITION GRAVÉE REFUSE CE QUE LE LECTEUR ABC REFUSE, ET UN TEXTE QUI N'EST PAS UNE PARTITION.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze des treize fautes que refuse « ABC → MIDI » se gravaient en vert : une durée nulle ou divisée par zéro, un accord jamais refermé, une liaison entre deux hauteurs ou vers un silence, un n-olet inachevé, une unité nulle ;
+    - un silence de durée nulle faisait tomber le graveur sur l'erreur brute « divide by zero » ;
+    - un ABC titré « T:Etude **kern » était refusé comme Humdrum, « **kern » étant cherché partout dans le texte ;
+    - un SVG ou un opus MusicXML, qui ne fait que citer des partitions, se gravaient en vert sur une page vide.
+  - **Ce qui change** :
+    - chaque air d'un texte ABC est lu par `lireMorceau` avant la gravure, et refusé par `refusAbc` avec les mêmes fautes nommées, ligne et fragment ;
+    - le Humdrum se reconnaît à sa première ligne de données ;
+    - un XML dont la racine n'est ni `score-partwise`, ni `score-timewise`, ni `mei` est refusé, et le message nomme cette racine (`racineXml`).
+
+    La notice le dit, en français et en anglais.
+  - **Un test tenait le contraire** : « un XML inconnu est tenté en MusicXML », dans `audio/verovio.test.ts`. Il avait été écrit avec le nœud et ne portait aucune décision.
+  - **Le garde** est `plugins/partition-verovio-norme.test.ts`, 43 cas. Il relit le SVG gravé comme un musicien, par `plugins/partition-lue.ts`, et le compare aux normes ABC 2.1, MusicXML 4.0 et MEI.
+    - Vu rouge sur le code d'avant : les 16 cas du lot.
+    - Vu rouge aussi sur une armure effacée avant la gravure, plantée : les 6 cas d'armure.
+
+- **UN NOM DE NOTE SE LIT DE LA MÊME FAÇON PARTOUT : E#4 EST UN FA, Do4 UN DO, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, septième format, décisions de Fabien du 2026-11-22 : « Read them everywhere », « Refuse it, named ».
+  - **Ce qui se passait**, mesuré par `executer`, et pour les synthétiseurs dans le son rendu : sept lecteurs, chacun avec sa table, son octave par défaut et sa façon d'échouer.
+    - `lireNote` faisait sonner « E#4 », « Fb4 » et « Cb4 » la 4, « B#3 » la 3, et remplaçait « C##4 », « C♯4 » ou « Do4 » par la note par défaut, sans un mot. C'était le lecteur du Vent à guide d'onde, de la Barre modale, de la Synthèse par balayage, du Terrain d'onde et de la Voyelle chantée ; l'expression des Instruments programmés Csound faisait de même.
+    - Les Classes de hauteurs jetaient « Fb », « B# », « do# » et « C♯ » : « C Fb G B# » rendait {0, 5}. Le Contrepoint d'espèces jetait « X4 », et jugeait trois notes contre quatre.
+    - Le Transposer rendait une sortie vide sans erreur ; les synthétiseurs Tone.js, l'erreur brute de la bibliothèque ; le Générateur de fréquence refusait en vert.
+    - Sans octave, les uns prenaient l'octave 3, le Contrepoint l'octave 4, d'autres refusaient.
+  - **Ce qui change** : `audio/noms-de-notes.ts`, module neuf, est le seul lecteur.
+    - Il lit les lettres de A à G et les noms de Do à Si, les altérations #, ##, b, bb, ♯ et ♭, l'octave de -1 à 9. E#4 est un fa, Cb4 un si de l'octave du dessous.
+    - Là où une hauteur est attendue, une note sans octave est refusée, et le message demande l'octave ; les nœuds qui lisent des classes, le Transposer compris, la lisent toujours.
+    - Les dix-sept nœuds passent par lui. `lireNote`, `noteVersFrequence` et la table de `lireSuite` disparaissent, avec la clé de traduction qui n'avait plus de lecteur.
+    - Les documentations des réglages et la notice du Générateur de fréquence le disent.
+  - **Des tests tenaient le contraire, et le commit le dit** : `plugins/modeles-physiques.test.ts` exigeait qu'une note illisible retombe sur la note de la fiche ; `plugins/tone-synths-generateurs.test.ts`, que le refus porte l'erreur de Tone.js ; `plugins/symboles-accords.test.ts` prenait « Do Mi Sol » pour illisible. Écrits avec leurs nœuds, ils décrivaient le comportement d'alors, et non une décision.
+  - **Le garde**, `plugins/noms-de-notes.test.ts`, tout par `executer` :
+    - quatorze orthographes jouées par six synthétiseurs, la hauteur mesurée dans le son par la période qui s'y répète le mieux, et l'octave vérifiée à part ;
+    - la Membrane, le Métal et le Polyphonique sonnent le nom français comme l'anglais, échantillon pour échantillon ;
+    - quatre noms refusés, et nommés, par onze nœuds ;
+    - le Transposer, l'Accord, les Classes de hauteurs, la Série dodécaphonique et le Contrepoint.
+
+    **Vu rouge** sur le code d'avant, 124 cas sur 152 ; puis sur deux fautes plantées, le dièse ignoré, 24 cas tombés, et l'octave comptée une fois de trop, 56 cas tombés.
+  - **Vu en passant, non réparé** : la Série dodécaphonique, les Classes de hauteurs et le Contrepoint d'espèces annoncent une suite vide sans le drapeau d'erreur.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des nœuds convertis, de Tonal, des symboles, des romains, de VexFlow, des parcours et du cœur qui les lancent, 47 fichiers et 1579 cas verts ; les gardes du dépôt touchés, 14 fichiers et 90 cas verts. **Non vérifié dans l'application.**
+  - **Repris après la CI de la PR 433** : l'exemple « Ré4 » des quinze textes anglais (treize documentations de réglage, la notice anglaise du Générateur de fréquence et le message d'une note illisible) devient « Re4 », l'orthographe anglaise du solfège, que le lecteur lit aussi. L'accent faisait prendre ces textes pour du français à `docs/anglais-registre.test.ts` : deux cas rouges en CI, 14 champs du registre et une clé du dictionnaire. Les textes français gardent « Ré4 », et `COMPONENTS.md` est régénéré. Vérifié : `npx tsc -b` vert, `npx oxlint` sans erreur sur les fichiers touchés, `src/docs` et les tests des nœuds touchés, 57 fichiers et 1251 cas verts.
+
 - **UNE SEULE RÈGLE DIT SI UN TEXTE EST EN CHIFFRES ROMAINS : LE PREMIER JETON DÉCIDE, POUR TOUS LES NŒUDS.** Revue des notations en texte, sixième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` : trois règles répondaient. La Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un, les graveurs VexFlow s'ils en étaient tous. Sur un texte mêlé, chacun nommait autre chose :
     - « I C V » nommait « C » ici, « I V » là ;
@@ -1919,7 +2561,32 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 - **« HARMONISER (COCONET) » SE DIT « HARMONISER PAR LE RÉSEAU » : LE MOTEUR VOCAL JETAIT « COCONET ».** Relevé le 2026-11-22 par `tests-e2e/lexique-dictee.spec.ts`, lancé pendant le lot 2b de l'harmonisation, le modèle français lié dans l'arbre de session.
   - **Ce qui se passait** : le moteur jette « coconet », absent de son lexique, et le nom du lot 1 entrait amputé dans la grammaire en « harmoniser », qui concurrençait « Harmoniser à quatre voix ».
   - **La réparation** : le mot rejoint `HORS_LEXIQUE_FR` (`plugins/lexique-vosk.ts`), et la fiche reçoit son nom parlé.
-  - **Vérifié** : `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts` verts, 11 cas ; la dictée ne jette plus que « dither », de la fiche « Dither » de master, hors de ce chantier. Master n'a ce mot ni dans `HORS_LEXIQUE_FR` ni en nom parlé : le garde doit y tomber aussi, ce qui est déduit et non lancé.
+  - **Vérifié** : `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts` verts, 11 cas ; la dictée ne jetait plus que « dither », de la fiche « Dither », hors de ce chantier, et réparé à part (entrée « « DITHER » SE DIT À LA DICTÉE » ci-dessous).
+
+- **LE JOURNAL DE PASSE EST RÉÉTABLI SUR DEUX EXEMPLES DONT LA NOTATION A CHANGÉ PAR DÉCISION.** Relevé le 2026-11-22 par la session du chantier de l'harmonisation, qui a rejoué le journal entier pendant le lot 3a : les deux scénarios de `gammes-au-clavier` étaient en écart.
+  - **Ce qui se passait.** Rejoué sur `origin/master` à `afe4ac06`, `npm run test:journal-de-passe` tombait sur quatre scénarios de deux exemples. Chacun suivait un changement voulu après lequel `tests-e2e/journaux-de-passe.json` n'avait pas été réétabli :
+    - `gammes-au-clavier`, « lancer » au rang 14 sur 29 et « gestes » au rang 8 sur 52. Le commit `5d71ad5f`, « la Gamme jouée et les Accords joués écrivent la vélocité », fait écrire la vélocité dans la sortie « Notation » de « Gamme jouée » : « C4 1 90 » au lieu de « C4 1 », sur `do-majeur`, `la-mineur` et `diminuee` ;
+    - `gestion_graphe_complexite`, « lancer » au rang 40 sur 814 et « gestes » au rang 38 sur 1641. Le commit `cdfa10b3` (PR #436), « un n-olet se reconnaît à la durée de ses parts », ne compte plus « (3/4 (1 1 1)) », trois noires exactes, pour un groupe irrégulier. Le message de `rythme-bas` dit donc « 0 groupes irréguliers » au lieu de « 1 », et ses trois notes perdent l'annotation « n-olet 3 ». Cette PR est entrée dans `master` après le relevé de la session de l'harmonisation.
+  - **Ce qui change.** Les deux entrées sont réétablies une à une, par `ECRIRE_JOURNAUX_DE_PASSE=1 EXEMPLE=<exemple>`, chaque scénario stable sur ses trois passes et sans valeur masquée. Le code ne change pas.
+  - **Seul le texte a changé, et non l'ordre des écritures.** Neuf lignes de la base bougent, toutes dans ces deux entrées. Ramenée par script à l'ancien texte, la base neuve redonne l'ancienne octet pour octet : d'abord les 78 « 1 90 » de `gammes-au-clavier` ramenés à « 1 », puis les 3 messages de `rythme-bas` ramenés à « 1 groupes irréguliers », avec leurs 9 annotations.
+  - **Vérifié** :
+    - `npm run test:journal-de-passe` entier, sans écrire, le SoundFont lié dans l'arbre par lien physique : 34 scénarios identiques sur 34, soit 17 exemples, 0 écriture sur l'instantané, « 1 passed » en 8,1 min. La passe d'avant est tombée à `un-echo-en-boucle-et-un-instrument · gestes`, l'application absente 15 s après le rechargement, pendant que deux autres sessions lançaient leurs vitest ; la cause n'est pas prouvée, et la passe suivante, la machine déchargée, est verte ;
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, aucun fichier de code n'étant touché ;
+    - `src/docs/indices-moteur.test.ts`, qui lit la base des journaux, et `src/docs/caracteres-controle.test.ts`, 6 cas verts.
+  - **Non lancé** : la passe complète de vitest, la machine étant partagée et seuls la base des journaux et ce fichier ayant bougé. Aucun comportement ne change, et rien n'est donc à vérifier dans l'application.
+
+- **« DITHER » SE DIT À LA DICTÉE : « ARRONDI AVEC BRUIT ».** Relevé le 2026-11-22 par la session du chantier de l'harmonisation : le garde du lexique vocal jetait « dither ». Le nom parlé a été choisi par Fabien le même jour, parmi trois noms proposés.
+  - **Ce qui se passait.** « Dither » est entré au catalogue le 2026-11-15 (PR 366). Le modèle vocal français n'a pas le mot « dither », et c'est le seul mot du nom : le composant ne pouvait pas se dire. Lancé sur les fichiers de `master`, `npm run test:lexique-dictee` tombe, et le moteur jette un seul mot, `["dither"]`.
+  - **Ce qui change.** « dither » rejoint `HORS_LEXIQUE_FR` dans `plugins/lexique-vosk.ts`, et la fiche porte le nom parlé « arrondi avec bruit », qui dit le geste du composant : un bruit ajouté avant l'arrondi. La notice ne change pas, elle ne nomme pas la dictée.
+  - **Le choix du nom.** Les trois candidats ont été vérifiés mot à mot contre la table des symboles de `graph/Gr.fst` du modèle `vosk-model-small-fr-0.22`. L'instrument a d'abord été éprouvé sur des cas connus : il rend absents les six mots déjà relevés (« dither », « pleurage », « convolution », « 303 », « granulaire », « trémolo ») et présents tous les mots des noms parlés en place qui ont été sondés.
+    - « arrondi », « avec » et « bruit » y sont, et aucun autre nom du catalogue ne commence par « arrondi ».
+    - Écartés : « réduction de profondeur », trop proche de « Réduction de bruit » ; « quantification avec bruit », trop proche de « Quantifier » ; tout nom en « bits », le Bitcrusher se disant « réducteur de bits ».
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, aucun dans les fichiers touchés ;
+    - `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts`, 11 cas verts. **Vu rouge** avec « dither » au lexique et sans nom parlé : « 1 composants qu'aucun nom ne permet de dire, contre 0 inscrits », le Dither seul nommé ;
+    - `src/docs/compatibilite.test.ts` et `src/docs/catalogue-markdown.test.ts`, 16 cas verts et une écriture sautée. Aucune table générée ne porte les noms parlés ;
+    - `npm run test:lexique-dictee`, le modèle français lié dans l'arbre par lien physique : « 1 passed » en 1,7 min, « mots jetés par le moteur : aucun », la ligne de dégel du modèle vue.
+  - **Non vérifié** : la reconnaissance de « arrondi avec bruit » dite au micro, le garde ne vérifiant que la grammaire. Non lancée : la passe complète de vitest, la machine étant partagée.
 
 - **LE MESSAGE DE « REMPLISSAGE DE TROU » COMPTE LES TROUS DANS LE TEMPS, ET NON EN MOYENNE PAR CANAL.** Relevé le 2026-11-22 en contrôlant l'option « Silences détectés », réparé sur l'ordre de Fabien : « réparer ».
   - **Ce qui se passait.** `plugins/inpainting.ts` divisait par le nombre de canaux le compte et la durée que chaque canal avait bouchés. Les silences se détectant voie par voie, dix millisecondes rebouchées sur un seul canal de deux s'annonçaient « 1 trou(s) bouché(s) · 5 ms reconstruits », et deux trous à deux endroits, un par canal, « 1 trou ».
@@ -2426,6 +3093,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Le garde** : `audio/ia.test.ts` éprouve le découpage par une session factice, sans modèle, sur un mélange plus long qu'un segment. Un spectre rendu intact doit redonner le mélange du premier échantillon au dernier ; altéré, son erreur ne doit pas être plus forte aux bords et à la jonction qu'au cœur. Sur l'ancien découpage, les deux cas tombent : 0,337 d'écart au quatrième échantillon, et une crête de 33,6 au cinquième contre 0,119 au cœur.
 
 ### Removed
+
+- **« PARTITION MIDI » ET « PARTITION VEXFLOW » SONT RETIRÉES.** Demandé par Fabien le 2026-11-23, qui n'en a plus l'usage. Le catalogue passe de 513 à 512 composants avec « SVG vers PDF », ajouté le même jour, la famille Notation de neuf à sept, et les composants à vue propre de 100 à 98.
+  - **Ce qui part avec elles, rien d'autre ne s'en servant** : leurs fiches de `plugins/vexflow.ts` et leurs notices ; `genererPartition`, l'empilement de ses accords, la grille de quantification et la longueur de mesure de `plugins/vexflow-notation.ts` ; `midiVersEvenements` et `hauteurDuMidi` d'`audio/notation-vexflow.ts` ; deux clés de traduction ; la coupe de la valeur de note faite de leurs six durées simples, qui fait passer la dette des nomenclatures de 51 à 50 formes ; leur ligne au banc des gammes ; et vingt-sept cas, de `plugins/vexflow.test.ts`, `plugins/vexflow-gravure.test.ts`, `plugins/points-ouverts-gravure.test.ts` et `audio/microtons.test.ts`. VexFlow reste au dépôt : la portée, la tablature et la grille d'accords le lisent.
+  - **Un graphe enregistré qui en porte une s'ouvre avec, à sa place, un nœud nommé par son identifiant, sans port, et ses câbles sont ignorés à la restauration.** Relevé dans l'application construite sur un graphe texte → « Partition VexFlow » → « Export SVG » : les trois nœuds dessinés, aucun câble, et l'avertissement « 2 arête(s) cassée(s) ignorée(s) à la restauration ». Aucun composant ne reprend leurs ports au même rang et leurs réglages sous les mêmes noms, donc aucun alias. Les deux ruptures sont déclarées, raison écrite, dans `docs/ruptures-declarees.json`, et leur version de contrat passe à deux dans `COMPATIBILITE.json`.
 
 - **LE « TRANSCRIPTEUR MIDI » EST RETIRÉ : LA « TRANSCRIPTION MIDI » FAIT LE MÊME TRAVAIL.** Demandé par Fabien le 2026-11-13 : sa méthode polyphonique transcrivait mal, et il doublait l'autre, un son rendu en notes MIDI dans la même famille Traitement → Conversion. Le catalogue passe de 511 à 510 composants, la famille Conversion de 24 à 23, et les composants à vue propre de 101 à 100.
   - **Ce qui part avec lui, rien d'autre ne s'en servant.** La fiche de `plugins/analyse.ts` et sa notice ; sa vue `VueTranscription` ; le worker `workers/transcription-worker.ts` et son calcul `audio/transcription-mesures.ts` ; Basic Pitch, soit `audio/basic-pitch.ts`, `audio/analyse-polyphonique.ts` et sa branche du worker d'inférence ONNX ; le modèle `basic-pitch` du manifeste, 230 444 octets qui ne se téléchargent plus, l'asset restant publié sur la release `assets`, ce que `THIRD_PARTY.md` dit ; cinq clés de traduction ; l'épreuve `tests-e2e/transcription-dans-application.spec.ts`, ses deux cas, et quatre cas unitaires, trois d'`audio/analyse.test.ts` et un de `plugins/integration.test.ts`. La liste `SANS_SORTIE_AUDIO` du garde de couverture des empreintes est vide, sa règle restant écrite, et `plugins/ordre-du-catalogue.txt` perd sa ligne.

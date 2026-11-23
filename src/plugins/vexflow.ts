@@ -1,4 +1,4 @@
-// plugins/vexflow.ts — Les cinq nœuds de gravure.
+// plugins/vexflow.ts — Les trois nœuds de gravure.
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
@@ -7,25 +7,14 @@ import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { analyserMidi, midiDuFichier } from "../audio/midi";
 import {
-  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererPortee, genererTab, graverNotation, romainsIllisibles,
-  jetonsSansCordeFret, jetonsSansDuree, longueurDeMesure, type Signature,
+  accordsDeProgression, genererGrille, genererTab, graverNotation, romainsIllisibles,
+  jetonsSansCordeFret, jetonsSansDuree,
 } from "./vexflow-notation";
-import { lireTablature, mettreEnMesures, midiVersEvenements, type FauteGravure } from "../audio/notation-vexflow";
-
-/** La première métrique d'un fichier MIDI, 4/4 s'il n'en déclare pas. */
-function signatureDuMidi(pistes: readonly (readonly { type: string; numerator?: number; denominator?: number }[])[]): Signature {
-  for (const piste of pistes) {
-    const s = piste.find((e) => e.type === "timeSignature" && e.numerator && e.denominator);
-    if (s) return { numerateur: s.numerator!, denominateur: s.denominator! };
-  }
-  return { numerateur: 4, denominateur: 4 };
-}
+import { lireTablature, type FauteGravure } from "../audio/notation-vexflow";
 
 /** Les cordes de chaque accordage de la tablature. */
 const CORDES: Record<string, number> = { "Guitare standard": 6, "Ukulélé": 4, Basse: 4 };
-import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
 import { choixClefPortee } from "../audio/clefs-portee";
 
@@ -35,7 +24,7 @@ function direFautesGravure(fautes: readonly FauteGravure[]): string {
   return traduire("msg.vexflow.notation_refusee_var_0", liste.join(" · ") + (fautes.length > 8 ? " · …" : ""));
 }
 
-/** La clé des trois portées. Ses identifiants sont les noms de VexFlow, ses libellés sont traduits. */
+/** La clé de la portée. Ses identifiants sont les noms de VexFlow, ses libellés sont traduits. */
 const CLE_PORTEE = reglagePartage({
   nom: "Clé", nomEn: "Clef", type: "choix", ...choixClefPortee(), defaut: "Sol", defautEn: "Treble",
   doc: "Clé de la portée : de sol pour les voix et les instruments aigus, de fa pour les graves, d'ut 3e ligne pour l'alto, d'ut 4e ligne pour le ténor.",
@@ -49,14 +38,14 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une portée de notation musicale à partir d'une notation texte.",
     resumeEn: "Displays a musical staff from a text notation.",
     entrees: [{ nom: "Notation", type: "texte", sousType: "notation", requis: false }],
-    // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX. Les quatre graveurs de ce
-    // fichier portent la même paire, et la raison vaut pour les quatre.
+    // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX. Les trois graveurs de ce
+    // fichier portent la même paire, et la raison vaut pour les trois.
     //
     // POURQUOI LA SECONDE. « Export SVG » écrit un FICHIER, et son entrée est donc de type image ;
     // ces nœuds ne rendaient qu'une chaîne. Graver une partition et en sauvegarder le SVG était
     // impossible dans un seul graphe : l'application refusait le câble, « connexion illégale :
-    // texte → image ». Seule « Partition MIDI », plus bas, savait alimenter l'export — son SVG
-    // était déjà un fichier, et c'est son précédent que l'on suit.
+    // texte → image ». Un seul graveur savait alors alimenter l'export, celui dont le SVG était
+    // déjà un fichier, et c'est son précédent que l'on suit.
     //
     // ET DEUX NOMS, PARCE QUE LE DÉPÔT L'EXIGE — ce que j'ai appris en le cassant. J'avais nommé
     // les deux « SVG », au motif que c'est le même contenu dans deux porteurs, comme « Mélodie »
@@ -218,122 +207,5 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [svg, new File([svg], "grille.svg", { type: "image/svg+xml" })], message: svg };
    },
  }),
-  fiche({
-    id: "vexflow-partition", nomDicte: "partition dessinée", nom: "Partition VexFlow", nomEn: "VexFlow Score",
-    univers: "Visualisation", famille: "Notation",
-    resume: "Affiche une partition simple à partir d'une progression d'accords.",
-    resumeEn: "Displays a simple score from a chord progression.",
-    entrees: [{ nom: "Progression", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
-    parametres: [
-      { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        doc: "Progression en chiffres romains ou en symboles d'accords (ex : C Am F G).",
-        docEn: "Roman numeral progression or chord symbols (e.g. C Am F G).", defautEn: "I V vi IV" },
-      { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
-        doc: "Tonalité de la progression. Accepte une tonique seule (« A ») ou un libellé complet (« A minor »), tel que l'émet « Analyse harmonique », dans ce cas le mode nommé l'emporte sur « Gamme ».",
-        docEn: "Progression key. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ».", defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
-        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
-        doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode. En mineur, III, VI et VII descendent d'un demi-ton.",
-        docEn: "Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone." },
-      CLE_PORTEE,
-      { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
-        doc: "Largeur du SVG.", docEn: "SVG width." },
-      { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
-        doc: "Hauteur du SVG.", docEn: "SVG height." },
-    ],
-    async executer(ctx) {
-      const entree = ctx.entree(0);
-      const progression = (typeof entree === "string" && entree.trim())
-        || ctx.paramTexte("Progression", "I V vi IV");
-      const tonic = ctx.paramTexte("Tonalité", "C");
-      const clef = ctx.paramTexte("Clé", "treble");
-      const w = ctx.paramNombre("Largeur", 500);
-      const h = ctx.paramNombre("Hauteur", 160);
-      // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAÎT EST REFUSÉ EN LE NOMMANT, comme sur la grille. Mesuré
-      // avant : « C Zorglub G C » finissait en « Aucune progression valide », sans dire lequel.
-      const illisibles = romainsIllisibles(progression);
-      if (illisibles.length > 0) {
-        return { valeurs: [null, null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
-      }
-      const accords = accordsDeProgression(progression, tonic, ctx.paramTexte("Gamme", "majeur"));
-      const inconnus = accordsInconnus(accords);
-      if (inconnus.length > 0) {
-        return { valeurs: [null, null], erreur: true,
-          message: traduire("msg.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
-      }
-      const svg = genererPartition(accords, clef, w, h);
-      if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_progression_valide") };
-      // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
-      // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
-      // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
-      // noeud « Erreur » alors que la portee s'affichait correctement.
-      return { valeurs: [svg, new File([svg], "partition.svg", { type: "image/svg+xml" })], message: svg };
-    },
-  }),
-  fiche({
-    id: "vexflow-midi", nom: "Partition MIDI", nomEn: "MIDI Score",
-    univers: "Visualisation", famille: "Notation",
-    resume: "Affiche une portée de notation musicale à partir d'un fichier MIDI.",
-    resumeEn: "Displays a musical staff from a MIDI file.",
-    entrees: [{ nom: "MIDI", type: "midi", requis: true }],
-    sorties: [{ nom: "SVG", type: "image" }],
-    parametres: [
-      { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
-        doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
-      { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
-        doc: "Canal MIDI à afficher : -1 pour tous les canaux, sauf le 9, celui de la batterie, que le message dit omis. Le 9 choisi par son numéro est gravé.",
-        docEn: "MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved." },
-      { nom: "Quantification", nomEn: "Quantization", type: "choix", ...choixValeurs(Object.keys(GRILLES_NOTATION)), defaut: "1/16",
-        doc: "Résolution de la grille de quantification. Chaque note garde sa longueur, écrite en valeurs pointées et liées, de la ronde à la triple croche ; une grille de triolet n'y est pas, faute de valeur pour l'écrire.",
-        docEn: "Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it.", defautEn: "1/16" },
-      CLE_PORTEE,
-      { nom: "Largeur", nomEn: "Width", plage: [200, 2000], pas: 10, defaut: 800, unite: "px",
-        doc: "Largeur du SVG.", docEn: "SVG width." },
-      { nom: "Hauteur", nomEn: "Height", plage: [100, 800], pas: 10, defaut: 200, unite: "px",
-        doc: "Hauteur du SVG.", docEn: "SVG height." },
-    ],
-    async executer(ctx) {
-      const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const midi = await midiDuFichier(fichier);
-      let bpm = ctx.paramNombre("Tempo", 0);
-      if (bpm <= 0) {
-        bpm = 120;
-        for (const piste of midi.tracks) {
-          for (const evt of piste) {
-            if (evt.type === "setTempo") {
-              bpm = Math.round(60 / (evt.microsecondsPerBeat / 1_000_000));
-              break;
-            }
-          }
-          if (bpm !== 120) break;
-        }
-      }
-      const canal = ctx.paramNombre("Canal", -1);
-      const grilleNom = ctx.paramTexte("Quantification", "1/16");
-      const grille = GRILLES_NOTATION[grilleNom] ?? 0.25;
-      const { notes } = analyserMidi(midi);
-      // LA BATTERIE N'EST PAS GRAVÉE SOUS « TOUS », décision de Fabien du 2026-11-22 : mesuré avant,
-      // la grosse caisse devenait un do 2 et la charleston un fa dièse 2, en clé de sol. Le canal 9
-      // choisi par son numéro reste gravé : c'est alors une demande.
-      const batterie = canal < 0 ? notes.filter((n) => n.canal === 9).length : 0;
-      const notesFiltrees = canal >= 0 ? notes.filter((n) => n.canal === canal) : notes.filter((n) => n.canal !== 9);
-      const ditBatterie = batterie > 0 ? `\n${traduire("msg.vexflow.batterie_omise_var_0", batterie)}` : "";
-      const evenements = midiVersEvenements(notesFiltrees, bpm, grille);
-      if (evenements.length === 0) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") + ditBatterie };
-      const signature = signatureDuMidi(midi.tracks);
-      const clef = ctx.paramTexte("Clé", "treble");
-      const w = ctx.paramNombre("Largeur", 800);
-      const h = ctx.paramNombre("Hauteur", 200);
-      const svg = genererPortee(mettreEnMesures(evenements, longueurDeMesure(signature)), clef, w, h, signature);
-      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
-      const svgFile = new File([svg], "partition.svg", { type: "image/svg+xml" });
-      // Le message est le SVG, que la vue dessine ; la ligne sur la batterie le suit, comme celle
-      // qu'ajoute le moteur pour une valeur de réglage inconnue.
-      return { valeurs: [svgFile], message: svg + ditBatterie };
-    },
-  }),
 ] as FicheAudio[]).map(avecDoc);
 

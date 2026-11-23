@@ -17,7 +17,7 @@
 // et l'on déclare la bonne unité, plutôt que d'arrondir et d'espérer.
 
 import type { Mesure, NoeudRythme } from "./arbre-rythmique";
-import { nomMusicXML } from "./musicxml";
+import { cleDe, nomMusicXML, signesDeLaMesure, type TeteDeMesure } from "./musicxml";
 
 // ── Rationnels ─────────────────────────────────────────────────────────
 
@@ -86,7 +86,13 @@ function descendre(
   // LE N-OLET SE COMPTE SUR LA SOMME DES POIDS, ET NON SUR LE NOMBRE DE PARTS. Une division en
   // deux parts de poids 2 et 1 vaut trois unités : c'est un triolet dont une note en prend deux,
   // et compter les parts en ferait un duolet, ce qui n'a pas de sens.
-  const irreguliere = !estPuissanceDeDeux(somme);
+  //
+  // ET IL N'Y A N-OLET QUE SI L'UNITÉ ÉCRITE N'EST PAS BINAIRE. Revue des notations en texte,
+  // 2026-11-22 : « (3/4 (1 1 1)) », trois noires exactes, se gravait en triolet de noires pointées,
+  // la somme 3 n'étant pas une puissance de deux. L'unité écrite est la durée du groupe, allongée du
+  // rapport des n-olets englobants, partagée par la somme des poids.
+  const unite = mul(mul(duree, rapport), rat(1, somme));
+  const irreguliere = !estPuissanceDeDeux(unite.d);
   const monNormal = irreguliere ? puissanceDeDeuxSous(somme) : normal;
   const monReel = irreguliere ? somme : reel;
   const monRapport = irreguliere ? mul(rapport, rat(somme, monNormal)) : rapport;
@@ -103,7 +109,10 @@ function descendre(
         silence: !!n.silence,
         liee: !!n.liee,
         rapport: monRapport,
-        groupe: irreguliere ? monGroupe : 0,
+        // LA NOTE APPARTIENT AU N-OLET QUI L'ENGLOBE, même sous une division binaire. Revue des
+        // notations en texte, 2026-11-22 : les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient
+        // leur modification de temps, et se lisaient comme deux blanches ordinaires.
+        groupe: monGroupe,
         reel: monReel,
         normal: monNormal,
       });
@@ -215,23 +224,7 @@ export function voixVersMusicXML(
   return lignes.join("\n");
 }
 
-/**
- * La clé d'une portée, choisie sur les hauteurs qu'elle porte.
- *
- * UNE SEULE CLÉ POUR TOUT NE TIENT PLUS DÈS QU'IL Y A DEUX PORTÉES. Une voix de basse gravée en clé
- * de sol se lit sur quatre lignes supplémentaires sous la portée, ce qu'aucune partition n'écrit.
- * La médiane décide, et non la note la plus grave : une seule note basse dans une ligne aiguë ne
- * doit pas faire changer de clé toute la portée.
- */
-function cleDe(hauteurs: readonly number[]): string {
-  if (hauteurs.length === 0) return "<sign>G</sign><line>2</line>";
-  const triees = [...hauteurs].sort((a, b) => a - b);
-  const mediane = triees[Math.floor(triees.length / 2)];
-  // Le do central vaut 60 ; en dessous, la clé de fa épargne les lignes supplémentaires.
-  return mediane < 60
-    ? "<sign>F</sign><line>4</line>"
-    : "<sign>G</sign><line>2</line>";
-}
+// LA CLÉ D'UNE PORTÉE est `cleDe`, d'`audio/musicxml.ts` : une seule règle pour l'arbre et pour le MIDI.
 
 /** Le corps d'une portée : ses mesures, ses notes, ses n-olets. */
 function unePartie(
@@ -243,6 +236,7 @@ function unePartie(
 
   const lignes: string[] = [];
   let rang = 0;
+  let derniere = hauteurs.length > 0 ? hauteurs[0] : 60;
   mesures.forEach((m, iMesure) => {
     const feuilles = parMesure[iMesure];
     lignes.push(`    <measure number="${iMesure + 1}">`);
@@ -261,6 +255,27 @@ function unePartie(
       lignes.push(`      <attributes><time><beats>${m.metrique[0]}</beats><beat-type>${m.metrique[1]}</beat-type></time></attributes>`);
     }
 
+    // LES HAUTEURS DE LA MESURE D'ABORD, pour que ses signes se décident dans l'ordre du temps : voir
+    // `signesDeLaMesure`.
+    // UNE FEUILLE LIÉE PROLONGE LA NOTE D'AVANT, et en garde la hauteur : elle prenait la hauteur suivante,
+    // et la liaison joignait deux notes différentes. `derouler` la fond dans la précédente, et le
+    // référentiel MusicXML lie deux notes « of the same pitch ». Revue des notations en texte, 2026-11-22.
+    const hauteursDeMesure = feuilles.map((f) => {
+      if (f.silence) return null;
+      if (!f.liee) derniere = hauteurs.length > 0 ? hauteurs[rang++ % hauteurs.length] : 60;
+      return derniere;
+    });
+    // LA LIAISON PAR-DESSUS LA BARRE commence sur la dernière note de la mesure : la feuille liée qui ouvre
+    // la mesure suivante n'en écrivait que la fin.
+    const suivanteDe = (i: number) => feuilles[i + 1] ?? parMesure[iMesure + 1]?.[0];
+    const tetes = feuilles.map((f, i) => {
+      const h = hauteursDeMesure[i];
+      return h === null ? null : { ...nomMusicXML(h), liee: f.liee };
+    });
+    const signesTetes = signesDeLaMesure(tetes.filter((t): t is TeteDeMesure & { liee: boolean } => t !== null));
+    let k = 0;
+    const signes = tetes.map((t) => (t ? signesTetes[k++] : null));
+
     feuilles.forEach((f, i) => {
       const duree = Math.round((f.duree.n * divisions) / f.duree.d);
       const { nom, points } = valeurEcrite(f.ecrite);
@@ -273,9 +288,7 @@ function unePartie(
       if (f.silence) {
         lignes.push('        <rest/>');
       } else {
-        const hauteur = hauteurs.length > 0 ? hauteurs[rang % hauteurs.length] : 60;
-        rang++;
-        const { pas, alter, octave } = nomMusicXML(hauteur);
+        const { pas, alter, octave } = nomMusicXML(hauteursDeMesure[i]!);
         lignes.push('        <pitch>');
         lignes.push(`          <step>${pas}</step>`);
         if (alter !== 0) lignes.push(`          <alter>${alter}</alter>`);
@@ -286,9 +299,10 @@ function unePartie(
       // UNE NOTE LIÉE EST ÉCRITE COMME TELLE, et non fondue dans la précédente : la gravure montre
       // la liaison, là où le son n'entend qu'une durée plus longue.
       if (f.liee) lignes.push('        <tie type="stop"/>');
-      if (feuilles[i + 1]?.liee) lignes.push('        <tie type="start"/>');
+      if (suivanteDe(i)?.liee) lignes.push('        <tie type="start"/>');
       lignes.push(`        <type>${nom}</type>`);
       for (let p = 0; p < points; p++) lignes.push('        <dot/>');
+      if (signes[i]) lignes.push(`        <accidental>${signes[i]}</accidental>`);
       if (f.groupe > 0) {
         lignes.push('        <time-modification>');
         lignes.push(`          <actual-notes>${f.reel}</actual-notes>`);
@@ -297,7 +311,7 @@ function unePartie(
       }
       const notations: string[] = [];
       if (f.liee) notations.push('<tied type="stop"/>');
-      if (feuilles[i + 1]?.liee) notations.push('<tied type="start"/>');
+      if (suivanteDe(i)?.liee) notations.push('<tied type="start"/>');
       if (debutGroupe) notations.push(`<tuplet type="start" number="1" bracket="yes"/>`);
       if (finGroupe) notations.push('<tuplet type="stop" number="1"/>');
       if (notations.length > 0) {

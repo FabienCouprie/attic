@@ -96,7 +96,9 @@ describe("L'ACCORD REND UN SYMBOLE QUE LES LECTEURS RELISENT, les renversements 
 
   it("DEUX NOTES NE FONT PAS UN ACCORD, et une note illisible est refusée", async () => {
     expect((await nommer("C E")).erreurRendue).toBe(true);
-    expect((await nommer("Do Mi Sol")).erreurRendue).toBe(true);
+    // « Do Mi Sol » servait ici de note illisible ; les noms français se lisent partout depuis la
+    // décision de Fabien du 2026-11-22, septième format de la revue, et rendent « C ».
+    expect((await nommer("C H G")).erreurRendue).toBe(true);
   });
 
   // L'ALLER-RETOUR : chaque qualité de la table, jouée sur do, nommée par l'Accord, puis relue par la

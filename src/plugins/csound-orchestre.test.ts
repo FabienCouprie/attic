@@ -41,10 +41,14 @@ describe("le nœud Orchestre Csound", () => {
     expect(faux.valeurs).toEqual([null, null]);
   });
 
-  it("compte les identifiants écartés plutôt que de les taire", async () => {
+  it("refuse un identifiant inconnu et le nomme, plutôt que de le compter", async () => {
+    // Ce test tenait le contraire : « trompette » était écarté et compté, « 1 identifiant(s) inconnu(s) »,
+    // et l'orchestre se construisait sans lui. Décision de Fabien du 2026-11-22, « Refuse it, named »,
+    // revue des notations en texte.
     const res = await fiche.executer(contexte({ "Instruments": "mode,trompette,gbuzz" }) as any);
-    expect(res.message).toContain("2 instrument(s)");
-    expect(res.message).toContain("1 identifiant(s) inconnu(s)");
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs).toEqual([null, null]);
+    expect(res.message).toContain("« trompette »");
   });
 
   it("écrit tout le monde en stéréo quand on le demande, et le rappelle", async () => {

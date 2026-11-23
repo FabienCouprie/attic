@@ -3,10 +3,10 @@
   "variables": {},
   "bruit": {
     "un-choral-harmonise.json · gestes": [
-      "rang 33 · scriptGenere : \"<svg viewBox=\\\"0 0 720 256\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"uqyq1ut\\\">\\n   <desc>Engraved by Verovio 6.3.0-425dd7b</desc…\" | \"<svg viewBox=\\\"0 0 720 256\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"ym"
+      "rang 33 · scriptGenere : \"<svg viewBox=\\\"0 0 720 264\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"r3iiira\\\">\\n   <desc>Engraved by Verovio 6.3.0-425dd7b</desc…\" | \"<svg viewBox=\\\"0 0 720 264\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"j2"
     ],
     "un-choral-harmonise.json · lancer": [
-      "rang 18 · scriptGenere : \"<svg viewBox=\\\"0 0 720 256\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"c1rz4i3\\\">\\n   <desc>Engraved by Verovio 6.3.0-425dd7b</desc…\" | \"<svg viewBox=\\\"0 0 720 256\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"zt"
+      "rang 18 · scriptGenere : \"<svg viewBox=\\\"0 0 720 264\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"juwepbv\\\">\\n   <desc>Engraved by Verovio 6.3.0-425dd7b</desc…\" | \"<svg viewBox=\\\"0 0 720 264\\\" version=\\\"1.1\\\" xmlns=\\\"http://www.w3.org/2000/svg\\\" xmlns:xlink=\\\"http://www.w3.org/1999/xlink\\\" overflow=\\\"visible\\\" id=\\\"m3"
     ]
   },
   "exemples": {
@@ -855,9 +855,9 @@
         "statut clavier en_cours « Étape 6/6 »",
         "statut clavier termine",
         "resultat clavier audioResultatBuffer=AudioBuffer(2×938127@44100) audioResultatMessage=\"39 notes · 21.3 s · jouable à deux mains\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"39 notes · 21.27 s\\n\\nConforme : ce fichier se joue tel quel à deux mains.\\n\\nMesures :\\n- 1.8 notes par seconde en moyenne\\n- 545 ms plus court intervalle entre deux attaques d'une même main\\n- plus grand s…\"",
-        "resultat do-majeur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"Do Majeur · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nC4 1\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nA4 1\\nB4 1\\nC5 1\\nB4 1\\nA4 1\\nG4 1\\nF4 1\\nE4 1\\nD4 1\\nC4 1\"",
-        "resultat la-mineur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"La Mineur naturel · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nA3 1\\nB3 1\\nC4 1\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nA4 1\\nG4 1\\nF4 1\\nE4 1\\nD4 1\\nC4 1\\nB3 1\\nA3 1\"",
-        "resultat diminuee audioResultatBuffer=AudioBuffer(2×216491@44100) audioResultatMessage=\"Ré Diminuée ton, demi-ton · 9 notes · 4.9 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nG#4 1\\nA#4 1\\nB4 1\\nC#5 1\\nD5 1\"",
+        "resultat do-majeur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"Do Majeur · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nC4 1 90\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nA4 1 90\\nB4 1 90\\nC5 1 90\\nB4 1 90\\nA4 1 90\\nG4 1 90\\nF4 1 90\\nE4 1 90\\nD4 1 90\\nC4 1 90\"",
+        "resultat la-mineur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"La Mineur naturel · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nA3 1 90\\nB3 1 90\\nC4 1 90\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nA4 1 90\\nG4 1 90\\nF4 1 90\\nE4 1 90\\nD4 1 90\\nC4 1 90\\nB3 1 90\\nA3 1 90\"",
+        "resultat diminuee audioResultatBuffer=AudioBuffer(2×216491@44100) audioResultatMessage=\"Ré Diminuée ton, demi-ton · 9 notes · 4.9 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nG#4 1 90\\nA#4 1 90\\nB4 1 90\\nC#5 1 90\\nD5 1 90\"",
         "resultat joindre1 audioResultatMessage=\"Jointure MIDI · 30 notes · 16.36s\" midiFichierSortie=File(audio/midi)",
         "resultat joindre2 audioResultatMessage=\"Jointure MIDI · 39 notes · 21.27s\" midiFichierSortie=File(audio/midi)",
         "resultat do-majeur tempsExecution=…",
@@ -880,8 +880,8 @@
         "statut la-mineur termine",
         "statut joindre1 en_cours « Étape 3/3 »",
         "statut joindre1 termine",
-        "resultat do-majeur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"Do Majeur · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nC4 1\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nA4 1\\nB4 1\\nC5 1\\nB4 1\\nA4 1\\nG4 1\\nF4 1\\nE4 1\\nD4 1\\nC4 1\"",
-        "resultat la-mineur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"La Mineur naturel · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nA3 1\\nB3 1\\nC4 1\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nA4 1\\nG4 1\\nF4 1\\nE4 1\\nD4 1\\nC4 1\\nB3 1\\nA3 1\"",
+        "resultat do-majeur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"Do Majeur · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nC4 1 90\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nA4 1 90\\nB4 1 90\\nC5 1 90\\nB4 1 90\\nA4 1 90\\nG4 1 90\\nF4 1 90\\nE4 1 90\\nD4 1 90\\nC4 1 90\"",
+        "resultat la-mineur audioResultatBuffer=AudioBuffer(2×360818@44100) audioResultatMessage=\"La Mineur naturel · 15 notes · 8.2 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nA3 1 90\\nB3 1 90\\nC4 1 90\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nA4 1 90\\nG4 1 90\\nF4 1 90\\nE4 1 90\\nD4 1 90\\nC4 1 90\\nB3 1 90\\nA3 1 90\"",
         "resultat joindre1 audioResultatMessage=\"Jointure MIDI · 30 notes · 16.36s\" midiFichierSortie=File(audio/midi)",
         "resultat do-majeur tempsExecution=…",
         "resultat la-mineur tempsExecution=…",
@@ -906,7 +906,7 @@
         "statut clavier en_cours « Étape 6/6 »",
         "statut clavier termine",
         "resultat clavier audioResultatBuffer=AudioBuffer(2×938127@44100) audioResultatMessage=\"39 notes · 21.3 s · jouable à deux mains\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"39 notes · 21.27 s\\n\\nConforme : ce fichier se joue tel quel à deux mains.\\n\\nMesures :\\n- 1.8 notes par seconde en moyenne\\n- 545 ms plus court intervalle entre deux attaques d'une même main\\n- plus grand s…\"",
-        "resultat diminuee audioResultatBuffer=AudioBuffer(2×216491@44100) audioResultatMessage=\"Ré Diminuée ton, demi-ton · 9 notes · 4.9 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nD4 1\\nE4 1\\nF4 1\\nG4 1\\nG#4 1\\nA#4 1\\nB4 1\\nC#5 1\\nD5 1\"",
+        "resultat diminuee audioResultatBuffer=AudioBuffer(2×216491@44100) audioResultatMessage=\"Ré Diminuée ton, demi-ton · 9 notes · 4.9 s · graine …\" audioResultatRefaisable={bits,reecriture} midiFichierSortie=File(audio/midi) scriptGenere=\"Tempo 110\\nD4 1 90\\nE4 1 90\\nF4 1 90\\nG4 1 90\\nG#4 1 90\\nA#4 1 90\\nB4 1 90\\nC#5 1 90\\nD5 1 90\"",
         "resultat joindre1 audioResultatMessage=\"Jointure MIDI · 30 notes · 16.36s\" midiFichierSortie=File(audio/midi)",
         "resultat joindre2 audioResultatMessage=\"Jointure MIDI · 39 notes · 21.27s\" midiFichierSortie=File(audio/midi)",
         "resultat do-majeur audioResultatMessage=\"Do Majeur · 15 notes · 8.2 s\"",
@@ -1010,7 +1010,7 @@
         "resultat ecoute audioResultatBuffer=AudioBuffer(2×154350@44100) audioResultatRefaisable={bits,reecriture}",
         "resultat cercle audioResultatMessage=\"2 notes · 4 places · A4\"",
         "resultat creneau-debut audioResultatMessage=\"créneau 1/2 · 0.00 s · 7.50 s\"",
-        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 1 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3  n-olet 3\\n0.500  0.500  C3  n-olet 3\\n1.000  0.500  C3  n-olet 3\"",
+        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 0 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3\\n0.500  0.500  C3\\n1.000  0.500  C3\"",
         "resultat cercle-debut audioResultatMessage=\"variation 1/3 · 2 attaques · 4 places\"",
         "resultat rythme-haut audioResultatMessage=\"2 notes · 0 silences · 1.00 s · 0 groupes irréguliers · entrée Séquence\" scriptGenere=\"1 mesures · 1.00 s · 120 BPM · entrée Séquence\\n\\n0.000  0.500  C4\\n0.500  0.500  C4\"",
         "resultat tourner audioResultatMessage=\"pas 1 · passe 1/3\"",
@@ -1824,7 +1824,7 @@
         "statut creneau-fin termine",
         "resultat cercle audioResultatMessage=\"2 notes · 4 places · A4\"",
         "resultat creneau-debut audioResultatMessage=\"créneau 1/2 · 0.00 s · 7.50 s\"",
-        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 1 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3  n-olet 3\\n0.500  0.500  C3  n-olet 3\\n1.000  0.500  C3  n-olet 3\"",
+        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 0 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3\\n0.500  0.500  C3\\n1.000  0.500  C3\"",
         "resultat cercle-debut audioResultatMessage=\"variation 1/3 · 2 attaques · 4 places\"",
         "resultat rythme-haut audioResultatMessage=\"2 notes · 0 silences · 1.00 s · 0 groupes irréguliers · entrée Séquence\" scriptGenere=\"1 mesures · 1.00 s · 120 BPM · entrée Séquence\\n\\n0.000  0.500  C4\\n0.500  0.500  C4\"",
         "resultat tourner audioResultatMessage=\"pas 1 · passe 1/3\"",
@@ -2616,7 +2616,7 @@
         "resultat ecoute audioResultatBuffer=AudioBuffer(2×154350@44100) audioResultatRefaisable={bits,reecriture}",
         "resultat cercle audioResultatMessage=\"2 notes · 4 places · A4\"",
         "resultat creneau-debut audioResultatMessage=\"créneau 1/2 · 0.00 s · 7.50 s\"",
-        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 1 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3  n-olet 3\\n0.500  0.500  C3  n-olet 3\\n1.000  0.500  C3  n-olet 3\"",
+        "resultat rythme-bas audioResultatMessage=\"3 notes · 0 silences · 1.50 s · 0 groupes irréguliers · réglage\" scriptGenere=\"1 mesures · 1.50 s · 120 BPM · réglage\\n\\n0.000  0.500  C3\\n0.500  0.500  C3\\n1.000  0.500  C3\"",
         "resultat cercle-debut audioResultatMessage=\"variation 1/3 · 2 attaques · 4 places\"",
         "resultat rythme-haut audioResultatMessage=\"2 notes · 0 silences · 1.00 s · 0 groupes irréguliers · entrée Séquence\" scriptGenere=\"1 mesures · 1.00 s · 120 BPM · entrée Séquence\\n\\n0.000  0.500  C4\\n0.500  0.500  C4\"",
         "resultat tourner audioResultatMessage=\"pas 1 · passe 1/3\"",
@@ -3851,7 +3851,7 @@
         "~resultat gravure audioResultatMessage=\"MusicXML · page 1 sur 1\" imageResultatFile=File(image/svg+xml) imageResultatUrl=\"blob:…\" scriptGenere=*",
         "resultat lire audioResultatMessage=\"DCML · 4 voix · 148 notes\" scriptGenere=\"DCML · réglage Notation · 80 à la noire\\n\\n1. 1.1 · 30 notes · C4 à E5\\n2. 1.2 · 40 notes · G3 à A4\\n3. 2.1 · 35 notes · E3 à E4\\n4. 2.2 · 43 notes · C2 à G3\\n\\nnotes liées jointes : 6\"",
         "resultat harmoniser audioResultatBuffer=AudioBuffer(2×1190700@44100) audioResultatMessage=\"36 colonnes · 0 erreurs au jugement\" audioResultatRefaisable={bits,reecriture} scriptGenere=\"36 colonnes · coût 42.06 · 2 replis chromatiques\\n\\naccords : I I vi V I I V V7 vi I I I V7 I V V I I I I I V/V ii° emprunté ii V7 V7 vi vi V I V I V V I I\\n\\njugement : 0 erreurs · 3 avis\\nmesure 5, temps…\"",
-        "resultat musicxml audioResultatMessage=\"73 notes · 9 mesures\" scriptGenere=\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n<!DOCTYPE score-partwise PUBLIC \\\"-//Recordare//DTD MusicXML 4.0 Partwise//EN\\\" \\\"http://www.musicxml.org/dtds/partwise.dtd\\\">\\n<score-partwise version=\\\"4.0\\\">\\n  <work…\"",
+        "resultat musicxml audioResultatMessage=\"73 notes · 9 mesures · clé de sol\" scriptGenere=\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n<!DOCTYPE score-partwise PUBLIC \\\"-//Recordare//DTD MusicXML 4.0 Partwise//EN\\\" \\\"http://www.musicxml.org/dtds/partwise.dtd\\\">\\n<score-partwise version=\\\"4.0\\\">\\n  <work…\"",
         "resultat lire tempsExecution=…",
         "resultat juge-bach tempsExecution=…",
         "resultat harmoniser tempsExecution=…",
@@ -3899,7 +3899,7 @@
         "statut gravure termine",
         "~resultat gravure audioResultatMessage=\"MusicXML · page 1 sur 1\" imageResultatFile=File(image/svg+xml) imageResultatUrl=\"blob:…\" scriptGenere=*",
         "resultat harmoniser audioResultatBuffer=AudioBuffer(2×1190700@44100) audioResultatMessage=\"36 colonnes · 0 erreurs au jugement\" audioResultatRefaisable={bits,reecriture} scriptGenere=\"36 colonnes · coût 42.06 · 2 replis chromatiques\\n\\naccords : I I vi V I I V V7 vi I I I V7 I V V I I I I I V/V ii° emprunté ii V7 V7 vi vi V I V I V V I I\\n\\njugement : 0 erreurs · 3 avis\\nmesure 5, temps…\"",
-        "resultat musicxml audioResultatMessage=\"73 notes · 9 mesures\" scriptGenere=\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n<!DOCTYPE score-partwise PUBLIC \\\"-//Recordare//DTD MusicXML 4.0 Partwise//EN\\\" \\\"http://www.musicxml.org/dtds/partwise.dtd\\\">\\n<score-partwise version=\\\"4.0\\\">\\n  <work…\"",
+        "resultat musicxml audioResultatMessage=\"73 notes · 9 mesures · clé de sol\" scriptGenere=\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\\n<!DOCTYPE score-partwise PUBLIC \\\"-//Recordare//DTD MusicXML 4.0 Partwise//EN\\\" \\\"http://www.musicxml.org/dtds/partwise.dtd\\\">\\n<score-partwise version=\\\"4.0\\\">\\n  <work…\"",
         "resultat juge-bach tempsExecution=…",
         "resultat harmoniser tempsExecution=…",
         "resultat juge-regles tempsExecution=…",

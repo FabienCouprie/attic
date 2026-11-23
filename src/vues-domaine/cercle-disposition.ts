@@ -124,9 +124,36 @@ export function ajusterMotif(motif: string, positions: number): string {
   return motif + "0".repeat(n - motif.length);
 }
 
-/** Un motif nettoyé de tout ce qui n'est ni zéro ni un, pour qu'une saisie à la main soit tolérée. */
+/**
+ * Le motif que porte un texte : tout le texte, ou, quand c'est l'adresse d'un cercle en ligne, ce qui
+ * suit son dernier « # ». Nettoyer l'adresse entière y prenait aussi ses chiffres : « ?tempo=120 »
+ * ajoutait « 10 » au motif. Décision de Fabien du 2026-11-22, « Read after the # ».
+ */
+export function partieMotif(texte: string): string {
+  const i = texte.lastIndexOf("#");
+  return i >= 0 ? texte.slice(i + 1) : texte;
+}
+
+/** Un motif nettoyé de ses séparateurs, pour qu'une saisie à la main ou une adresse collée soient tolérées. */
 export function nettoyerMotif(texte: string): string {
-  return [...texte].filter((c) => c === "0" || c === "1").join("");
+  return [...partieMotif(texte)].filter((c) => c === "0" || c === "1").join("");
+}
+
+/** Ce qu'une adresse collée sépare : espaces, tirets, points et barres. */
+const SEPARATEUR = /[\s\-.|/]/;
+
+/**
+ * Le premier caractère du motif qui n'est ni 0, ni 1, ni un séparateur, avec son rang compté depuis 1
+ * dans le motif écrit, ou null.
+ *
+ * « 1002 » DONNAIT TROIS PLACES : tout ce qui n'était ni 0 ni 1 s'écartait, le 2 compris. Seuls les
+ * séparateurs s'écartent désormais. Décision de Fabien du 2026-11-22, « Clean separators only »,
+ * revue des notations en texte.
+ */
+export function caractereEtranger(texte: string): { caractere: string; rang: number } | null {
+  const lettres = [...partieMotif(texte)];
+  const i = lettres.findIndex((c) => c !== "0" && c !== "1" && !SEPARATEUR.test(c));
+  return i < 0 ? null : { caractere: lettres[i], rang: i + 1 };
 }
 
 // ── Le nom d'une note écrit dans sa pastille ────────────────────────────────────────────────────

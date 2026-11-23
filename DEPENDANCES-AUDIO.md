@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 98 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 284 · transposable tel quel
+- **récipient** : 99 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 291 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | abc-contraintes.ts | pur | — |
 | abc-edition-llm.ts | pur | — |
 | abc-fautes.ts | pur | — |
+| abc-gravure.ts | pur | — |
 | abc-midi.ts | pur | — |
 | abc-reprise-motifs.ts | pur | — |
 | abc-reprise.ts | pur | — |
@@ -132,6 +133,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | croisement-registre.ts | pur | — |
 | croisement-reglages.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
+| csound-formules-en.ts | pur | — |
 | csound-formules.ts | pur | — |
 | csound-opcodes.ts | pur | — |
 | csound-orchestre.ts | pur | — |
@@ -251,6 +253,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
 | limiteur-crete-vraie.ts | pur | — |
+| listes-musicales.ts | pur | — |
 | lsysteme.ts | pur | — |
 | lucier.ts | recipient | AudioBuffer |
 | mandelbrot.ts | recipient | AudioBuffer |
@@ -293,10 +296,12 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | multicanal.ts | recipient | AudioBuffer |
 | musicxml-arbre.ts | pur | — |
 | musicxml-parties.ts | pur | — |
+| musicxml-temps.ts | pur | — |
 | musicxml.ts | pur | — |
 | nancarrow.ts | recipient | AudioBuffer |
 | ndarray-inerte.ts | pur | — |
 | nom-note.ts | pur | — |
+| noms-de-notes.ts | pur | — |
 | norgard.ts | pur | — |
 | normalisation-sonie.ts | recipient | AudioBuffer |
 | notation-texte.ts | pur | — |
@@ -360,6 +365,8 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | sequence-percussion.ts | recipient | AudioBuffer |
 | sequence.ts | pur | — |
 | series-intervalles.ts | pur | — |
+| sfz-entete.ts | pur | — |
+| sfz-noms.ts | recipient | AudioBuffer |
 | sfz.ts | recipient | AudioBuffer |
 | signatures.ts | pur | — |
 | silences.ts | pur | — |
@@ -425,5 +432,6 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | vosim.ts | pur | — |
 | vosk-travailleur.ts | pur | — |
 | vumetre.ts | recipient | AudioBuffer |
+| wav-racine.ts | pur | — |
 | wishart.ts | recipient | AudioBuffer |
 | zones-vers-midi.ts | pur | — |

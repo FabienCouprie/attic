@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **521 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **520 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,8 +11,8 @@ Attic ships **521 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
-| [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
+| [Visualization](#visualization) | 43 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (7) |
+| [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
 | [Other & lab](#other--lab) | 97 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (8) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
@@ -143,7 +143,7 @@ This component writes a song's plan as text: its description, its lyrics, its te
 | Description | text | `a calm acoustic guitar ballad, warm and slow` |  | What is wanted. The « Description » input replaces it when connected. |
 | Lyrics | text | — |  | The sung text, with its section markers in brackets. Empty, the field is absent from the plan and the render is instrumental. |
 | Tempo | number | 120 BPM | 0 – 240 BPM, step 1 | The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected. |
-| Key | text | `C major` |  | The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. Empty, the field is absent from the plan. The « Key » input replaces it when connected. |
+| Key | text | `C major` |  | The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. « Gm » is written « G minor » and « G » « G major »; any other mode, « mixolydian » or « dorian », makes the node refused, and the message names it. Empty, the field is absent from the plan. The « Key » input replaces it when connected. |
 | Length | number | 60 s | 5 – 600 s, step 5 | Target length. As this plan carries no audio codes, it is held to the sample. |
 | Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best. |
 | Time signature | choice | 4 | 2 / 3 / 4 / 6 | The number of beats per bar, written into the plan. |
@@ -519,7 +519,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Motif | choice | Major triad | Major triad / Minor triad / 7th arpeggio / Cantus firmus / Custom | Base interval motif repeated recursively. |
-| Intervals | text | `0,3,7,10` |  | Intervals of the custom motif, in semitones separated by commas (e.g. 0,3,7,10). |
+| Intervals | text | `0,3,7,10` |  | For the « Custom » motif: the intervals, in semitones from -96 to 96 above the tonic, separated by spaces, commas or semicolons, « 0 3 7 10 ». An empty list, or one with an unreadable token, is refused, and the message names it. A motif whose unfolding leaves the MIDI range, 0 to 127, is refused. |
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursion levels (higher = denser structure). |
 | Duration | number | 8 s | 2 – 60 s | Generated duration, in seconds. |
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -629,8 +629,8 @@ Generates a melody from a self-rewriting grammar. Aristid Lindenmayer, a biologi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Example | choice | Lindenmayer's algae | Hand-written / Lindenmayer's algae / Koch snowflake / Dragon curve / Plant / Cantor dust | Loads a known grammar instead of the axiom and rules typed below. « Hand-written » takes the rules written in the fields. |
-| Axiom | text | `A` |  | The starting word, rewritten on every pass. |
-| Rules | text | `A=AB, B=A` |  | The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and &lt; lengthen and shorten the step, a dot is a rest. |
+| Axiom | text | `A` |  | The starting word, rewritten on every pass. Empty, it makes the node refused. |
+| Rules | text | `A=AB, B=A` |  | The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and &lt; lengthen and shorten the step, a dot is a rest. A rule without « = », or whose left side is not a single letter, and a second rule for the same letter, make the node refused, and the message names them. |
 | Iterations | number | 5 | 0 – 12, step 1 | Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Tonic of the scale. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees that the letters and the + and − signs walk through: each distinct letter takes a degree by its rank, and the word never leaves the scale. Has no effect when « Example » is « Cantor dust », which has a single letter and neither + nor −: it plays only the tonic. |
@@ -983,7 +983,7 @@ Builds a sound from a feature vector: tempo, spectral centroid, chroma, cepstral
 
 *Generates a pure tone at a given frequency (Hz) or note.*
 
-Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-20000 Hz) or as a musical note (format A4, C#5, Bb3). Four waveforms: sine (single frequency, pure), square (odd harmonics, rich), sawtooth (all harmonics, bright) and triangle (soft odd harmonics). A 10 ms fade in/out avoids clicks. Used for ear training, testing filters, tuning an instrument, or as a reference. The waveform and spectrum can be read on an analysis.
+Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-20000 Hz) or as a musical note (format A4, C#5, Bb3, or French names, Sib3, Re4); an unreadable note, or one without an octave, is refused and named. Four waveforms: sine (single frequency, pure), square (odd harmonics, rich), sawtooth (all harmonics, bright) and triangle (soft odd harmonics). A 10 ms fade in/out avoids clicks. Used for ear training, testing filters, tuning an instrument, or as a reference. The waveform and spectrum can be read on an analysis.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -993,7 +993,7 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 |---|---|---|---|---|
 | Input | choice | Frequency (Hz) | Frequency (Hz) / Note | Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5). |
 | Frequency | number | 440 Hz | 20 – 20000 Hz, step 1 | Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4. |
-| Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3. |
+| Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter or French name, accidental, octave, e.g. A4, C#5, Sib3, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Waveform | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -1227,7 +1227,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 |---|---|---|---|---|
 | Source | choice | Catalogue | Catalogue / Draw / Drawing | Catalogue runs through the listed trees; Draw generates one at random. |
 | Number | number | 0 | 0 – 339, step 1 | The catalogue tree returned. Beyond the last, the count starts again at the first. No effect when « Source » is not « Catalogue ». |
-| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. |
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | The measure used. No effect when « Source » is « Drawing »: the drawn tree carries its own time signature. |
 | Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect when « Source » is not « Draw ». |
 | Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. No effect when « Source » is not « Draw ». |
@@ -1419,8 +1419,8 @@ Synthesises a sound point by point, with no waveform model: two lists of numbers
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
-| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
+| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty list, an unreadable token or an amplitude outside -1 to 1 makes the node refused, and the message names it. |
+| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. A duration is written as a whole number of samples, at least 1; an empty list, an unreadable token or any other duration makes the node refused, and the message names it. |
 | Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it, and that is the first of the two conditions for a held wave. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other, applied to amplitudes, it draws a ramp rather than a sound. |
 | Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations lets the gap between two points repeat identically, which is the second condition for a held wave, the first being a sequence on the amplitudes; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. With a single duration written, this setting has nothing left to reshuffle and the condition is met whatever it is. |
 | Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
@@ -1537,7 +1537,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers separated by spaces. Empty, a cantus is generated. |
+| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers or note names with their octave, « C4 », separated by spaces. Empty, a cantus is generated. A cantus with a note that cannot be read, or that falls outside 0 to 127, is refused, and the message names it. |
 | Notes | number | 10 | 4 – 16, step 1 | The length of the generated cantus, when none is supplied. |
 | Position | choice | Above | Above / Below | Places the searched voice above or below the cantus. |
 | Mode | choice | From the cantus | From the cantus / Chromatic | « From the cantus » uses only the degrees the cantus uses, which holds the line in its mode. |
@@ -1714,7 +1714,7 @@ Replays a sequence of notes recorded on the block's virtual keyboard and synthes
 
 *Loads an SFZ sample bank (the built-in drum kit, or a file from disk) with no keyboard.*
 
-Loads an SFZ sample bank and hands it to the graph, with no keyboard. The drums are built in: the kit, this node's default source, holds eight sounds on General MIDI notes, 36 kick, 38 snare, 39 clap, 42 closed hi-hat, 45 low tom, 46 open hi-hat, 49 crash, 50 high tom. Those sounds are the advanced drum sequencer's own, rendered to files and bundled with the application just like the default SoundFont: three hundred and seventy kilobytes, no third-party samples, no download, and the node gives a playable drum kit with nothing to set. The bank type is what makes the drums right. A pitched bank always looks for the nearest zone: on a real kit read that way, key 37, absent from General MIDI, played the kick a semitone higher, and key 60 played the crash an octave and a half up. A kit transposes nothing and leaves a key with no sound silent. The file says so itself (single-key regions, or a « pitch_keytrack=0 ») and automatic mode detects it; forcing either remains possible, including to get a deliberately transposed kit. Velocity layers are kept. A seriously sampled piano has three to eight recordings per key (played softly the hammer brushes the string, played hard it slams) and that is not a matter of level: a forte sample turned down twenty decibels remains a forte sample. Each layer becomes a zone with its velocity range, and the message reports how many there are. If the file declares « amp_veltrack », it is honoured: at zero, velocity only picks the layer and no longer touches the level, which avoids the double effect that made notes played piano nearly inaudible. The preview plays each sound one after another (one note per key, not one per zone) then, when there are layers, a staircase of dynamics on a single key, from softest to loudest: the only way to hear what the layers bring without wiring a keyboard or a MIDI file.
+Loads an SFZ sample bank and hands it to the graph, with no keyboard. The drums are built in: the kit, this node's default source, holds eight sounds on General MIDI notes, 36 kick, 38 snare, 39 clap, 42 closed hi-hat, 45 low tom, 46 open hi-hat, 49 crash, 50 high tom. Those sounds are the advanced drum sequencer's own, rendered to files and bundled with the application just like the default SoundFont: three hundred and seventy kilobytes, no third-party samples, no download, and the node gives a playable drum kit with nothing to set. The bank type is what makes the drums right. A pitched bank always looks for the nearest zone: on a real kit read that way, key 37, absent from General MIDI, played the kick a semitone higher, and key 60 played the crash an octave and a half up. A kit transposes nothing and leaves a key with no sound silent. The file says so itself (single-key regions, or a « pitch_keytrack=0 ») and automatic mode detects it; forcing either remains possible, including to get a deliberately transposed kit. The built-in kit's sounds are declared « loop_mode=one_shot »: each one rings to the end of its sample, the crash for 1.2 s, however long the note that triggers it. Velocity layers are kept. A seriously sampled piano has three to eight recordings per key (played softly the hammer brushes the string, played hard it slams) and that is not a matter of level: a forte sample turned down twenty decibels remains a forte sample. Each layer becomes a zone with its velocity range, and the message reports how many there are. If the file declares « amp_veltrack », it is honoured: at zero, velocity only picks the layer and no longer touches the level, which avoids the double effect that made notes played piano nearly inaudible; negative, it works in reverse, the loudest velocity becoming the softest. A region the file describes badly is dropped and named in the message. The preview plays each sound one after another (one note per key, not one per zone) then, when there are layers, a staircase of dynamics on a single key, from softest to loudest: the only way to hear what the layers bring without wiring a keyboard or a MIDI file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1733,7 +1733,7 @@ Loads an SFZ sample bank and hands it to the graph, with no keyboard. The drums 
 
 *Plays an SFZ bank, a file from disk or a bank from the graph, on an 88-key keyboard, and records what you play.*
 
-An eighty-eight-key keyboard, playable with the mouse or the computer keyboard, that sounds a sample bank. The bank is read at node level: the instrument may therefore differ from one instance to the next within a single graph. Two sources. The file: the 📂 button picks a .sfz, its samples are read beside it, and the path is kept in the graph, enough to check what you have just exported, or to play a bank from elsewhere. The bank input: « Spread Across Keyboard » or « Instrument End » wired straight in, with no disk round trip; the graph must then have been run once for the keyboard to have something to play. What you play is recorded, and the node outputs three things: the sequence's audio, its MIDI, and the bank itself, which can therefore be chained on to « SFZ Export » or « Multi-Zone Sampler ». The playback ratios are the render's: the same function serves live playing and the graph's audio, so what you hear while listening to yourself is what will come out. What is read from the format: regions, opcode inheritance through &lt;global>, &lt;master> and &lt;group>, note names as well as numbers, default_path, sustain loops, tune, volume and transpose. What is not is stated in the node's message rather than guessed: ignored opcodes are counted and named, missing samples too, and velocity layers are kept: one key may carry three to eight recordings (piano, mezzo, forte) and the played velocity picks which one sounds. On the keyboard, velocity comes from the striking rhythm: playing fast brings out the loud layer. An #include is reported, not followed.
+An eighty-eight-key keyboard, playable with the mouse or the computer keyboard, that sounds a sample bank. The bank is read at node level: the instrument may therefore differ from one instance to the next within a single graph. Two sources. The file: the 📂 button picks a .sfz, its samples are read beside it, and the path is kept in the graph, enough to check what you have just exported, or to play a bank from elsewhere. The bank input: « Spread Across Keyboard » or « Instrument End » wired straight in, with no disk round trip; the graph must then have been run once for the keyboard to have something to play. What you play is recorded, and the node outputs three things: the sequence's audio, its MIDI, and the bank itself, which can therefore be chained on to « SFZ Export » or « Multi-Zone Sampler ». The playback ratios are the render's: the same function serves live playing and the graph's audio, so what you hear while listening to yourself is what will come out. What is read from the format: regions, opcode inheritance through &lt;global>, &lt;master> and &lt;group>, note names as well as numbers, default_path, which each &lt;control> sets for the regions that follow it, a &lt;control> without one resetting it, sustain loops, whose « loop_end » is inclusive as the format requires, « loop_mode=one_shot », which plays the sample to its end whatever the key release, « pitch_keycenter=sample », which takes the root from the WAV's « smpl » chunk, or note 0, stated in the message, when the file declares none, tune, volume and transpose. What is not is stated in the node's message rather than guessed: ignored opcodes are counted and named, missing samples too, and velocity layers are kept: one key may carry three to eight recordings (piano, mezzo, forte) and the played velocity picks which one sounds. On the keyboard, velocity comes from the striking rhythm: playing fast brings out the loud layer. An #include is reported, not followed. « octave_offset » and « note_offset », set in &lt;control>, shift the keys and root of the regions that follow. A region is dropped, and named in the message by its rank, when one of its values is unreadable or outside the format's range, when « lokey » exceeds « hikey », when its keys are -1, which reserves it for a controller, or when its « sample » is a generator such as « *sine ».
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1952,7 +1952,7 @@ Composes a random melody in the chosen key and scale, over the given number of b
 
 *Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed.*
 
-Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). A clicked cell turns on or off, as in the other sequencers; nuance is on the modifiers, Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Settings: • tempo • number of steps (16 or 32) • swing • bars; the audio output loops the pattern. A second output gives the same rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): the same rhythm can thus be played with other sounds. The grid's nuances become velocities there and swing is applied: the groove survives the change of sounds.
+Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). A clicked cell turns on or off, as in the other sequencers; nuance is on the modifiers, Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Settings: • tempo • number of steps (8, 16 or 32) • swing • bars; the audio output loops the pattern. A second output gives the same rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): the same rhythm can thus be played with other sounds. The grid's nuances become velocities there and swing is applied: the groove survives the change of sounds.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1966,7 +1966,7 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 | Swing | number | 0 % | 0 – 60 % | Delays off-beats for a shuffle groove. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1 to 9 (velocity). |
+| Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1 to 9 (velocity). A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cantor Rhythm
@@ -2102,11 +2102,11 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Pulses | number | 12 | 2 – 48, step 1 | Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number. |
-| Motif | text | `0 1 2` |  | The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself. |
+| Motif | text | `0 1 2` |  | The positions struck by one voice, as whole pulse numbers, from 0 to « Pulses » minus one, separated by spaces, commas or semicolons. Empty, the node searches for a tiling motif itself. A motif with an unreadable token, or one that leaves the cycle, is refused, and the message names it; a motif that does not tile is refused too. |
 | Searched size | number | 3 | 2 – 12, step 1 | Number of onsets per voice, when the motif is left empty. It must divide the number of pulses. |
 | Step length | number | 0.2 s | 0.05 – 1 s, step 0.05 | Length of one pulse. |
 | Repeats | number | 4 | 1 – 16, step 1 | Number of cycles played. |
-| Pitches | text | `60 64 67 72` |  | One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. |
+| Pitches | text | `60 64 67 72` |  | One pitch per voice, as a MIDI number from 0 to 127 or a note name with its octave, « C4 ». This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. A decimal pitch sounds as written; the MIDI file, which carries whole numbers only, rounds it, and the message says so. An empty list, or one with an unreadable token, is refused. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -2140,7 +2140,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. |
+| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. A number from 1 to 12 followed by A or B, in capitals or not; any other code makes the node refused, and the message names it. |
 | Journey | choice | Full | Full / Neighbors / Random | Full = around the wheel; Neighbors = compatible moves (+1, -1, same number, +7); Random = random walk between neighbors. |
 | Steps | number | 12 | 1 – 24, step 1 | Number of chords generated. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -2357,7 +2357,7 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Mode | choice | Block | Block / Arpeggiated / Rolled | Block = chord played as a block; Arpeggiated = notes spread over the step, each released when the next starts; Rolled = onsets quickly staggered, all notes held. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. |
+| Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| », each step 0 or 1. Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent. |
 
 #### Melodic Sequencer
 
@@ -2385,7 +2385,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| ». |
+| Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| », each step 0 or 1. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent. |
 
 ### Synthesizers
 
@@ -2413,7 +2413,7 @@ Generates a note using frequency modulation (FM) or amplitude modulation (AM) vi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Mode | choice | FM | FM / AM | Modulation type: FM (frequency) or AM (amplitude). |
-| Note | text | `C4` |  | Note to play (e.g. C4, G5). |
+| Note | text | `C4` |  | Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 3 | 0.1 – 10, step 0.1 | Frequency ratio between carrier and modulator. |
@@ -2437,7 +2437,7 @@ Generates a synthetic kick drum using Tone.js MembraneSynth. The sound is render
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. |
+| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. The sound is extended if the envelope exceeds this value. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Pitch decay | number | 0.05 s | 0.001 – 1 s, step 0.001 | Pitch envelope decay time. |
@@ -2459,7 +2459,7 @@ Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js Meta
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C5` |  | Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. |
+| Note | text | `C5` |  | Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 5.1 | 0.1 – 10, step 0.1 | Frequency ratio between modulator and carrier. |
@@ -2484,7 +2484,7 @@ Generates a plucked string note using Karplus-Strong synthesis: a short burst of
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C4` |  | Plucked string note (e.g. C4, G3). |
+| Note | text | `C4` |  | Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Attack noise | number | 1 | 0.1 – 20, step 0.1 | Amount of noise at the attack. |
@@ -2507,7 +2507,7 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). |
+| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named. |
 | Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Waveform | choice | Triangle | Sine / Square / Sawtooth / Triangle | Oscillator waveform. |
@@ -2760,8 +2760,8 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Sieve | text | `5@0 7@2 11@3` |  | Residual classes as "modulus@residue", separated by spaces. Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. Malformed fragments are ignored rather than emptying the sieve. |
-| Operation | choice | Union | Union / Intersection / Difference | "Union" keeps what at least one class holds, the operation that creates irregularity. "Intersection" keeps only what all of them hold, hence very little. "Difference" keeps what the first class holds and no other does: the only way to punch holes in a regular grid. |
+| Sieve | text | `5@0 7@2 11@3` |  | Residual classes as "modulus@residue", separated by spaces and combined by "Operation". Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. The expression can also combine its classes itself, in Christopher Ariza's notation: "\|" for union, "&" for intersection, "^" for the symmetric difference, which keeps what one of the two terms holds and not the other, "-" before a class or a parenthesis for the complement, taken over the degrees examined, and parentheses to group. The complement is read first, then intersection, then symmetric difference, then union. Thus 3@0 & -4@0 keeps the multiples of 3 that are not multiples of 4, 3@0 ^ 4@0 also keeps the multiples of 4 that are not multiples of 3, and 3@0-4@0 is refused. An expression carrying these signs no longer follows "Operation". A fragment that cannot be read makes the sieve refused, and the message names it. The message writes the expression applied, ∪ for union, ∩ for intersection, △ for the symmetric difference and − for the complement, and it reads back as it is. |
+| Operation | choice | Union | Union / Intersection / Difference | "Union" keeps what at least one class holds, the operation that creates irregularity. "Intersection" keeps only what all of them hold, hence very little. "Difference" keeps what the first class holds and no other does: the only way to punch holes in a regular grid. The operation combines the classes of a "Sieve" written as a list; an expression carrying "\|", "&", a complement or parentheses combines itself. |
 | Reading | choice | Pitches and rhythm | Pitches / Rhythm / Pitches and rhythm | Which axis to read the sieve along. "Pitches" plays the kept degrees as evenly spaced notes; "Rhythm" plays a single note at the kept onsets; "Pitches and rhythm" does both, the duality Xenakis claimed. |
 | Span | number | 96 | 8 – 512, step 1 | Number of degrees examined. To hear a long-period sieve you need at least its period, otherwise you only hear a fragment. |
 | Base note | number | 48 | 24 – 96, step 1 | MIDI pitch of degree 0. Each kept degree is one semitone above. |
@@ -3080,8 +3080,8 @@ Lays a rhythm written by divisions on a series of pitches, and returns the resul
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. |
-| Pitches | text | `60 62 64 65 67` |  | The MIDI numbers used, read in a loop, when no input supplies them. |
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
+| Pitches | text | `60 62 64 65 67` |  | The pitches used, read in a loop, when no input supplies them: MIDI numbers from 0 to 127, decimals allowed, or note names with their octave, « C4 », separated by spaces, commas or semicolons. An empty list, or one with an unreadable token, is refused, and the message names it. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. |
 | Repeats | number | 1 | 1 – 16, step 1 | How many times the whole tree is played again, end to end. |
 | Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
@@ -3148,7 +3148,7 @@ Reduces a rhythm tree to its shortest form and returns the notation obtained. A 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tree | text | `(4/4 (1 (1 (1 1.0)) (1 (-1 -1)) 1))` |  | The list notation, used when the input of the same name is not connected. |
+| Tree | text | `(4/4 (1 (1 (1 1.0)) (1 (-1 -1)) 1))` |  | The list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
 
 #### Speech to MIDI
 
@@ -3214,7 +3214,7 @@ Returns the degrees of the tuning received on its input as notes. Pitches are fr
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Degrees | text | — |  | The degree ranks to play, separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. |
+| Degrees | text | — |  | The degree ranks to play, as whole numbers separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. A list with a token that is not a whole number, or a rank that falls outside the MIDI range 0 to 127, is refused, and the message names it. |
 | Duration | slider | 0.5 s | 0.05 – 4 s, step 0.05 | Each note's length. The notes follow one another without overlap, so this length is also the gap between them. |
 | Tonic | slider | 60 | 24 – 96, step 1 | The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. |
 
@@ -4699,7 +4699,7 @@ Splits a MIDI file into parts, one per instrument, so that a full arrangement ca
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Split by | choice | Automatic | Automatic / By channels / By tracks | Automatic: the node looks at what the file holds and splits on its own, channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. By channels: you write each part's channels below. By tracks: the same boxes then mean track numbers, which is what files whose voices share a channel need, a notation program often writes a choir's four voices on channel 1, separated by tracks. |
-| Part 1 | text | `1` |  | Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. |
+| Part 1 | text | `1` |  | Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. Empty, the part has no channel, and its notes go to « Rest ». A channel outside 1 to 16, a track zero or an unreadable token, in this part as in the following ones, makes the node refused, and the message names it. |
 | Part 2 | text | `2` |  | Channels (or tracks) of the second part. |
 | Part 3 | text | `3` |  | Channels (or tracks) of the third part. |
 | Drums | text | `10` |  | Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank (a kit, where a key is a sound and not a pitch) hence its name. |
@@ -4983,7 +4983,7 @@ Closes a slot loop and returns a sequence in which what each pass produced occup
 
 *Opens a loop: what follows is computed once per slot, and knows the place it will occupy.*
 
-Opens a loop over slots: what is laid between this node and « Slot Loop End » is computed once per slot, and returns a sequence that the end lays in its place. This node returns a single-note sequence covering the slot of the current pass: its onset is that of the slot and its length that of the slot. It is by that note that the chain learns where it will be laid, and a formula on sequence reads « debut », « duree », « i » the rank of the slot and « n » their number. « Slots » sets their number. « Onsets » and « Lengths » describe them, in three ways: a single number holds for all, a series of numbers gives the first values and the last repeats, and two numbers separated by a colon make a straight ramp from the first to the second. « Tempo » is carried by the returned sequence, so that the chain has it. The « Slot » output returns the note covering the current slot. The message gives the rank of the slot, its instant and its length.
+Opens a loop over slots: what is laid between this node and « Slot Loop End » is computed once per slot, and returns a sequence that the end lays in its place. This node returns a single-note sequence covering the slot of the current pass: its onset is that of the slot and its length that of the slot. It is by that note that the chain learns where it will be laid, and a formula on sequence reads « debut », « duree », « i » the rank of the slot and « n » their number. « Slots » sets their number. « Onsets » and « Lengths » describe them, in three ways: a single number holds for all, a series of numbers gives the first values and the last repeats, and two numbers separated by a colon make a straight ramp from the first to the second. What is not written this way makes the node refused, and the message names it. « Tempo » is carried by the returned sequence, so that the chain has it. The « Slot » output returns the note covering the current slot. The message gives the rank of the slot, its instant and its length.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5663,7 +5663,7 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 4000 Hz, step 1 | Frequency of the first resonator; the others follow from it through the structure. A resonator that would fall beyond half the sample rate is dropped, not folded back. |
 | Structure | choice | Harmonic | Harmonic / Odd / Bar / Chord | Where the resonators sit above the fundamental. Harmonic: 1, 2, 3...; odd: 1, 3, 5...; bar: the inharmonic modes of a free bar; chord: the intervals written below. |
-| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. |
+| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. An interval runs from -96 to 96 semitones, decimals allowed. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Count | slider | 12 | 1 – 32, step 1 | Number of resonators. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a resonator takes to lose 60 dB. Short, the sound takes on a colour; long, it fades behind the chord. |
 | Brightness | slider | 50 % | 0 – 100 %, step 1 | Level of the high resonators relative to the low ones. 100%: all at the same level; 0%: the k-th at 1/k², a dark sound. |
@@ -5775,7 +5775,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Note of the first comb; the others follow from it through the chord. |
-| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, separated by spaces or commas. « 0 »: a single note. |
+| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, from -96 to 96, decimals allowed, separated by spaces or commas. « 0 »: a single note. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a comb takes to lose 60 dB. |
 | Damping | slider | 20 % | 0 – 95 %, step 1 | Loss of highs on each trip round the loop. 0: bright, metallic; high: round, muffled. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
@@ -5945,7 +5945,7 @@ Definite-pitched percussion by modal synthesis. A bar does not vibrate like a st
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Marimba | Glockenspiel (free bar) / Marimba / Vibraphone / Tubular bell / Tibetan bowl / Wood block | The instrument, that is, its modal ratios. A free bar vibrates on 1 / 2.756 / 5.404 / 8.933, non-integer ratios, hence its metallic colour. Carving an arch under a marimba bar brings its second mode to 4 and its third to 10: it becomes harmonic, hence musical. The tubular bell rings on 2 / 3 / 4.16 / 5.43, so the note one hears is not in the sound at all. |
-| Note | text | `C4` |  | Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. |
+| Note | text | `C4` |  | Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Mallet hardness | number | 50 % | 0 – 100 %, step 1 | A hard mallet gives a short impulse, hence rich in highs, and wakes the upper modes; a soft one wakes only the first. It is the setting that changes the timbre most, and for a physical reason rather than by a tuning curve. |
 | Damping | number | 0 % | 0 – 100 %, step 1 | A hand laid on the bar: shortens every resonance at once. |
 | Tremolo | number | 0 % | 0 – 100 %, step 1 | Tremolo depth, that is, the amplitude modulation produced by the discs spinning in a vibraphone's resonator tubes. The setting acts on every instrument. |
@@ -5993,7 +5993,7 @@ Scanned synthesis, after Bill Verplank, Max Mathews and Rob Shaw (CCRMA, 2000). 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `A2` |  | Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. |
+| Note | text | `A2` |  | Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Masses | number | 64 | 4 – 256, step 1 | Number of masses in the chain, hence of points in the wavetable. Few masses give an angular shape and a rich sound; many give a smooth one. |
 | Rate | number | 800 /s | 20 – 4000 /s, step 10 | Speed of the mechanical simulation. It does not change the note: it changes how fast the timbre evolves. |
 | Tension | number | 50 % | 0 – 100 %, step 1 | Stiffness of the springs between neighbours: it makes the waves travel along the chain, hence the speed of the shape changes. At zero the shape is frozen and one gets an ordinary wavetable oscillator. |
@@ -6072,7 +6072,7 @@ Sung vowel by formant synthesis. A vowel is not a waveform, it is a configuratio
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Vowel | choice | A (father) | A (father) / E (bed) / I (beet) / O (bought) / U (boot) / AE (bat) / ER (bird) | The vowel, that is, the position of its first three formants. A has a high first formant and a low second (730 and 1090 Hz), I the opposite (270 and 2290): the sharpest contrast in the table. |
-| Note | text | `A2` |  | Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. |
+| Note | text | `A2` |  | Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Attack | number | 3 ms | 0.5 – 20 ms, step 0.5 | Rise time of the formant bursts. Short, it spreads the formants towards the highs and hardens the voice; long, it softens it. |
 | Formant width | number | 100 % | 20 – 400 %, step 5 | Multiplies the bandwidths. Narrowed, the resonances ring and sound artificial; widened, the voice becomes breathy. |
 | Tract size | number | 0 st | -12 – 12 st, step 1 | Shifts all formants together, which amounts to changing the size of the vocal tract: upwards gives a child's voice, downwards a giant's, without touching the sung note. |
@@ -6102,7 +6102,7 @@ Wave terrain synthesis. A wavetable oscillator reads a one-dimensional curve; th
 | Terrain | choice | Classic (Mitsuhashi) | Classic (Mitsuhashi) / Saddle / Sine product / Concentric ripples / Formula | The surface travelled. « Classic » is the one of the whole literature, hollowed along the lines x = ±1 and y = ±1. « Saddle » is symmetric, and therefore sounds an octave above the rotation speed. « Concentric ripples » is constant along a centred circle: it gives nothing unless the orbit's centre is offset, and that is geometry, not a defect. |
 | Formula | text | `sin(4*x) * cos(3*y)` |  | Altitude as a function of x and y, for the « Formula » terrain. The usual functions are available (sin, cos, exp, sqrt, abs…). |
 | Orbit | choice | Circle | Circle / Ellipse / Lissajous / Spiral | The path followed on the terrain. A Lissajous with integer ratios closes after several turns and gives a longer waveform; the spiral drifts the radius, hence the timbre. |
-| Note | text | `A2` |  | Note played when no MIDI is connected: it is the number of orbit turns per second. |
+| Note | text | `A2` |  | Note played when no MIDI is connected: it is the number of orbit turns per second. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Radius | number | 80 % | 0 – 300 %, step 1 | Size of the orbit: this is the timbre control. A small orbit stays in a flat area and gives a poor sound, a large one explores the relief and gives a rich one, without changing the note. |
 | Flattening | number | 50 % | 10 – 100 %, step 1 | Flattening of the ellipse on the y axis. Has no effect when « Orbit » is not « Ellipse ». |
 | X ratio | number | 3 | 1 – 8, step 1 | Lissajous orbit frequency on the x axis. Has no effect when « Orbit » is not « Lissajous ». |
@@ -6129,7 +6129,7 @@ Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscil
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Clarinet | Clarinet / Flute / Brass | The model. The clarinet's bore is closed at one end, which lets only odd harmonics live: the even ones weigh 0.4 % of the odd, hence its hollow colour. The flute is nearly sinusoidal. The brass brightens when blown hard, because the wave steepens as it travels. |
-| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. |
+| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Breath | number | 80 % | 0 – 100 %, step 1 | Breath pressure. The setting spans the range where the chosen model is accurate: it starts at 65 % of real pressure on the clarinet, which does not start below that, and at 85 % on the flute, which does not hold its pitch there. Those two therefore speak at every setting, and pressure acts on their timbre: the clarinet darkens as it rises. The brass keeps the full scale and is the only one that refuses to speak, below 20 %; the node then produces no sound, and its message says so. Its timbre opens up markedly as pressure rises. |
 | Noise | number | 5 % | 0 – 100 %, step 1 | Amount of breath noise mixed into the pressure. A little makes the attack alive; a lot gives the sound of a winded player. |
 | Vibrato | number | 10 % | 0 – 100 %, step 1 | Depth of the breath vibrato. |
@@ -6303,7 +6303,7 @@ Separates pitch from rhythm, then marries them again. The first input supplies a
 
 *Learns a MIDI file's note transitions and generates new ones, with the transition table in plain sight.*
 
-Learns a MIDI file's note transitions, then generates new ones. The text output gives the table, context by context, in note names and percentages. « Order » is the setting that matters: it is how many notes are looked back on. At 1, the piece comes out in its key but without phrasing; at 2 or 3, its turns of phrase reappear; beyond that, the chain has no choice left and copies the source. The share of contexts with « no choice », shown at the head of the report, measures exactly that overfitting: above 80%, lower the order. Two simplifications, stated rather than hidden: the source's durations are not learned, the node imitates pitches only and plays them as eighth notes, and a chord is read from the bottom up, hence as an arpeggio. When the chain meets a transition never seen, it restarts from a known context instead of stopping. With a fixed seed, the same sequence is replayed identically.
+Learns a MIDI file's note transitions, then generates new ones. The text output gives the table, context by context, in note names and percentages, each followed by the number of times the continuation was heard: « D4 67% (2) ». It writes the twenty most frequent contexts, and says out of how many when there are more. « Order » is the setting that matters: it is how many notes are looked back on. At 1, the piece comes out in its key but without phrasing; at 2 or 3, its turns of phrase reappear; beyond that, the chain has no choice left and copies the source. The share of contexts with « no choice », shown at the head of the report, measures exactly that overfitting: above 80%, lower the order. Two simplifications, stated rather than hidden: the source's durations are not learned, the node imitates pitches only and plays them as eighth notes, and a chord is read from the bottom up, hence as an arpeggio. When the chain meets a transition never seen, it restarts from a known context instead of stopping. With a fixed seed, the same sequence is replayed identically.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -6462,7 +6462,7 @@ Inverts, spreads and chains the chords received. The notes come from the « Sequ
 
 *Reflects pitches around the tonic-dominant axis: C major becomes C minor, G7 becomes F minor 6.*
 
-Reflects pitches around the tonic-dominant axis. The idea comes from Hugo Riemann's dualist harmony, taken up by Ernst Levy in « A Theory of Harmony » (1985), and put back into circulation in recent years under the name negative harmony. Reflecting the twelve pitches around the axis lying halfway between the tonic and its dominant turns every tonal function into its image, giving a harmony that fills the same role by the opposite path. In C, the axis falls between E flat and E; it falls on no note of the keyboard, and therefore has no fixed point: the twelve classes swap in six pairs. The tonic becomes the dominant, E flat and E swap, and C major comes out as C minor. The famous result is G7, which becomes an F minor 6: two chords that nothing relates on paper, and which both call for resolution onto C. The text output gives the six pairs, so one sees what the reflection does before hearing it. « Reflection » offers the procedure's two readings. « Classes, register kept » reflects each note within its octave: the harmony changes, the line keeps its contour, which suits substituting a chord inside a progression. « True mirror » reflects everything around a single absolute axis, placed in the middle of the piece: intervals change direction, so the melody turns over, which is the real mirror, but rarely what one is after on a melodic line. The node offers a substitution, without judging its relevance.
+Reflects pitches around the tonic-dominant axis. The idea comes from Hugo Riemann's dualist harmony, taken up by Ernst Levy in « A Theory of Harmony » (1985), and put back into circulation in recent years under the name negative harmony. Reflecting the twelve pitches around the axis lying halfway between the tonic and its dominant turns every tonal function into its image, giving a harmony that fills the same role by the opposite path. In C, the axis falls between E flat and E; it falls on no note of the keyboard, and therefore has no fixed point: the twelve classes swap in six pairs. The tonic becomes the dominant, E flat and E swap, and C major comes out as C minor. The famous result is G7, which becomes an F minor 6: two chords that nothing relates on paper, and which both call for resolution onto C. The text output gives the six pairs, so one sees what the reflection does before hearing it. « Reflection » offers the procedure's two readings. « Classes, register kept » reflects each note within its octave: the harmony changes, and each note keeps its register, which suits substituting a chord inside a progression. The line turns over there as in any reflection, a rise becoming a fall. « True mirror » reflects everything around a single absolute axis, placed in the middle of the piece: intervals change direction, so the melody turns over, which is the real mirror, but rarely what one is after on a melodic line. The node offers a substitution, without judging its relevance.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -6474,7 +6474,7 @@ Reflects pitches around the tonic-dominant axis. The idea comes from Hugo Rieman
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key whose axis is taken. It is the only setting that matters: the axis lies halfway between this note and its fifth, and everything else follows. |
-| Reflection | choice | Classes, register kept | Classes, register kept / True mirror | « Classes » reflects each note within its octave: the harmony changes, the line keeps its contour; this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over. |
+| Reflection | choice | Classes, register kept | Classes, register kept / True mirror | « Classes » reflects each note within its octave: the harmony changes, and each note keeps its register, the bass staying the bass; this is what one wants to substitute a chord. The line turns over there too, as any reflection does: C D E F G becomes G F E flat D C. « True mirror » reflects everything around a single axis: intervals change direction, the melody turns over, and the low register moves to the high. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -6593,7 +6593,7 @@ Plays a row's four forms and writes its matrix. Twelve-tone writing is a calcula
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. |
+| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 | Form | choice | Original | Original / Retrograde / Inversion / Retrograde inversion / All four in turn | The transformation played. « All four in turn » chains the four forms, which makes audible at once what the matrix shows. |
 | Transposition | number | 0 | 0 – 11, step 1 | Transposition level of the played form, in semitones. With the forty-eight combinations of form and level, one has everything a row allows. |
 | Register | choice | Closest | Closest / One octave | « Closest » picks, for each note, the octave nearest the previous one, which makes a line audible; « One octave » stacks everything above the starting note, which makes the order of the classes audible. |
@@ -7810,7 +7810,7 @@ The sieve is a harmonic series: the fundamental and its multiples, whose ranks o
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Fundamental of the harmonic series that forms the sieve. |
 | Ranks | choice | All | All / Odd / Even / Primes / List | The harmonics kept. Primes: 1, 2, 3, 5, 7, 11... List: the ranks written below. |
-| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, separated by spaces or commas. |
+| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, as whole numbers from 1 up, separated by spaces or commas. A rank whose harmonic lies above half the sample rate keeps or removes nothing. An empty list, or one with a token that is not a rank, is refused, and the message names it. |
 | Tolerance | slider | 30 cents | 2 – 200 cents, step 1 | Distance from a harmonic within which a component passes. |
 | Mode | choice | Keep | Keep / Remove | Keep: only the kept harmonics pass. Remove: only they are taken out. |
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
@@ -8803,7 +8803,7 @@ Splits the sound into 3 or 4 frequency bands (low, mid, high) and makes them the
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Strands | choice | 3 (low · mid · high) | 3 (low · mid · high) / 4 | Number of bands. Three: cutoffs at 250 Hz and 2.5 kHz. Four: at 180 Hz, 900 Hz and 4.5 kHz. At first, the lowest band is on the left and the highest on the right. |
-| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. |
+| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. A crossing is written as a non-zero decimal integer, between minus and plus the number of strands minus one; an empty word, or one with an unreadable crossing, is refused. |
 | Repeats | number | 3 | 1 – 12, step 1 | Number of times the pattern is played, spread over the sound's length. Strands return to their places after a number of patterns set by the word, 3 for the plait: the message tells you. |
 | Relief | number | 100 % | 0 – 100 %, step 1 | Contrast between the strand going over (+3 dB mid-crossing at 100%) and the one going under (−6 dB). At 0%, bands swap places without it being heard which one passes in front. |
 | Width | number | 90 % | 0 – 100 %, step 1 | Distance of the outermost places from the centre. |
@@ -8899,7 +8899,7 @@ Turns a sound around the listener while moving it away, azimuth and distance lin
 
 *Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice.*
 
-Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at the end of the 19th century, a network in which major and minor triads form adjacent triangles, the Tonnetz, and Richard Cohn turned it in the 1990s into an analytical tool for music where chords follow one another without tonality explaining them: Wagner, Liszt, late Schubert, and by extension much film music. Everything rests on three operations, and each moves a single voice. P swaps major and minor on the same root by moving the third a semitone: C major becomes C minor. L moves by a semitone the note not belonging to the neighbouring chord: C major becomes E minor. R moves by a whole tone: C major becomes A minor. This is called parsimonious voice leading, and it is why these progressions sound connected although they have no tonal relation, between two neighbouring chords, two notes out of three do not move at all. The node places the voices so that this can be heard: without it, root-position chords would jump from one end of the keyboard to the other and the parsimony would stay theoretical. The « Path » mode finds the shortest route between two chords, which gives a distance no tonal analysis provides. Over the 576 pairs of triads, any two chords are at most five operations apart. C major and G sharp minor, which share no note, are only three apart, the hexatonic pole, and exactly the kind of neighbourhood the Tonnetz reveals and the circle of fifths hides.
+Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at the end of the 19th century, a network in which major and minor triads form adjacent triangles, the Tonnetz, and Richard Cohn turned it in the 1990s into an analytical tool for music where chords follow one another without tonality explaining them: Wagner, Liszt, late Schubert, and by extension much film music. Everything rests on three operations, and each moves a single voice. P swaps major and minor on the same root by moving the third a semitone: C major becomes C minor. L moves by a semitone the note not belonging to the neighbouring chord: C major becomes E minor. R moves by a whole tone: C major becomes A minor. This is called parsimonious voice leading, and it is why these progressions sound connected although they have no tonal relation, between two neighbouring chords, two notes out of three do not move at all. Three compounds can be written too, each as one step: N, « RLP », leads C major to F minor, S, « LPR », to C sharp minor, and H, « LPL », to A flat minor; they move more than one voice. The node places the voices so that this can be heard: without it, root-position chords would jump from one end of the keyboard to the other and the parsimony would stay theoretical. The « Path » mode finds the shortest route between two chords, which gives a distance no tonal analysis provides. Over the 576 pairs of triads, any two chords are at most five operations apart. C major and G sharp minor, which share no note, are only three apart, the hexatonic pole, and exactly the kind of neighbourhood the Tonnetz reveals and the circle of fifths hides.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8911,8 +8911,8 @@ Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Starting chord | text | `C` |  | The chord to start from, a major or minor triad: « C » or « C major » for C major, « Am » for A minor, « F#m » for F sharp minor, « D/F# » for D major. Another chord, « Cmaj7 », « Cdim », or unreadable text is refused, and the message names it. A MIDI file on the input wins, and its first triad is used as the start. |
-| Mode | choice | Sequence of operations | Sequence of operations / Path to a chord | « Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives. |
-| Operations | text | `PLRLPR` |  | The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. |
+| Mode | choice | Sequence of operations | Sequence of operations / Path to a chord | « Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord, in P, L and R: the distance measure proper to Riemann's space, which no tonal distance gives. A destination that is the start returns the chord alone, in zero operations. |
+| Operations | text | `PLRLPR` |  | The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. The compounds N, S and H each count as one step: N, « RLP », leads C major to F minor; S, « LPR », to C sharp minor; H, « LPL », to A flat minor, and they move more than one voice. Spaces, commas and hyphens separate; any other letter makes the node refused, and the message names it. |
 | Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
 | Chord length | number | 1 s | 0.1 – 4 s, step 0.1 | Length of each chord. |
 | Base note | number | 60 | 36 – 84, step 1 | Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible. |
@@ -9702,10 +9702,8 @@ Counts the number of zero crossings of the signal in each analysis frame using M
 | [ABC Constraints](#abc-constraints) | Checks that an edit of an ABC score kept what had to stay fixed: bars, meter, key, melody, rhythm, chords. |
 | [Engraved Score](#engraved-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules. |
 | [MIDI → ABC](#midi--abc) | Writes a MIDI file in ABC notation: a text score, readable and editable by a language model. |
-| [MIDI Score](#midi-score) | Displays a musical staff from a MIDI file. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [VexFlow Chord Chart](#vexflow-chord-chart) | Displays a chord chart from a list of symbols. |
-| [VexFlow Score](#vexflow-score) | Displays a simple score from a chord progression. |
 | [VexFlow Staff](#vexflow-staff) | Displays a musical staff from a text notation. |
 | [VexFlow Tab](#vexflow-tab) | Displays a tablature from a text notation. |
 
@@ -9735,7 +9733,7 @@ Compares an original ABC score with an edited version, and says whether what had
 
 *Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.*
 
-This node engraves a score from a notation text, and returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. The engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white. A long piece spans several pages: the « Page » setting says which one to render, and the message gives their number. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.
+This node engraves a score from a notation text, and returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element. An ABC score is first read note by note. A zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, and the message names each fault, its line and the fragment. Five ABC constructs are not engraved, and a score that carries one is refused, the message naming each one and its line: - several voices (V:); - an alternative ending (|1, [2, :|2); - a key change within the tune, [K:G] or a K: line; a clef change alone, [K:clef=bass], is engraved; - a tie inside a chord, [C-E]2 or [CE]2-; - a tuplet whose second number is not the one usage reads under its number alone. So (5, five notes in the time of two in simple time, is refused, and (5:4:5, five in the time of four, is engraved. An ABC tempo, Q: in the header or [Q:] within the tune, is engraved above its bar: « ♩ = 60 », preceded by the name of the movement if it has one, « Allegro ♩ = 120 ». The engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white. A long piece spans several pages: the « Page » setting says which one to render, and the message gives their number. An ABC text carrying several tunes, one per X: field, engraves them all, each under its title and starting on a new page. « Page » then goes through the pages of all the tunes, and the message says which tune is rendered. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9774,35 +9772,13 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 | Overlaps | choice | Separate voices (exact) | Separate voices (exact) / Shorten into one line | What to do with a note still sounding when the next one starts. Separate voices: it goes into an extra voice, and the score read back gives exactly the same notes. Shorten: it is cut at the next attack, so a legato melody stays on a single line, more readable, and easier for a language model to edit, but the length of the cut notes is lost. Chords are never cut. The Groove Box melody, whose same-pitch notes overlap, comes out on two voices in the first mode and one in the second. |
 | Title | text | — |  | Title written in the T: field. Empty: the file's track name, if any. |
 
-#### MIDI Score
-
-`vexflow-midi` · Visualization → Notation
-
-*Displays a musical staff from a MIDI file.*
-
-Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo (0 = detected from MIDI), MIDI channel (-1 = all), rhythmic quantization and clef. The staff takes the file's time signature, 4/4 if it declares none, and is cut into bars. Each note is placed at its own onset and keeps its length, written in dotted and tied values; a note that overlaps the next onset stops there, the staff having a single voice, and notes starting together form a chord, which lasts as long as the shortest. Each accidental is drawn when it changes what is in force in the bar, naturals included. Under « all », channel 9, the drums, is not engraved, and the message says so; choosing it by its number engraves it. The SVG output can be saved with the « SVG Export » node.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | MIDI | MIDI | required |
-| output | SVG | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
-| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved. |
-| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it. |
-| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
-| Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
-| Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |
-
 #### MusicXML
 
 `musicxml` · Visualization → Notation
 
 *Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.*
 
-Converts a MIDI file into a MusicXML score, the interchange format read by MuseScore, Finale, Sibelius and Dorico. The text output gives the XML, the file output a .musicxml ready to save. Notes starting together become a chord, gaps become rests, and every bar is filled exactly, a bar that does not add up is rejected by MuseScore. « Quantization » sets the smallest value written: a note played between two slots is snapped to the grid. That is what makes the score readable, and also what loses the detail of the performance. « Tempo » does not change the pitches, but a wrong tempo gives wrong durations. The rhythm tree comes before the durations when there is one: it alone knows that a third of a beat is a triplet and not a rounding, and it is then written as a tuplet. It comes from the « Tree » input, otherwise from the writing the received sequence carries, and the message states which one served. A carried writing that no longer describes the notes is set aside, and the engraving starts again from the durations. What the export cannot do, and no automatic transcription can: slurs, dynamics, expression marks, and the composer's enharmonic choice, a C sharp is written sharp, never D flat. A note longer than a bar is truncated, for lack of a tie. It is a starting point to edit, not an engraving. The alteration field accepting fractions of a semitone, a microtonal score can be written there.
+Converts a MIDI file into a MusicXML score, the interchange format read by MuseScore, Finale, Sibelius and Dorico. The text output gives the XML, the file output a .musicxml ready to save. Notes that start and end together become a chord, and notes overlapping otherwise are written as voices on the same staff, the highest in the first: none is lost. Gaps become rests, and every bar is filled exactly, a bar that does not add up is rejected by MuseScore. « Quantization » sets the smallest value written: a note played between two slots is snapped to the grid. That is what makes the score readable, and also what loses the detail of the performance. « Tempo » serves only when the input carries none of its own: the tempo of a sequence or of a MIDI file prevails. It does not change the pitches, but a wrong tempo gives wrong durations. The rhythm tree comes before the durations when there is one: it alone knows that a third of a beat is a triplet and not a rounding, and it is then written as a tuplet. It comes from the « Tree » input, otherwise from the writing the received sequence carries, and the message states which one served. A carried writing that no longer describes the notes is set aside, and the engraving starts again from the durations. What the export cannot do, and no automatic transcription can: slurs, dynamics, expression marks, and the composer's enharmonic choice, a C sharp is written sharp, never D flat. A note crossing the bar line, or a length no single value names, is written as tied notes, and a rest as successive rests. The splitting follows the beats of the bar, as engraving usage has it: a four-beat bar shows its middle, a value starting off the beat does not cross the next beat, and two syncopations are admitted, the half note on beat two between two quarters and the quarter between two eighths; a compound bar counts its beats in dotted quarters. The clef follows the register: the bass clef when the median pitch is below middle C, the treble clef otherwise, and the message names it. It is a starting point to edit, not an engraving. Each alteration is drawn by its sign, valid until the bar line as custom has it, and a natural undoes it. The alteration field accepting fractions of a semitone, a microtonal score can be written there: a quarter tone takes its sign, and any other offset the sign of the nearest quarter tone, the exact pitch staying written for the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9815,7 +9791,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Title | text | `Attic` |  | Title written into the score. |
-| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values, when the input carries none: the tempo of a sequence or of a MIDI file prevails. A wrong tempo does not change the pitches, but gives wrong durations. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature of the score. It decides how bars are cut. A time signature whose unit is shorter than the value asked for in « Quantization » refines the writing grid accordingly, a bar having to fall on a whole number of units. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. No effect under a « Time signature » in sixteenths, from 5/16 to 15/16: the grid there already goes down to the sixteenth, the finest value offered here. |
 
@@ -9841,29 +9817,6 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 | Measures per line | number | 4 | 1 – 8, step 1 | Number of measures per line. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 600 px, step 10 | SVG height. |
-
-#### VexFlow Score
-
-`vexflow-partition` · Visualization → Notation
-
-*Displays a simple score from a chord progression.*
-
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. Symbols are read in their usual spellings (« Bø7 », « CΔ7 », « B♭ »); « N.C. » is a quarter rest. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Progression | text |  |
-| output | SVG | text |  |
-| output | SVG file | image |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Progression | text | `I V vi IV` |  | Roman numeral progression or chord symbols (e.g. C Am F G). |
-| Key | text | `C` |  | Progression key. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ». |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone. |
-| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
-| Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
-| Height | number | 160 px | 100 – 400 px, step 10 | SVG height. |
 
 #### VexFlow Staff
 
@@ -9892,7 +9845,7 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 
 *Displays a tablature from a text notation.*
 
-Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». Durations are the staff's, w, h, q, 8, 16, 32, followed by one to three dots; a token without a duration is a quarter note. The « Tuning » parameter sets the title and the number of lines: six for the guitar, four for the ukulele and the bass. A string the instrument does not have, a chord, an unknown duration or an unreadable form is refused, and the message names the token: nothing is engraved. The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
+Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». Durations are the staff's, w, h, q, 8, 16, 32, followed by one to three dots; a token without a duration is a quarter note. The « Tuning » parameter sets the title and the number of lines: six for the guitar, four for the ukulele and the bass. The tablature is cut into 4/4 bars, with their bar lines; a note crossing the bar line is cut in two, the second fret in parentheses, and the last bar is filled with silent beats. A string the instrument does not have, a chord, an unknown duration or an unreadable form is refused, and the message names the token: nothing is engraved. The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9917,6 +9870,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 | [Instrument End](#instrument-end) | Closes an instrument chain and gathers every note's render into a keyboard bank. |
 | [SFZ Export](#sfz-export) | Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler. |
 | [SVG Export](#svg-export) | Saves an SVG file to disk and returns its path. |
+| [SVG to PDF](#svg-to-pdf) | Prints an SVG into a PDF file, under a title, and returns its path. |
 | [Video Export](#video-export) | Writes a film to disk, in the working directory, and returns its path. |
 
 #### Image Export
@@ -9964,7 +9918,7 @@ Closes an instrument chain and gathers every note's render into a keyboard bank,
 
 *Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler.*
 
-Writes a keyboard bank as SFZ: a text file describing the regions, and the samples in a folder beside it; one WAV per zone, named after its root note. SFZ is read by almost every sampler (Sforzando, LinuxSampler, Bitwig, Renoise, and by conversion most others), and it is a text format: it can be opened, read back, corrected by hand. The keyboard coverage can be rebuilt from the regions written: the eighty-eight keys are each covered once. An SF2 would be another undertaking: a binary format with its tables and generators. Three fields carry everything: « pitch_keycenter » says at which note the sample is in tune, « lokey » and « hikey » bound the zone, and the sampler derives the transposition, at most the zone width chosen at build time. When the bank has a sustain loop it is written in samples with « loop_mode=loop_sustain »: it then turns only while the key is held, exactly as a multi-zone sampler does. The samples are written first and the SFZ file only afterwards: were one of them to fail, an already-written SFZ would point at a missing file and the sampler would fall silent without saying why. The node reports how many samples were written and their total size. Requires Electron, like the other export nodes.
+Writes a keyboard bank as SFZ: a text file describing the regions, and the samples in a folder beside it; one WAV per sound, named after its root note; two sounds on the same root get a suffix, « zone-060-2.wav », and a sound shared by two zones is written once. The file name goes into every sample path, where the format forbids « = »: a name containing it is refused, and nothing is written. SFZ is read by almost every sampler (Sforzando, LinuxSampler, Bitwig, Renoise, and by conversion most others), and it is a text format: it can be opened, read back, corrected by hand. The keyboard coverage can be rebuilt from the regions written: the eighty-eight keys are each covered once. An SF2 would be another undertaking: a binary format with its tables and generators. Three fields carry everything: « pitch_keycenter » says at which note the sample is in tune, « lokey » and « hikey » bound the zone, and the sampler derives the transposition, at most the zone width chosen at build time. When the bank has a sustain loop it is written in samples with « loop_mode=loop_sustain »: it then turns only while the key is held, exactly as a multi-zone sampler does. Its end is written inclusive, as the format requires: a thousand-sample loop starting at 1000 is written « loop_end=1999 ». A zone that sounds in one shot, like a kit's, is written « loop_mode=one_shot ». A zone's gain is written as « volume », in decibels, its temperament as « pitch_keytrack », in cents per key, and a zone that does not follow the key, a kit's, as « pitch_keytrack=0 ». The samples are written first and the SFZ file only afterwards: were one of them to fail, an already-written SFZ would point at a missing file and the sampler would fall silent without saying why. The node reports how many samples were written and their total size. The comments at the head of the file follow the interface language. Requires Electron, like the other export nodes.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9992,6 +9946,27 @@ Saves an SVG file to disk and returns its path. Connect an 'Image' output produc
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Name | text | `export.svg` |  | Output SVG filename (in the working directory). The extension is forced to .svg. |
+
+#### SVG to PDF
+
+`svg-vers-pdf` · Outputs → Export
+
+*Prints an SVG into a PDF file, under a title, and returns its path.*
+
+This node prints an SVG image into a one-page PDF file, under a title, and writes it to the working directory. Requires Electron. The « SVG » input receives the image to print, a page of a score for instance. Its format is read from its bytes: an image that is not an SVG is refused, and the message says what it is. The « Title » input receives the text written at the top of the page, centred and in bold, on as many lines as it needs. With no text connected, the « Title » setting gives it; empty, the page has no title. This title is also the document's own, in its properties; with no title, it is the file name. The image takes the width of the page, between 15 mm margins, and keeps its proportions. Too tall for the room left under the title, it is scaled down until it fits: the PDF always has a single page. The drawing stays vector, and the text of the image stays text in the PDF. The « Format » setting chooses the page, A4 or US Letter, and the « Orientation » setting its direction, Portrait or Landscape. The « Name » setting gives the file name, whose extension is forced to .pdf. A file of the same name is replaced. The « Path » output gives the path of the written file.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | SVG | image |  |
+| input | Title | text |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Title | text | — |  | Title written at the top of the page, when no text is connected to the « Title » input. Empty, the page has no title. |
+| Name | text | `score.pdf` |  | Name of the file written to the working directory. The extension is forced to .pdf. |
+| Format | choice | A4 | A4 / US Letter | Page format: A4, 210 × 297 mm, or US Letter, 215.9 × 279.4 mm. |
+| Orientation | choice | Portrait | Portrait / Landscape | Page direction: upright, or sideways. |
 
 #### Video Export
 
@@ -10569,7 +10544,7 @@ Shows on the node the circle arriving at its input, and returns it at its output
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. |
+| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. Any other character, a space included, makes the node refused, and the message names its position. |
 
 #### Circle Join
 
@@ -10676,7 +10651,7 @@ Turns the circles connected to its inputs and returns their onsets as dated note
 
 *Reverses the order of the notes or their intervals, the positions staying put.*
 
-Reverses the notes of the received circle without touching its positions, and returns the reversed circle. The rhythm is therefore intact, and no measurement changes. Two operations bear the name inversion in music, and they do not do the same thing. « The order of the notes » reads the sounds backwards along the circle: the first note goes to the last sounding position, and the other way round. « The intervals » acts on the pitches themselves: note v becomes twice the axis minus v, which turns the melody over about a pivot and changes a rise into a fall. « Axis » serves the intervals only, and is given in semitones. Left empty, the lowest note of the circle serves as the pivot: the melody then unfolds upwards from its own foot. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. A percussion circle passes through this node unchanged: all its vertices carry the same sound, and reversing them would give nothing else. The « Circle » output carries the reversed circle. The message states the operation and, inside a loop, the rank of the pass.
+Reverses the notes of the received circle without touching its positions, and returns the reversed circle. The rhythm is therefore intact, and no measurement changes. Two operations bear the name inversion in music, and they do not do the same thing. « The order of the notes » reads the sounds backwards along the circle: the first note goes to the last sounding position, and the other way round. « The intervals » acts on the pitches themselves: note v becomes twice the axis minus v, which turns the melody over about a pivot and changes a rise into a fall. « Axis » serves the intervals only, and is given in semitones. Left empty, the lowest note of the circle serves as the pivot: the melody then unfolds upwards from its own foot. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. A percussion circle passes through this node unchanged: all its vertices carry the same sound, and reversing them would give nothing else. The « Circle » output carries the reversed circle. The message states the operation and, inside a loop, the rank of the pass.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10686,7 +10661,7 @@ Reverses the notes of the received circle without touching its positions, and re
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Inversion | choice | The order of the notes | The order of the notes / The intervals | The order reads the sounds backwards along the circle; the intervals turn the pitches over about a pivot. |
-| Axis | text | — |  | The pivot of the interval inversion, in semitones. Empty, it is the lowest note of the circle. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. |
+| Axis | text | — |  | The pivot of the interval inversion, in semitones. Empty, it is the lowest note of the circle. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. |
 
 #### Melodic Circle
 
@@ -10702,7 +10677,7 @@ Places the notes of a melody on a circle whose positions are evenly spread, and 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. |
+| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. Spaces, dashes, dots and bars are dropped, and from a pasted address only what follows its last « # » is read; any other character makes the pattern refused, and the message names it with its rank. A pattern with neither 0 nor 1 is refused. |
 | Fundamental | choice | C4 · 261.63 Hz | C1 · 32.70 Hz / C#1 · 34.65 Hz / D1 · 36.71 Hz / D#1 · 38.89 Hz / E1 · 41.20 Hz / F1 · 43.65 Hz / F#1 · 46.25 Hz / G1 · 49.00 Hz / G#1 · 51.91 Hz / A1 · 55.00 Hz / A#1 · 58.27 Hz / B1 · 61.74 Hz / C2 · 65.41 Hz / C#2 · 69.30 Hz / D2 · 73.42 Hz / D#2 · 77.78 Hz / E2 · 82.41 Hz / F2 · 87.31 Hz / F#2 · 92.50 Hz / G2 · 98.00 Hz / G#2 · 103.83 Hz / A2 · 110.00 Hz / A#2 · 116.54 Hz / B2 · 123.47 Hz / C3 · 130.81 Hz / C#3 · 138.59 Hz / D3 · 146.83 Hz / D#3 · 155.56 Hz / E3 · 164.81 Hz / F3 · 174.61 Hz / F#3 · 185.00 Hz / G3 · 196.00 Hz / G#3 · 207.65 Hz / A3 · 220.00 Hz / A#3 · 233.08 Hz / B3 · 246.94 Hz / C4 · 261.63 Hz / C#4 · 277.18 Hz / D4 · 293.66 Hz / D#4 · 311.13 Hz / E4 · 329.63 Hz / F4 · 349.23 Hz / F#4 · 369.99 Hz / G4 · 392.00 Hz / G#4 · 415.30 Hz / A4 · 440.00 Hz / A#4 · 466.16 Hz / B4 · 493.88 Hz / C5 · 523.25 Hz / C#5 · 554.37 Hz / D5 · 587.33 Hz / D#5 · 622.25 Hz / E5 · 659.26 Hz / F5 · 698.46 Hz / F#5 · 739.99 Hz / G5 · 783.99 Hz / G#5 · 830.61 Hz / A5 · 880.00 Hz / A#5 · 932.33 Hz / B5 · 987.77 Hz / C6 · 1046.50 Hz | The note of position zero, given with its frequency. Every other one follows from it. |
 | Layout | choice | The circle is the octave | The circle is the octave / Twelve semitones / Chain of fifths | What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets. |
 
@@ -10712,7 +10687,7 @@ Places the notes of a melody on a circle whose positions are evenly spread, and 
 
 *Reflects the onsets about an axis, the position of the axis staying put.*
 
-Reflects the received circle about an axis and returns the reflected circle. The position of the axis stays where it is, and the following position takes the place of the preceding one. Together with rotation, reflection generates the symmetry group of the circle: two patterns that follow from one another are the same necklace, and carry the same scores. That is what allows a variation to be heard without the measurements moving. « Axis » is given in positions and not in degrees: the reflection that fixes position a sends position p to a minus p. A null axis is the mirror about position zero. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. The « Circle » output carries the reflected circle. The message gives the axis applied and, inside a loop, the rank of the pass.
+Reflects the received circle about an axis and returns the reflected circle. The position of the axis stays where it is, and the following position takes the place of the preceding one. Together with rotation, reflection generates the symmetry group of the circle: two patterns that follow from one another are the same necklace, and carry the same scores. That is what allows a variation to be heard without the measurements moving. « Axis » is given in positions and not in degrees: the reflection that fixes position a sends position p to a minus p. A null axis is the mirror about position zero. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. The « Circle » output carries the reflected circle. The message gives the axis applied and, inside a loop, the rank of the pass.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10721,7 +10696,7 @@ Reflects the received circle about an axis and returns the reflected circle. The
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Axis | text | `0` |  | The position the reflection leaves in place. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. |
+| Axis | text | `0` |  | The position the reflection leaves in place. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. |
 
 #### Permute Notes
 
@@ -10729,7 +10704,7 @@ Reflects the received circle about an axis and returns the reflected circle. The
 
 *Shuffles the notes between the positions of the circle, the rhythm staying put.*
 
-Shuffles the notes of the received circle between its positions and returns the permuted circle. The positions do not move: the rhythm is intact, and no measurement changes. This is an axis of composition that the scores do not see. Two circles that differ only by their labels carry the same evenness, the same balance, the same area and the same oddity, although they do not sound alike. A permutation asked for is a permutation drawn, not enumerated: the permutations of seven notes number five thousand and forty, those of ten more than three million, far beyond what a traversal would give. « Seed » is the number of the draw, and the same seed always gives the same permutation. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. Inside a loop, a seed written « 1:8 » gives a different permutation at each pass, all reproducible. A percussion circle passes through this node unchanged: all its vertices carry the same sound. The « Circle » output carries the permuted circle. The message gives the seed used and, inside a loop, the rank of the pass.
+Shuffles the notes of the received circle between its positions and returns the permuted circle. The positions do not move: the rhythm is intact, and no measurement changes. This is an axis of composition that the scores do not see. Two circles that differ only by their labels carry the same evenness, the same balance, the same area and the same oddity, although they do not sound alike. A permutation asked for is a permutation drawn, not enumerated: the permutations of seven notes number five thousand and forty, those of ten more than three million, far beyond what a traversal would give. « Seed » is the number of the draw, and the same seed always gives the same permutation. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. Inside a loop, a seed written « 1:8 » gives a different permutation at each pass, all reproducible. A percussion circle passes through this node unchanged: all its vertices carry the same sound. The « Circle » output carries the permuted circle. The message gives the seed used and, inside a loop, the rank of the pass.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10738,7 +10713,7 @@ Shuffles the notes of the received circle between its positions and returns the 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Seed | text | `1` |  | The number of the draw. The same seed gives the same permutation. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. |
+| Seed | text | `1` |  | The number of the draw. The same seed gives the same permutation. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. |
 
 #### Rhythm Circle
 
@@ -10746,7 +10721,7 @@ Shuffles the notes of the received circle between its positions and returns the 
 
 *Places a rhythm on a circle of equal positions, and draws its inscribed polygon.*
 
-Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise. The polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed. A click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to 48; the pattern already laid is kept, padded with rests or cut at the end. « Rhythm » lays in one go one of the eleven traditional rhythms of the list: tresillo, son, shiko, soukous, rumba, bossa nova, gahu, samba, fume-fume, bembé and the one by Steve Reich. They come from Godfried Toussaint's « The Geometry of Musical Rhythm », which uses them as examples: the six with sixteen positions and five onsets are his claves, and they all have the same sum of arcs, it is the chords that tell them apart. Four of them obtain the best score for their size in Paul Lascabettes and Isabelle Bloch, « What Are "Good" Rhythms? », MCM 2024: the son at five onsets on sixteen, the tresillo at three on eight, the fume-fume at five on twelve, the samba at seven on sixteen. On « Free », it is « Pattern » that governs. « Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes as it stands from the address of an online rhythm circle. Clicking a position writes that pattern and sets « Rhythm » back to « Free », which keeps the chosen rhythm as a starting point. « Drum » selects the sound, the same for every onset of the circle. The « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it. After: Paul Lascabettes, Corentin Guichaoua & Moreno Andreatta (2025). The Rhythm Circle: An Interactive Open-Source Web Environment Based on the Circular Representation, International Computer Music Conference, Boston (MA), United States.
+Places the onsets of a rhythm on a circle whose positions are evenly spread, and joins those that sound with an inscribed polygon. Position zero is at the top, and the turn goes clockwise. The polygon is not an ornament: its area is greatest when the onsets are evenly spread, and it is on its chords that the evenness of the rhythm is computed. A click on a position turns it on or off. The « plus » and « minus » buttons change the number of positions, up to 48; the pattern already laid is kept, padded with rests or cut at the end. « Rhythm » lays in one go one of the eleven traditional rhythms of the list: tresillo, son, shiko, soukous, rumba, bossa nova, gahu, samba, fume-fume, bembé and the one by Steve Reich. They come from Godfried Toussaint's « The Geometry of Musical Rhythm », which uses them as examples: the six with sixteen positions and five onsets are his claves, and they all have the same sum of arcs, it is the chords that tell them apart. Four of them obtain the best score for their size in Paul Lascabettes and Isabelle Bloch, « What Are "Good" Rhythms? », MCM 2024: the son at five onsets on sixteen, the tresillo at three on eight, the fume-fume at five on twelve, the samba at seven on sixteen. On « Free », it is « Pattern » that governs. « Pattern » carries the rhythm as a string of zeros and ones, one per position, and the number of positions is its length. It copies from one node to another, and pastes from the address of an online rhythm circle, of which only what follows the last « # » is read. Clicking a position writes that pattern and sets « Rhythm » back to « Free », which keeps the chosen rhythm as a starting point. « Drum » selects the sound, the same for every onset of the circle. The « Circle » output carries the positions and their sound, with no duration at all: time is supplied by the node that renders it. After: Paul Lascabettes, Corentin Guichaoua & Moreno Andreatta (2025). The Rhythm Circle: An Interactive Open-Source Web Environment Based on the Circular Representation, International Computer Music Conference, Boston (MA), United States.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10755,7 +10730,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
-| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
+| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». Spaces, dashes, dots and bars are dropped, and from a pasted address only what follows its last « # » is read; any other character makes the pattern refused, and the message names it with its rank. A pattern with neither 0 nor 1 is refused. |
 | Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle
@@ -10764,7 +10739,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 
 *Shifts every onset by the same number of positions, the sound following its point.*
 
-Turns the received circle by a number of positions, and returns the turned circle. Each vertex carries its sound along with it. Rotation changes neither the evenness, nor the balance, nor the area, nor the oddity of the rhythm: it only changes where the cycle begins. Off-beatness does depend on it, since it is counted on the positions coprime with the number of positions. « Step » gives the number of positions the circle turns by, forward when the number is positive. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. Inside a loop, it is this field that makes the variation: « 0:3 » over four passes returns the circle untouched, then turned by one position, by two, by three. The « Circle » output carries the turned circle. The message gives the step applied and, inside a loop, the rank of the pass.
+Turns the received circle by a number of positions, and returns the turned circle. Each vertex carries its sound along with it. Rotation changes neither the evenness, nor the balance, nor the area, nor the oddity of the rhythm: it only changes where the cycle begins. Off-beatness does depend on it, since it is counted on the positions coprime with the number of positions. « Step » gives the number of positions the circle turns by, forward when the number is positive. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. Inside a loop, it is this field that makes the variation: « 0:3 » over four passes returns the circle untouched, then turned by one position, by two, by three. The « Circle » output carries the turned circle. The message gives the step applied and, inside a loop, the rank of the pass.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10773,7 +10748,7 @@ Turns the received circle by a number of positions, and returns the turned circl
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Step | text | `1` |  | The number of positions the circle turns by. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. |
+| Step | text | `1` |  | The number of positions the circle turns by. A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes. What is not written this way is refused, and the message names it. |
 
 #### Scale Circle
 
@@ -10921,7 +10896,7 @@ Csound's physical-model instruments, adjustable without writing a line of code. 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Bowed string (wgbow) | Bowed string (wgbow) / Clarinet (wgclar) / Flute (wgflute) / Brass (wgbrass) / Plucked string (wgpluck2) / Formants (fof2) | The opcode used. The bowed string: its Helmholtz model has been debugged here for thirty years. Each instrument uses the three settings below in its own way, detailed in the notice. |
-| Note | text | `A3` |  | Note played when no MIDI is connected. |
+| Note | text | `A3` |  | Note played when no MIDI is connected. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Pressure | number | 40 % | 0 – 100 %, step 1 | Bow pressure, reed stiffness, breath or lip tension depending on the instrument. |
 | Position | number | 25 % | 0 – 100 %, step 1 | Bow position, air jet ratio, attack time or formant frequency depending on the instrument. It is the most sensitive control of most of them. |
 | Vibrato | number | 20 % | 0 – 100 %, step 1 | Vibrato depth. No effect on the plucked string and the formants. |
@@ -10944,7 +10919,7 @@ Composes a Csound orchestra by ticking instruments in a list rather than writing
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Instruments | text | `wgbow,foscil` |  | The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the numbers: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier is dropped without failing the rest, and a duplicate is ignored, the same instrument twice would give two numbers to one sound. |
+| Instruments | text | `wgbow,foscil` |  | The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the numbers: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier makes the orchestra refused, and the message names it along with the list of identifiers. A duplicate is ignored, and the message says so: the same instrument twice would give two numbers to one sound. |
 | Channels | choice | Mono | Mono / Stereo | How every instrument writes its output, `out` in mono, `outs` in stereo. This must match the Csound node's setting: a stereo orchestra rendered by a node set to mono loses every other channel, and the reverse renders silence. The node's message states which one to set. |
 | First instrument | number | 1 | 1 – 90, step 1 | Number of the first `instr`. Leave it at 1 unless the orchestra is assembled with another: « Csound Score » also numbers from 1, and the two must agree. |
 | Level | slider | 100 % | 0 – 100 %, step 1 | Level applied to every instrument, on top of each one's own gain. Those gains come from measurement: Csound's opcodes share no amplitude convention, for a requested amplitude of 0.6, measured peaks ranged from 0.10 for the modal resonance to 0.95 for the bowed string, which hit the limiter. |
@@ -10969,10 +10944,10 @@ Translates a MIDI file into a Csound score. All notations converge on MIDI (ABC,
 | Pitch as | choice | cps (hertz) | cps (hertz) / pch (8.09) / oct (8.75) / midi (69) | The convention the pitch is written in, and this is the setting that decides whether anything is heard. Csound has four, and an orchestra written for one does not work with another. CPS: frequency in hertz, 440 for A4, what `oscili` and Perry Cook's physical models expect. PCH: octave point pitch-class, 8.00 for middle C and 8.09 for the A above, Music V's notation, converted by `cpspch()`; its hundredths only run to 11, 8.11 being followed by 9.00. OCT: octave in decimal, 8.0 for middle C and 8.75 for the A, converted by `cpsoct()`, handy for transposing by simple addition. MIDI: the note number, converted by `cpsmidinn()`. Feeding hertz to an orchestra that expects pch produces neither sound nor error: it is the hardest fault to spot in all of Csound. |
 | Instrument | number | 1 | 1 – 99, step 1 | Number of the first instrument, the `1` in `i1`. It is the one the orchestra must define with `instr 1`. |
 | One instrument per channel | choice | No | No / Yes | Yes: each MIDI channel present gets its own instrument number, following the previous one. A file on channels 1, 2 and 10 yields instruments 1, 2 and 3, not 1, 2 and 10, because an orchestra numbers its instruments consecutively. This is what lets a whole arrangement be played by several Csound instruments, and the Report output states the mapping. NO: everything goes to the same number. |
-| p4 | choice | Pitch | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fourth field of each note carries. Pitch is the custom, and most orchestras read it there. |
-| p5 | choice | Amplitude (velocity ÷ 127) | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fifth field carries. Amplitude, that is velocity brought to the range 0 to 1, is the custom, `0dbfs` being 1 here. |
-| p6 | choice | MIDI note number | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the sixth field carries. The note number is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. |
-| p7 | choice | Nothing | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the seventh field carries. Nothing omits it, and any that would follow. |
+| p4 | choice | Pitch | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fourth field of each note carries. Pitch is the custom, and most orchestras read it there. « Nothing » writes 0 there if a later field is written, and omits it otherwise. |
+| p5 | choice | Amplitude (velocity ÷ 127) | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fifth field carries. Amplitude, that is velocity brought to the range 0 to 1, is the custom, `0dbfs` being 1 here. « Nothing » writes 0 there if a later field is written, and omits it otherwise. |
+| p6 | choice | MIDI note number | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the sixth field carries. The note number is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. « Nothing » writes 0 there if a later field is written, and omits it otherwise. |
+| p7 | choice | Nothing | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the seventh field carries. « Nothing » omits it. |
 | Constant | number | 0 | -1000 – 1000, step 0.01 | Value of the « Constant » field. Used to pass a fixed setting to the orchestra, a table index, a factor, a stereo position. Acts only when one of the fields « p4 », « p5 », « p6 » or « p7 » is « Constant ». |
 | Final margin | number | 0.5 s | 0 – 30 s, step 0.1 | Seconds added after the last note, written as `f0`. Without them, Csound stops at the last note and cuts reverb or resonance tails, which is heard as a click. |
 
@@ -11006,7 +10981,7 @@ Csound's spectral processes. The « pvs » opcodes work on a spectral stream rat
 
 *Describes a synthesis parameter by parameter rather than event by event, and returns the Csound score.*
 
-Describes a synthesis parameter by parameter and returns the corresponding Csound score. An additive synthesis of two hundred partials is not written event by event. One writes a line for the frequencies, one for the amplitudes, one for the durations, and each holds for every event at once. This is the structure found in OMChroma under the name class-array. A field is written in three ways. A single number holds for every event. A series of numbers separated by spaces gives the first values, and the last repeats for the remaining events; this is a repetition and not a loop, a looped list manufacturing a periodicity nobody asked for and which would be heard as a rhythm. Two numbers separated by a colon describe a straight ramp from the first to the second, spread over the events, bounds included. « Events » sets their number. At zero it is deduced: it is the length of the longest series written. A ramp does not count, stretching to any length, and a matrix of constants alone gives a single event. « Instrument » is the number written at the head of each line, p1. « Onsets » and « Lengths » are p2 and p3, which Csound expects at that place and interprets itself. They are written like the other fields. « p4 » to « p9 » are the free fields, whose meaning depends on the orchestra that reads them. A field left empty is not written, and the following ones do not shift for that: an empty field between two filled ones would leave a hole the orchestra would misread, so the ranks written are stated in the analysis. « Curve » receives a line that replaces one field, chosen by « Driven field ». It is read at as many points as there are events, then spread between « Minimum » and « Maximum ». « Decimals » sets the precision of the numbers written. The « Score » output returns the text, which connects to the Csound node. The « Analysis » output gives the number of events, the ranks written, and for each its first and last values. The message gives the number of events, the number of fields and the length covered.
+Describes a synthesis parameter by parameter and returns the corresponding Csound score. An additive synthesis of two hundred partials is not written event by event. One writes a line for the frequencies, one for the amplitudes, one for the durations, and each holds for every event at once. This is the structure found in OMChroma under the name class-array. A field is written in three ways. A single number holds for every event. A series of numbers separated by spaces gives the first values, and the last repeats for the remaining events; this is a repetition and not a loop, a looped list manufacturing a periodicity nobody asked for and which would be heard as a rhythm. Two numbers separated by a colon describe a straight ramp from the first to the second, spread over the events, bounds included. A number is written in decimal, and what is not written in one of these three ways makes the node refused: the message names the setting and what cannot be read. « Events » sets their number. At zero it is deduced: it is the length of the longest series written. A ramp does not count, stretching to any length, and a matrix of constants alone gives a single event. « Instrument » is the number written at the head of each line, p1. « Onsets » and « Lengths » are p2 and p3, which Csound expects at that place and interprets itself. They are written like the other fields. An onset is written at zero or later, and a length stays positive at the decimals asked for: Csound would play nothing of a zero length and would hold the note of a negative one, so either makes the node refused, and the message names the event. « p4 » to « p9 » are the free fields, whose meaning depends on the orchestra that reads them. A field left empty after the last filled one is not written. Between two filled ones it is written 0, and the following ones do not shift: each value stays at the rank the orchestra reads, and the ranks written are stated in the analysis. « Curve » receives a line that replaces one field, chosen by « Driven field ». It is read at as many points as there are events, then spread between « Minimum » and « Maximum ». « Decimals » sets the precision of the numbers written. The « Score » output returns the text, which connects to the Csound node. The « Analysis » output gives the number of events, the ranks written, and for each its first and last values. The message gives the number of events, the number of fields and the length covered.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11020,12 +10995,12 @@ Describes a synthesis parameter by parameter and returns the corresponding Csoun
 | Instrument | number | 1 | 1 – 99, step 1 | The number written at the head of each line, p1. |
 | Onsets | text | `0:2` |  | The instants, p2. A number, a series, or a ramp written « from:to ». |
 | Lengths | text | `0.5` |  | The lengths, p3. |
-| p4 | text | `0.3` |  | The p4 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
-| p5 | text | `200:2000` |  | The p5 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
-| p6 | text | — |  | The p6 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
-| p7 | text | — |  | The p7 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
-| p8 | text | — |  | The p8 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
-| p9 | text | — |  | The p9 field, whose meaning depends on the orchestra that reads it. Empty, it is not written. |
+| p4 | text | `0.3` |  | The p4 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
+| p5 | text | `200:2000` |  | The p5 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
+| p6 | text | — |  | The p6 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
+| p7 | text | — |  | The p7 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
+| p8 | text | — |  | The p8 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
+| p9 | text | — |  | The p9 field, whose meaning depends on the orchestra that reads it. Empty, it is not written, or is written 0 when a later field is filled. |
 | Driven field | choice | None | None / p4 / p5 / p6 / p7 / p8 / p9 | The field the connected curve replaces. With no curve on « Curve », it replaces nothing. |
 | Minimum | number | 0 | -10000 – 10000, step 0.1 | The value the lowest point of the curve takes. Has no effect with no curve on « Curve », or when « Driven field » is « None ». |
 | Maximum | number | 1 | -10000 – 10000, step 0.1 | The value the highest point of the curve takes. Has no effect with no curve on « Curve », or when « Driven field » is « None ». |
@@ -12359,7 +12334,7 @@ Detects the chord a list of notes forms, and returns its symbol on the « Name �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). |
+| Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 
 #### Dissonance Curve
 
@@ -12400,7 +12375,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C E G B` |  | The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file. |
+| Notes | text | `C E G B` |  | The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 | Grouping | choice | Whole excerpt | Whole excerpt / Chord by chord | « Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material. Applies only to notes received on « Sequence » or « MIDI »: the typed « Notes » are always analysed as a single set. |
 
 #### Progression
@@ -12437,7 +12412,7 @@ Analyses a rhythm by its geometry on the circle. After Godfried Toussaint, « Th
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. |
+| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». A filled cell is written x or 1, an empty one . - _ · or 0; numbers separated by spaces are positions, counted from 0 and bounded by « Steps ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. An empty pattern, one without onsets, or one with an unreadable token, is refused, and the message names it. |
 | Steps | slider | 16 | 2 – 64, step 1 | Number of cells in the cycle. Used when the pattern is given as positions, and to quantise a MIDI file. A pattern written as cells imposes its own length. |
 | Cycle | slider | 2 s | 0.25 – 16 s, step 0.25 | Length of one turn, to quantise a MIDI file. With no MIDI connected, this setting does nothing. |
 
@@ -12474,8 +12449,8 @@ Checks a first-species counterpoint. Johann Joseph Fux published in 1725 the « 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Lower voice | text | `C4 D4 E4 F4 E4 D4 C4` |  | The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. |
-| Upper voice | text | `G4 F4 G4 A4 G4 B4 C5` |  | The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. |
+| Lower voice | text | `C4 D4 E4 F4 E4 D4 C4` |  | The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Upper voice | text | `G4 F4 G4 A4 G4 B4 C5` |  | The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Inner unisons | choice | Forbidden | Forbidden / Allowed | Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard. |
 
 #### Transpose
@@ -12493,7 +12468,7 @@ Transposes a note by a given interval. Example: C4 + 2M → D4. Uses Tonal inter
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C4` |  | Note to transpose (e.g. C4, D#3, F#5). |
+| Note | text | `C4` |  | Note to transpose (e.g. C4, D#3, F#5). As letters or French names, with or without an octave; an unreadable name is refused and named. |
 | Interval | choice | 2M | 1P / 2m / 2M / 3m / 3M / 4P / 4A / 5P / 6m / 6M / 7m / 7M / 8P | Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.). |
 
 #### Voice-Leading Distance
@@ -12512,7 +12487,7 @@ Measures the voice-leading distance between two chords, in semitones. After Dmit
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. |
+| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11, decimals allowed, or as note names, « C E G ». The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. An empty setting, or one with a token that cannot be read or falls outside 0 to 11, is refused, and the message names it. |
 | Tolerance | slider | 0.05 s | 0.01 – 0.5 s, step 0.01 | Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing. |
 
 #### World Scales

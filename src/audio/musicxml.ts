@@ -6,8 +6,24 @@
 //
 // Ce module écrit du MusicXML 4.0 « partwise », la forme la plus largement acceptée. Il
 // ne prétend pas tout couvrir : une transcription automatique depuis du MIDI ne connaît
-// ni les liaisons, ni les nuances, ni l'enharmonie voulue par le compositeur. Elle donne
+// ni les liaisons d'expression, ni les nuances, ni l'enharmonie voulue par le compositeur. Elle donne
 // les hauteurs, les durées et les mesures — ce qu'on attend d'un point de départ.
+import { valeursSelonLesTemps } from "./musicxml-temps";
+
+/**
+ * La clé d'une portée, choisie sur les hauteurs qu'elle porte.
+ *
+ * Une voix de basse gravée en clé de sol se lit sur quatre lignes supplémentaires sous la portée, ce
+ * qu'aucune partition n'écrit. La médiane décide, et non la note la plus grave : une seule note basse
+ * dans une ligne aiguë ne doit pas faire changer de clé toute la portée. Sous le do central, 60, la clé
+ * de fa. Le chemin du MIDI écrivait toujours la clé de sol ; il choisit la sienne depuis la décision de
+ * Fabien du 2026-11-22, « Choose by register ».
+ */
+export function cleDe(hauteurs: readonly number[]): string {
+  if (hauteurs.length === 0) return "<sign>G</sign><line>2</line>";
+  const triees = [...hauteurs].sort((a, b) => a - b);
+  return triees[Math.floor(triees.length / 2)] < 60 ? "<sign>F</sign><line>4</line>" : "<sign>G</sign><line>2</line>";
+}
 
 export interface NoteXML {
   note: number;
@@ -29,9 +45,19 @@ export interface OptionsMusicXML {
    * longueur, et une voix qui se tait avant les autres en écrivait moins.
    */
   mesures?: number;
-  /** La clé : de sol par défaut, de fa pour une voix grave. */
+  /**
+   * La clé, quand elle est imposée. Sans elle, la clé se choisit sur le registre des notes ; une
+   * partition par voix la fixe, pour qu'une voix d'alto qui descend ne change pas de clé d'une pièce
+   * à l'autre.
+   */
   cle?: "sol" | "fa";
 }
+
+/** Les clés qu'une option peut imposer. */
+const CLES: Record<string, string> = {
+  sol: "<sign>G</sign><line>2</line>",
+  fa: "<sign>F</sign><line>4</line>",
+};
 
 /** Un degré chromatique en nom de note, avec son altération. */
 const DEGRES: { pas: string; alter: number }[] = [
@@ -59,6 +85,44 @@ export function nomMusicXML(noteMidi: number): { pas: string; alter: number; oct
   // évite d'écrire 0,49999999999 dans une partition.
   const ecart = Math.round((borne - n) * 100) / 100;
   return { pas: d.pas, alter: d.alter + ecart, octave: Math.floor(n / 12) - 1 };
+}
+
+/** Le signe que MusicXML nomme pour une altération dessinée, de deux demi-tons sous la note à deux au-dessus. */
+const SIGNES: Record<string, string> = {
+  "-2": "flat-flat", "-1.5": "three-quarters-flat", "-1": "flat", "-0.5": "quarter-flat", "0": "natural",
+  "0.5": "quarter-sharp", "1": "sharp", "1.5": "three-quarters-sharp", "2": "double-sharp",
+};
+
+/**
+ * L'altération que l'on dessine : celle du quart de ton le plus proche. Un écart qu'aucun signe ne nomme
+ * prend le signe le plus proche, et `<alter>` garde sa valeur exacte pour le son. Décision de Fabien du
+ * 2026-11-22, « Nearest quarter-tone sign ».
+ */
+const alterationDessinee = (alter: number) => Math.max(-2, Math.min(2, Math.round(alter * 2) / 2)) || 0;
+
+/** Une tête de note dans une mesure, telle que le signe se décide. */
+export interface TeteDeMesure { pas: string; alter: number; octave: number; liee?: boolean }
+
+/**
+ * LES SIGNES D'UNE MESURE, ses têtes données dans l'ordre du temps.
+ *
+ * `<alter>` dit la hauteur et `<accidental>` le signe dessiné, et le référentiel MusicXML 4.0 les sépare :
+ * un graveur qui suit la norme ne dessine que le second. Les écrivains n'écrivaient que le premier, et fa
+ * dièse se gravait fa. La règle est celle de l'usage, la même que suit le lecteur de la gravure : un signe
+ * à la première tête d'une ligne qui change d'altération dans la mesure, valable jusqu'à la barre, et rien
+ * sur la suite d'une note liée, qui garde le signe de son départ sans le donner aux suivantes. L'armure est
+ * celle de do. Revue des notations en texte, 2026-11-22.
+ */
+export function signesDeLaMesure(tetes: readonly TeteDeMesure[]): (string | null)[] {
+  const etat = new Map<string, number>();
+  return tetes.map((t) => {
+    if (t.liee) return null;
+    const vue = alterationDessinee(t.alter);
+    const ligne = `${t.pas}${t.octave}`;
+    if ((etat.get(ligne) ?? 0) === vue) return null;
+    etat.set(ligne, vue);
+    return SIGNES[String(vue)];
+  });
 }
 
 /** Les valeurs de note que MusicXML nomme, de la ronde à la quadruple-croche. */
@@ -96,42 +160,40 @@ export function valeurNote(dureeUnites: number, unitesParNoire = 4): { nom: stri
 const echapper = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-interface Evenement {
-  /** Position en unités (double-croches) depuis le début. */
-  debut: number;
-  duree: number;
-  notes: number[];
-}
+/** Une voix : des événements qui se suivent sans se chevaucher, un accord étant un seul événement. Les temps sont en unités. */
+export type Voix = { debut: number; fin: number; notes: number[] }[];
 
 /**
- * Regroupe les notes en événements : celles qui commencent ensemble forment un accord.
+ * LES VOIX D'UNE SUITE DE NOTES, posées sur la grille.
  *
- * La quantification est indispensable — une note jouée à 0,503 s n'a pas de valeur
- * notable — et c'est elle qui décide de ce que la partition dira. Une note plus courte
- * qu'une unité en occupe une quand même : une partition n'a pas de silence de durée nulle.
+ * La quantification est indispensable — une note jouée à 0,503 s n'a pas de valeur notable — et c'est elle
+ * qui décide de ce que la partition dira. Une note plus courte qu'une unité en occupe une quand même : une
+ * partition n'a pas de silence de durée nulle.
+ *
+ * CHAQUE NOTE VA DANS LA PREMIÈRE VOIX LIBRE, les plus aiguës d'abord, pour que la première voix porte le
+ * dessus comme le veut l'usage ; des notes de même attaque et de même fin y forment un accord. Les notes
+ * étaient groupées par attaque : un accord prenait la plus longue de ses durées, et une note qui commençait
+ * pendant une autre était perdue, de sorte qu'une basse ronde sous quatre noires donnait deux notes sur cinq.
+ * Décision de Fabien du 2026-11-22, « Write voices », revue des notations en texte.
  */
-export function evenementsDepuisNotes(
-  notes: NoteXML[],
-  tempo: number,
-  quantification: number,
-): Evenement[] {
+export function voixDepuisNotes(notes: NoteXML[], tempo: number, quantification: number): Voix[] {
   const unitesParNoire = Math.max(1, Math.round(quantification / 4));
   const secondesParUnite = 60 / Math.max(1, tempo) / unitesParNoire;
-  const parDebut = new Map<number, { duree: number; notes: number[] }>();
-  for (const n of notes) {
+  const posees = notes.map((n) => {
     const debut = Math.max(0, Math.round(n.debut / secondesParUnite));
-    const duree = Math.max(1, Math.round((n.fin - n.debut) / secondesParUnite));
-    const e = parDebut.get(debut);
-    if (e) {
-      e.notes.push(n.note);
-      e.duree = Math.max(e.duree, duree);
-    } else {
-      parDebut.set(debut, { duree, notes: [n.note] });
-    }
+    return { note: n.note, debut, fin: debut + Math.max(1, Math.round((n.fin - n.debut) / secondesParUnite)) };
+  }).sort((a, b) => a.debut - b.debut || b.note - a.note);
+  const voix: Voix[] = [];
+  for (const n of posees) {
+    const derniere = (v: Voix) => v[v.length - 1];
+    const accord = voix.find((v) => derniere(v).debut === n.debut && derniere(v).fin === n.fin);
+    if (accord) { if (!derniere(accord).notes.includes(n.note)) derniere(accord).notes.push(n.note); continue; }
+    const libre = voix.find((v) => derniere(v).fin <= n.debut);
+    if (libre) libre.push({ debut: n.debut, fin: n.fin, notes: [n.note] });
+    else voix.push([{ debut: n.debut, fin: n.fin, notes: [n.note] }]);
   }
-  return [...parDebut.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([debut, e]) => ({ debut, duree: e.duree, notes: [...e.notes].sort((x, y) => x - y) }));
+  for (const v of voix) for (const e of v) e.notes.sort((a, b) => a - b);
+  return voix.length > 0 ? voix : [[]];
 }
 
 /** Écrit la partition complète. */
@@ -150,8 +212,8 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   const divisions = unitesParNoire;
   const unitesParMesure = ((numerateur * 4) / denominateur) * unitesParNoire;
 
-  const evenements = evenementsDepuisNotes(notes, tempo, grille);
-  const fin = evenements.reduce((m, e) => Math.max(m, e.debut + e.duree), 0);
+  const voix = voixDepuisNotes(notes, tempo, grille);
+  const fin = voix.flat().reduce((m, e) => Math.max(m, e.fin), 0);
   const nbMesures = Math.max(1, options.mesures ?? 1, Math.ceil(fin / unitesParMesure));
 
   const lignes: string[] = [];
@@ -173,28 +235,31 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
       lignes.push(`        <divisions>${divisions}</divisions>`);
       lignes.push('        <key><fifths>0</fifths></key>');
       lignes.push(`        <time><beats>${numerateur}</beats><beat-type>${denominateur}</beat-type></time>`);
-      lignes.push(options.cle === "fa" ? '        <clef><sign>F</sign><line>4</line></clef>' : '        <clef><sign>G</sign><line>2</line></clef>');
+      lignes.push(`        <clef>${CLES[options.cle ?? ""] ?? cleDe(notes.map((n) => n.note))}</clef>`);
       lignes.push('      </attributes>');
       lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${Math.round(tempo)}</per-minute></metronome></direction-type><sound tempo="${Math.round(tempo)}"/></direction>`);
     }
 
-    // Ce que la mesure contient, dans l'ordre, silences compris.
-    let curseur = debutMesure;
-    const dansLaMesure = evenements.filter((e) => e.debut >= debutMesure && e.debut < debutMesure + unitesParMesure);
-    for (const e of dansLaMesure) {
-      if (e.debut > curseur) {
-        lignes.push(...ecrireSilence(e.debut - curseur, unitesParNoire));
-        curseur = e.debut;
+    // Chaque voix, dans la mesure, en morceaux : une première voix toujours, pour que la mesure soit pleine,
+    // et les autres là seulement où elles jouent.
+    const parVoix = voix
+      .map((v) => morceauxDeLaMesure(v, debutMesure, debutMesure + unitesParMesure, unitesParNoire, [numerateur, denominateur]))
+      .filter((morceaux, i) => i === 0 || morceaux.some((p) => p.notes.length > 0));
+    // Les signes se décident dans l'ordre du temps, toutes voix confondues : ils valent pour la portée.
+    const tetes = parVoix.flatMap((morceaux, v) => morceaux.flatMap((p) =>
+      p.notes.map((n, k) => ({ v, p, k, debut: p.debut, ...nomMusicXML(n), liee: p.lieeAvant }))));
+    const ordre = [...tetes].sort((a, b) => a.debut - b.debut);
+    const signes = new Map(signesDeLaMesure(ordre).map((s, i) => [ordre[i], s]));
+    parVoix.forEach((morceaux, v) => {
+      if (v > 0) lignes.push(`      <backup><duration>${unitesParMesure}</duration></backup>`);
+      for (const p of morceaux) {
+        if (p.notes.length === 0) { lignes.push(...ecrireSilence(p.duree, unitesParNoire, v + 1)); continue; }
+        p.notes.forEach((n, k) => {
+          const tete = tetes.find((t) => t.p === p && t.k === k)!;
+          lignes.push(...ecrireNote(n, p, k > 0, unitesParNoire, v + 1, signes.get(tete) ?? null));
+        });
       }
-      // Une note ne déborde pas de la mesure : on la tronque, faute de pouvoir la lier.
-      const duree = Math.min(e.duree, debutMesure + unitesParMesure - curseur);
-      if (duree <= 0) continue;
-      e.notes.forEach((n, i) => lignes.push(...ecrireNote(n, duree, i > 0, unitesParNoire)));
-      curseur += duree;
-    }
-    if (curseur < debutMesure + unitesParMesure) {
-      lignes.push(...ecrireSilence(debutMesure + unitesParMesure - curseur, unitesParNoire));
-    }
+    });
     lignes.push('    </measure>');
   }
 
@@ -203,9 +268,56 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   return lignes.join("\n");
 }
 
-function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesParNoire: number): string[] {
+/**
+ * Les valeurs qu'une durée prend une fois écrite, en unités, selon les temps de la mesure où elle
+ * commence à `position` unités du début. La plus grande valeur d'abord, sans égard aux temps, cachait
+ * le milieu de la mesure : voir `audio/musicxml-temps.ts`.
+ */
+function decomposer(position: number, duree: number, unitesParNoire: number, metrique: readonly [number, number], sonne: boolean): number[] {
+  const parDouble = 4 / Math.max(1, unitesParNoire);
+  return valeursSelonLesTemps(position * parDouble, duree * parDouble, metrique, sonne).map((v) => v / parDouble);
+}
+
+/** Un morceau d'une voix dans une mesure : une note ou un accord d'une seule valeur, ou un silence. */
+interface Morceau { debut: number; duree: number; notes: number[]; lieeAvant: boolean; lieeApres: boolean }
+
+/**
+ * LES MORCEAUX D'UNE VOIX DANS UNE MESURE, silences compris.
+ *
+ * `<duration>` est la durée voulue et `<type>` la valeur dessinée, que le référentiel MusicXML 4.0 sépare.
+ * Une note qui passait la barre était tronquée, « faute de pouvoir la lier », et une durée qu'aucune valeur
+ * ne nomme se dessinait sous la plus proche, ce qui décalait tout ce qui suivait : cinq doubles croches en
+ * noire. L'une et l'autre s'écrivent maintenant en notes liées, `<tie>` pour le son et `<tied>` pour la
+ * gravure, et un silence en silences successifs. Revue des notations en texte, 2026-11-22.
+ */
+function morceauxDeLaMesure(
+  voix: Voix, debutMesure: number, finMesure: number, unitesParNoire: number, metrique: readonly [number, number],
+): Morceau[] {
+  const morceaux: Morceau[] = [];
+  const poser = (debut: number, fin: number, notes: number[], lieeAvant: boolean, lieeApres: boolean) => {
+    const valeurs = decomposer(debut - debutMesure, fin - debut, unitesParNoire, metrique, notes.length > 0);
+    let t = debut;
+    valeurs.forEach((duree, k) => {
+      const sonne = notes.length > 0;
+      morceaux.push({ debut: t, duree, notes, lieeAvant: sonne && (k > 0 || lieeAvant), lieeApres: sonne && (k < valeurs.length - 1 || lieeApres) });
+      t += duree;
+    });
+  };
+  let t = debutMesure;
+  for (const e of voix) {
+    if (e.fin <= debutMesure || e.debut >= finMesure) continue;
+    const debut = Math.max(e.debut, debutMesure), fin = Math.min(e.fin, finMesure);
+    if (debut > t) poser(t, debut, [], false, false);
+    poser(debut, fin, e.notes, e.debut < debutMesure, e.fin > finMesure);
+    t = fin;
+  }
+  if (t < finMesure) poser(t, finMesure, [], false, false);
+  return morceaux;
+}
+
+function ecrireNote(noteMidi: number, p: Morceau, estAccord: boolean, unitesParNoire: number, voix: number, signe: string | null): string[] {
   const { pas, alter, octave } = nomMusicXML(noteMidi);
-  const { nom, points } = valeurNote(duree, unitesParNoire);
+  const { nom, points } = valeurNote(p.duree, unitesParNoire);
   const out = ["      <note>"];
   if (estAccord) out.push("        <chord/>");
   out.push("        <pitch>");
@@ -213,16 +325,23 @@ function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesP
   if (alter !== 0) out.push(`          <alter>${alter}</alter>`);
   out.push(`          <octave>${octave}</octave>`);
   out.push("        </pitch>");
-  out.push(`        <duration>${duree}</duration>`);
+  out.push(`        <duration>${p.duree}</duration>`);
+  if (p.lieeAvant) out.push('        <tie type="stop"/>');
+  if (p.lieeApres) out.push('        <tie type="start"/>');
+  out.push(`        <voice>${voix}</voice>`);
   out.push(`        <type>${nom}</type>`);
   for (let i = 0; i < points; i++) out.push("        <dot/>");
+  if (signe) out.push(`        <accidental>${signe}</accidental>`);
+  if (p.lieeAvant || p.lieeApres) {
+    out.push(`        <notations>${p.lieeAvant ? '<tied type="stop"/>' : ""}${p.lieeApres ? '<tied type="start"/>' : ""}</notations>`);
+  }
   out.push("      </note>");
   return out;
 }
 
-function ecrireSilence(duree: number, unitesParNoire: number): string[] {
+function ecrireSilence(duree: number, unitesParNoire: number, voix: number): string[] {
   const { nom, points } = valeurNote(duree, unitesParNoire);
-  const out = ["      <note>", "        <rest/>", `        <duration>${duree}</duration>`, `        <type>${nom}</type>`];
+  const out = ["      <note>", "        <rest/>", `        <duration>${duree}</duration>`, `        <voice>${voix}</voice>`, `        <type>${nom}</type>`];
   for (let i = 0; i < points; i++) out.push("        <dot/>");
   out.push("      </note>");
   return out;

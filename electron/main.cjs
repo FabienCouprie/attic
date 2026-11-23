@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, desktopCapturer, protocol } = require("electron");
+const { app, BrowserWindow, WebContentsView, ipcMain, dialog, Menu, shell, session, desktopCapturer, protocol } = require("electron");
 const path = require("path");
 
 // ═══ LES DIALOGUES FONT NAÎTRE LES RACINES, ET EUX SEULS ═══
@@ -78,6 +78,7 @@ const { installerIpcScripts } = require("./ipc-scripts.cjs");
 const { installerIpcFichiers } = require("./ipc-fichiers.cjs");
 const { installerIpcModeles } = require("./ipc-modeles.cjs");
 const { installerIpcMoteurs } = require("./ipc-moteurs.cjs");
+const { installerIpcPdf } = require("./ipc-pdf.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const {
   fenetreDe, uneSeuleFois, requeteDeFenetre, adresseDeDeveloppement,
@@ -580,6 +581,9 @@ ecrireLaProposition(interpretesEnUsage());
 // Les mises à jour vivent dans `ipc-maj.cjs` depuis le 2026-11-07. L'appel reste ici, à la place
 // du code qu'il remplace, pour que les canaux s'enregistrent dans le même ordre qu'avant.
 installerIpcMaj({ ipcMain, BrowserWindow, autoUpdater, CHEMIN_SAUVEGARDE_MAJ });
+
+// L'impression d'un SVG en PDF, pour « SVG vers PDF » : une vue détachée, sans script ni réseau.
+installerIpcPdf({ ipcMain, WebContentsView, session });
 
 // Mémoire occupée par l'application entière : navigateur, onglets, GPU, utilitaires.
 // `getAppMetrics` lit des compteurs déjà tenus par le système — pas de processus lancé, pas

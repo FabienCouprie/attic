@@ -4,26 +4,11 @@
 // deviendrait le maitre des autres, alors qu'une aide partagee est un sujet a elle seule.
 
 
-import { frequenceDeNoteMidi, GAMMES_ACCORDS } from "../audio";
+import { GAMMES_ACCORDS } from "../audio";
 
-/**
- * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
- * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
- * Retourne null si la note est invalide.
- */
-
-export function noteVersFrequence(note: string): number | null {
-  const n = note.trim().replace(/\s+/g, "");
-  const m = n.match(/^([A-Ga-g])([#♯]|[b♭])?(-?\d+)$/);
-  if (!m) return null;
-  const tbl: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  let pc = tbl[m[1].toUpperCase()] ?? 9;
-  const alt = m[2] ?? "";
-  if (alt === "#" || alt === "♯") pc += 1;
-  else if (alt === "b" || alt === "♭") pc -= 1;
-  const midi = (parseInt(m[3]) + 1) * 12 + pc;
-  return frequenceDeNoteMidi(midi);
-}
+// `noteVersFrequence` VIVAIT ICI, et a disparu le 2026-11-22 : le Générateur de fréquence lit sa note
+// par le seul lecteur des noms de notes, `hauteurOuRefus` (`audio/noms-de-notes.ts`), qui lit aussi
+// « C##4 » et « Do4 », et refuse en levant le drapeau d'erreur.
 
 // LA TABLE DES FORMES D'ONDE A QUITTÉ CE FICHIER pour `audio/timbres.ts`, où vit déjà la table
 // d'alias qui relit une valeur enregistrée. Celle qui était ici portait l'identifiant `saw` quand

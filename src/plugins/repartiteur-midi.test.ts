@@ -148,10 +148,11 @@ describe("le nœud Répartiteur MIDI", () => {
   });
 
   it("lit une liste de pistes sans la borne des seize canaux", () => {
-    expect(analyserListePistes("2,3")).toEqual([2, 3]);
-    expect(analyserListePistes("1-4")).toEqual([1, 2, 3, 4]);
-    expect(analyserListePistes("20")).toEqual([20]);
-    expect(analyserListePistes("0")).toEqual([]);
-    expect(analyserListePistes("")).toEqual([]);
+    expect(analyserListePistes("2,3")).toEqual({ numeros: [2, 3] });
+    expect(analyserListePistes("1-4")).toEqual({ numeros: [1, 2, 3, 4] });
+    expect(analyserListePistes("20")).toEqual({ numeros: [20] });
+    expect(analyserListePistes("")).toEqual({ numeros: [] });
+    // « 0 » était écarté en silence ; il est refusé et nommé. Revue des notations en texte, 2026-11-22.
+    expect(analyserListePistes("0")).toEqual({ refus: "0" });
   });
 });

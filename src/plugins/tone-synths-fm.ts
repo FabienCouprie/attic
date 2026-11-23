@@ -13,6 +13,7 @@ import { genererModulationSynth, genererPluckSynth, rendreBatterieMidi } from ".
 import { analyserMidi } from "../audio/midi";
 import { parseMidi } from "midi-file";
 import { avecDoc } from "./notices";
+import { hauteurOuRefus, nomAnglais } from "../audio/noms-de-notes";
 
 
 export const fiches: FicheAudio[] = ([
@@ -42,8 +43,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C4", defautEn: "C4",
-        doc: "Note à jouer (ex. C4, G5).",
-        docEn: "Note to play (e.g. C4, G5).",
+        doc: "Note à jouer (ex. C4, G5). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.",
       },
       {
         nom: "Durée",
@@ -135,7 +136,9 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const mode = ctx.paramTexte("Mode", "FM") as "FM" | "AM";
-      const note = ctx.paramTexte("Note", "C4");
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
       const duree = ctx.paramNombre("Durée", 1.5);
       const volume = ctx.paramNombre("Volume", 80);
       const harmonicity = ctx.paramNombre("Harmonicity", 3);
@@ -187,8 +190,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C4",
-        doc: "Note de corde pincée (ex. C4, G3).",
-        docEn: "Plucked string note (e.g. C4, G3).", defautEn: "C4",
+        doc: "Note de corde pincée (ex. C4, G3). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4",
       },
       {
         nom: "Durée",
@@ -261,7 +264,9 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const note = ctx.paramTexte("Note", "C4");
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
       const attackNoise = ctx.paramNombre("Attack noise", 1);

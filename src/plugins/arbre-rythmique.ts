@@ -16,7 +16,7 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante, traduire } from "../i18n";
+import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core";
 import { derouler, dureeArbre, ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
@@ -27,6 +27,7 @@ import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
 import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 import { SIGNATURES, lireSignature } from "../audio/signatures";
+import { lireListe } from "../audio/listes-musicales";
 
 const en = () => langueCourante() === "en";
 
@@ -39,29 +40,15 @@ const SOURCES = [
   { id: "dessin", nom: "Dessin", nomEn: "Drawing" },
 ];
 
-/** Lit une suite de hauteurs écrite à la main : « 60 62 64 » ou « 60, 62, 64 ». */
-function lireHauteurs(texte: string): number[] {
-  return texte.split(/[\s,;]+/).map(Number).filter((n) => Number.isFinite(n) && n >= 0 && n <= 127);
-}
-
 /**
- * Les jetons d'une suite de hauteurs qui ne sont PAS un numéro MIDI.
+ * Une suite de hauteurs écrite à la main, réglage ou entrée, par le seul lecteur des listes.
  *
- * POURQUOI CE RELEVÉ EXISTE. Le filtre ci-dessus jette en silence ce qu'il ne sait pas lire, de
- * sorte qu'un texte étranger se changeait en hauteurs sans que rien ne le dise. MESURÉ dans
- * l'application sur le format de « Texte → MIDI » : « Tempo 90 / C4+E4+G4 2.000 » donnait
- * `[NaN, 90, NaN, 2]`, puis `[90, 2]` après filtrage — le nœud jouait un fa dièse 6 sorti du
- * nombre 90, en annonçant « entrée Hauteurs » comme s'il avait lu une liste.
- *
- * ÉCARTER UNE VALEUR HORS DE 0–127 EST SAIN, JETER UN MOT NE L'EST PAS : les deux sont nommés ici,
- * car une hauteur hors de portée perdue en silence coûte une note tout autant.
+ * MESURÉ dans l'application sur le format de « Texte → MIDI » : « Tempo 90 / C4+E4+G4 2.000 » se
+ * changeait en hauteurs sans que rien ne le dise, et le nœud jouait un fa dièse 6 sorti du nombre 90.
+ * L'entrée refusait depuis ce qui ne se lit pas ; le réglage le jetait encore, et une espace en tête
+ * ou un retour à la ligne final ajoutait un MIDI 0, revue des notations en texte, 2026-11-22.
  */
-function jetonsNonHauteurs(texte: string): string[] {
-  return texte.split(/[\s,;]+/).filter(Boolean).filter((jeton) => {
-    const n = Number(jeton);
-    return !Number.isFinite(n) || n < 0 || n > 127;
-  });
-}
+const lireHauteurs = (texte: string) => lireListe(texte, "hauteurs", en() ? "Pitches" : "Hauteurs");
 
 function lireMetrique(texte: string): [number, number] {
   const lue = lireSignature(texte);
@@ -92,8 +79,8 @@ export const fiches: FicheAudio[] = ([
         doc: "L'arbre du catalogue qui est rendu. Au-delà du dernier, le compte reprend au premier. Sans effet quand « Source » ne vaut pas « Catalogue ».",
         docEn: "The catalogue tree returned. Beyond the last, the count starts again at the first. No effect when « Source » is not « Catalogue »." },
       { nom: "Arbre", nomEn: "Tree", type: "texte", defaut: ARBRE_DEFAUT, defautEn: ARBRE_DEFAUT,
-        doc: "L'arbre dessiné, en notation de listes. Le dessin l'écrit ici, et un arbre venu d'ailleurs s'y colle. Employé quand la source est Dessin.",
-        docEn: "The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing." },
+        doc: "L'arbre dessiné, en notation de listes. Le dessin l'écrit ici, et un arbre venu d'ailleurs s'y colle. Employé quand la source est Dessin. Les formes d'OpenMusic se lisent aussi : une voix « (? ((4//4 (1 1 1 1)))) », et une métrique « 4//4 » ou « (4 4) ». Un poids nul ou entre 0 et 1, une liaison sans note devant elle, un silence lié, une division négative ou liée, une métrique dont un terme est nul et une liste vide sont refusés, et le message nomme le jeton.",
+        docEn: "The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token." },
       { nom: "Métrique", nomEn: "Time signature", type: "choix",
         options: METRIQUES, optionsEn: METRIQUES, optionIds: METRIQUES, defaut: "4/4", defautEn: "4/4",
         doc: "La mesure employée. Sans effet quand « Source » vaut « Dessin » : l'arbre dessiné porte sa propre métrique.", docEn: "The measure used. No effect when « Source » is « Drawing »: the drawn tree carries its own time signature." },
@@ -226,11 +213,11 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Arbre", nomEn: "Tree", type: "texte", defaut: ARBRE_DEFAUT, defautEn: ARBRE_DEFAUT,
-        doc: "Le rythme en notation de listes, employé quand l'entrée du même nom n'est pas branchée.",
-        docEn: "The rhythm in list notation, used when the input of the same name is not connected." },
+        doc: "Le rythme en notation de listes, employé quand l'entrée du même nom n'est pas branchée. Les formes d'OpenMusic se lisent aussi : une voix « (? ((4//4 (1 1 1 1)))) », et une métrique « 4//4 » ou « (4 4) ». Un poids nul ou entre 0 et 1, une liaison sans note devant elle, un silence lié, une division négative ou liée, une métrique dont un terme est nul et une liste vide sont refusés, et le message nomme le jeton.",
+        docEn: "The rhythm in list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token." },
       { nom: "Hauteurs", nomEn: "Pitches", type: "texte", defaut: "60 62 64 65 67", defautEn: "60 62 64 65 67",
-        doc: "Les numéros MIDI employés, lus en boucle, quand aucune entrée ne les fournit.",
-        docEn: "The MIDI numbers used, read in a loop, when no input supplies them." },
+        doc: "Les hauteurs employées, lues en boucle, quand aucune entrée ne les fournit : des numéros MIDI de 0 à 127, décimales permises, ou des noms de notes avec leur octave, « C4 », « Do4 », séparés par des espaces, des virgules ou des points-virgules. Une liste vide, ou dont un jeton ne se lit pas, est refusée, et le message le nomme.",
+        docEn: "The pitches used, read in a loop, when no input supplies them: MIDI numbers from 0 to 127, decimals allowed, or note names with their octave, « C4 », separated by spaces, commas or semicolons. An empty list, or one with an unreadable token, is refused, and the message names it." },
       { nom: "Tempo", nomEn: "Tempo", plage: [20, 300], pas: 1, defaut: 120, unite: "BPM",
         doc: "La durée d'une noire.", docEn: "The length of a quarter note." },
       { nom: "Répétitions", nomEn: "Repeats", plage: [1, 16], pas: 1, defaut: 1,
@@ -273,18 +260,17 @@ export const fiches: FicheAudio[] = ([
       // UNE CHAÎNE VIDE PASSE TOUJOURS À LA SOURCE SUIVANTE : l'ordre « Hauteurs, puis Séquence,
       // puis réglage » est documenté dans la notice, et un contrôle ne doit pas le changer.
       if (typeof hauteursTexte === "string" && hauteursTexte.trim()) {
-        const fautifs = jetonsNonHauteurs(hauteursTexte);
-        if (fautifs.length > 0) {
-          return { valeurs: [null, null], erreur: true,
-            message: traduire("msg.hauteurs_non_lues_var_0", fautifs.slice(0, 3).join(" ")) };
-        }
-        hauteurs = lireHauteurs(hauteursTexte);
+        const lue = lireHauteurs(hauteursTexte);
+        if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
+        hauteurs = lue.valeurs;
         provenance = en() ? "pitches input" : "entrée Hauteurs";
       } else if (estSequence(sequenceEntree) && sequenceEntree.notes.length > 0) {
         hauteurs = sequenceEntree.notes.map((n) => n.note);
         provenance = en() ? "sequence input" : "entrée Séquence";
       } else {
-        hauteurs = lireHauteurs(ctx.paramTexte("Hauteurs", "60 62 64 65 67"));
+        const lue = lireHauteurs(ctx.paramTexte("Hauteurs", "60 62 64 65 67"));
+        if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
+        hauteurs = lue.valeurs;
         provenance = en() ? "setting" : "réglage";
       }
       if (hauteurs.length === 0) {

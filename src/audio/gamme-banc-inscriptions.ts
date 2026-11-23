@@ -18,7 +18,6 @@ export const HORS_DE_PORTEE: Record<string, string> = {
   "dessin-sonore·Gamme": "le nœud lit une image par le DOM, absent du banc ; son calcul pur est tenu dans gammes-tenues-accords.test.ts",
   "parole-vers-sequence·Gamme": "le nœud exige le modèle de reconnaissance vocale Vosk, absent du banc de node",
   "vexflow-grille·Gamme": "le nœud rend une partition en SVG, que le banc ne sait pas lire ; ses accords viennent de accordsDepuisRomains, que la Progression éprouve",
-  "vexflow-partition·Gamme": "le nœud rend une partition en SVG, que le banc ne sait pas lire ; ses accords viennent de accordsDepuisRomains, que la Progression éprouve",
   "gammes-monde·Gamme": "le nœud rend un texte libre, la liste de ses degrés, sans hauteur que le banc sache lire",
   "partition-aleatoire-csound·Gamme": "le nœud rend une partition Csound, que le banc ne sait pas encore lire",
   "cercle-pulsant·Gamme": "la clé du nœud suit la roue de Camelot et change en cours de rendu ; le banc ne sait pas encore la suivre",

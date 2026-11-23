@@ -13,7 +13,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { estSequence, type Sequence } from "../audio/sequence";
-import { decrireSerie, serieTousIntervalles } from "../audio/series-intervalles";
+import { decrireSerie, rangDansLeCatalogue, serieTousIntervalles } from "../audio/series-intervalles";
 import { forme, type FormeSerielle } from "../audio/theorie-serielle";
 import { analyseContrastive, motifsRepetes, profilPrimaire } from "../audio/morphologie";
 import { nomNote } from "../audio/nom-note";
@@ -69,7 +69,8 @@ export const fiches: FicheAudio[] = ([
         doc: "La vélocité des notes.", docEn: "The velocity of the notes." },
     ],
     async executer(ctx) {
-      const rang = Math.round(ctx.paramNombre("Numéro", 0));
+      // LE RANG BOUCLE, ET LE MESSAGE NOMME LA SÉRIE RENDUE : 3856 rendait la dernière et se disait 3856.
+      const rang = rangDansLeCatalogue(Math.round(ctx.paramNombre("Numéro", 0)));
       const depart = Math.round(ctx.paramNombre("Note de départ", 0));
       const choisie = ctx.paramTexte("Forme", FORMES[0].id);
       const def = FORMES.find((f) => f.id === choisie || f.nom === choisie || f.nomEn === choisie) ?? FORMES[0];

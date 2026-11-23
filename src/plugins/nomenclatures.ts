@@ -201,8 +201,7 @@ export const DOMAINES: Domaine[] = [
       ),
       ...coupesPour(
         "les chiffres romains d'une progression ne se lisent que dans une tonalité majeure ou mineure, et les autres gammes n'ont pas de degrés nommés",
-        "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme", "vexflow-partition·Gamme",
-        "accords-vers-notation·Gamme",
+        "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme", "accords-vers-notation·Gamme",
       ),
       { ou: "gammes-monde·Gamme", raison: "le nœud des gammes en cents, qui pose chaque degré à sa hauteur exacte ; les gammes tempérées ont leurs propres nœuds" },
       { ou: "verifier-choral·Gamme", raison: "la sensible, la dominante et la cadence d'un choral ne se lisent que dans une tonalité majeure ou mineure" },
@@ -355,18 +354,19 @@ export const DOMAINES: Domaine[] = [
     // grille jusqu'à la borne de son algorithme, et deux grilles qui se ressemblaient ne se
     // ressemblent plus. Restent la table entière sous DEUX ORDRES, celui de la table pour la vitesse
     // de l'arpégiateur et l'ordre d'origine d'abord pour les deux grilles de quantification MIDI ; et
-    // cinq parts, chacune la grille de son composant et déclarée en coupe : la table sans sa valeur
+    // quatre parts, chacune la grille de son composant et déclarée en coupe : la table sans sa valeur
     // extrême pour l'intervalle et pour la taille du « beat repeat », les quatre valeurs binaires de
-    // Magenta, les six durées simples qu'une partition sait écrire, les sept valeurs qui font un
-    // nombre entier de pas par temps pour un réservoir.
-    formesAssumees: 7,
-    pourquoi: "la table entière sous deux ordres, celui de la table pour la vitesse de l'arpégiateur et l'ordre d'origine d'abord pour les deux grilles de quantification MIDI ; et cinq parts, chacune la grille de son composant : la table sans sa valeur extrême pour l'intervalle et pour la taille du « beat repeat », les quatre valeurs binaires de Magenta, les six durées simples d'une partition, les sept valeurs à pas entiers d'un réservoir",
+    // Magenta, les sept valeurs qui font un nombre entier de pas par temps pour un réservoir.
+    //
+    // PUIS À SIX, LE 2026-11-23 : la partition qui gravait un fichier MIDI a quitté le catalogue, et
+    // avec elle sa part, les six durées simples qu'elle savait écrire.
+    formesAssumees: 6,
+    pourquoi: "la table entière sous deux ordres, celui de la table pour la vitesse de l'arpégiateur et l'ordre d'origine d'abord pour les deux grilles de quantification MIDI ; et quatre parts, chacune la grille de son composant : la table sans sa valeur extrême pour l'intervalle et pour la taille du « beat repeat », les quatre valeurs binaires de Magenta, les sept valeurs à pas entiers d'un réservoir",
     coupes: [
       ...coupesPour(
         "le réseau avance d'un nombre entier de pas par temps et reconnaît le temps par `pas % pasParBeat` : une pointée, la blanche, la ronde ou le triolet de noire en demanderaient une fraction",
         "reservoir-musical·Résolution", "multi-reservoirs·Résolution",
       ),
-      { ou: "vexflow-midi·Quantification", raison: "la partition n'écrit que des durées simples, de la ronde à la triple croche, sans point ni triolet : une attaque posée sur une grille pointée ou de triolet tomberait entre deux durées écrites" },
       { ou: "beat-repeat·Intervalle", raison: "sans le 1/32 de triolet : aucune taille offerte n'est plus courte, et sous un intervalle pas plus long que la taille le segment réécrit les échantillons qu'il remplace, la sortie égalant l'entrée" },
       { ou: "beat-repeat·Taille", raison: "sans la ronde : aucun intervalle offert n'est plus long, et une taille au moins aussi longue que l'intervalle rend l'entrée telle quelle, mesuré par `plugins/beat-repeat-taille.test.ts`" },
       ...coupesPour(

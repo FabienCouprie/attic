@@ -34,7 +34,7 @@ export type ModeProgression = "majeur" | "mineur";
  * pas rend une chaîne vide, que `romainsInconnus` nomme avant.
  *
  * Point d'entrée unique des nœuds qui développent des chiffres romains (« Progression », « Grille
- * d'accords », « Accords → Notation MIDI », la Grille et la Partition VexFlow).
+ * d'accords », « Accords → Notation MIDI » et la Grille VexFlow).
  *
  * LA LECTURE EST CELLE D'ATTIC DEPUIS LE 2026-11-22 (`lecture-romains.ts`), revue des notations en
  * texte. Elle passait par Tonal, que deux fonctions d'ici préparaient : `normaliserRomains`
