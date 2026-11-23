@@ -14,6 +14,7 @@ import { fiches as f_collections } from "../collections";
 import { fiches as f_documentation } from "../documentation";
 import { fiches as f_demonstration } from "../demonstration";
 import { fiches as f_verovio } from "../verovio";
+import { fiches as f_partitionGuitare } from "../partition-guitare";
 import { fiches as f_gout } from "../gout";
 import { fiches as f_assaisonnement } from "../assaisonnement";
 import { fiches as f_parfum } from "../parfum";
@@ -56,6 +57,7 @@ export const fiches = [
   ...f_documentation,
   ...f_demonstration,
   ...f_verovio,
+  ...f_partitionGuitare,
   ...f_gout,
   ...f_assaisonnement,
   ...f_parfum,

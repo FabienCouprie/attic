@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **520 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **521 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **520 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 43 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (7) |
+| [Visualization](#visualization) | 44 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (8) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -9701,6 +9701,7 @@ Counts the number of zero crossings of the signal in each analysis frame using M
 |---|---|
 | [ABC Constraints](#abc-constraints) | Checks that an edit of an ABC score kept what had to stay fixed: bars, meter, key, melody, rhythm, chords. |
 | [Engraved Score](#engraved-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules. |
+| [Guitar Score](#guitar-score) | Engraves an ABC, MusicXML, MEI or Humdrum notation into a guitar score, staff and tablature, as SVG. |
 | [MIDI → ABC](#midi--abc) | Writes a MIDI file in ABC notation: a text score, readable and editable by a language model. |
 | [MusicXML](#musicxml) | Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read. |
 | [VexFlow Chord Chart](#vexflow-chord-chart) | Displays a chord chart from a list of symbols. |
@@ -9745,6 +9746,36 @@ This node engraves a score from a notation text, and returns one page as SVG. Fo
 |---|---|---|---|---|
 | Notation | text | `X:1 T:Gamme M:4/4 L:1/4 K:C C D E F \| G A B c \|` |  | The notation to engrave, when no text is connected to the input. |
 | Format | choice | Auto | Auto / ABC / MusicXML / MEI / Humdrum | « Auto » recognises the format from the shape of the text. The others impose it. |
+| Width | slider | 1800 | 600 – 6000, step 50 | Page width, in tenths of a millimetre: 2100 is an A4 sheet. Wider, more bars per line. No effect in unrolled mode. |
+| Scale | slider | 40 % | 10 – 200 %, step 5 | Size of the engraving. Small, the score fits whole in the node; large, it can be read. |
+| Unrolled | choice | No | No / Yes | The whole piece on a single system, as long as needed, instead of pages. |
+| Page | number | 1 | 1 – 200, step 1 | The page to render. Beyond the last one, the last one is rendered. |
+
+#### Guitar Score
+
+`partition-guitare` · Visualization → Notation
+
+*Engraves an ABC, MusicXML, MEI or Humdrum notation into a guitar score, staff and tablature, as SVG.*
+
+This node engraves a guitar score from a notation text: the staff, in treble clef with an 8 below, and its tablature, which gives for each note the string and the fret where it is played. It returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML; MEI; and Humdrum. The format is recognised from the shape of the text; the « Format » setting imposes it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element. An ABC score is read note by note: a zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, as do several voices (V:), an alternative ending, a key change within the tune, a tie inside a chord and a tuplet that its number alone would make read wrongly. The message names each fault and its line. Each note sounds at the pitch the text gives it: its written accidental, otherwise the one that holds until the bar line, otherwise the key signature. A tied note keeps the pitch of the note where the tie starts. The staff writes this pitch one octave higher, as guitar notation does. « Octave » moves every note by that many octaves, and the message says so. « Tuning » gives the open strings and their number: Standard (E A D G B E), Drop D, DADGAD, Open G, Open D, Half step down, and Standard 7-string, with a low B. « Capo » puts the capo on a fret, and the tablature's frets are counted from it. « Last fret » bounds the neck. A tuning other than standard, and the capo, are engraved above the first bar. Each note is placed on a string and a fret. A pitch can often be played at several places on the neck; the placement kept is the one that moves the hand least over the whole piece. The hand covers « Stretch » frets from the index finger: at 4, in position 7, it holds from fret 7 to fret 10. It moves only when a fretted note falls outside this window, and the movement is counted in frets; an open string does not move it. For equal movement, the lowest frets win. Two notes sounding together, in a chord or in two voices, take two strings, fit in the window, and a held note keeps its own. What the guitar does not play is refused, and the message names it with its bar: a note outside the tuning's range, a pitch between two frets, and a chord that carries more notes than strings, that needs the same string twice or that exceeds the stretch. « Display » says what is engraved. « Staff and tablature » engraves both, joined by a bracket: the rhythm is read on the staff, and the tablature carries only the frets. « Tablature » engraves it alone, with its duration stems, its rests and the staff's markings. Grace notes stay on the staff and are not in the tablature; the message counts them. Of a score with several staves, only one is transcribed: « Staff » says which, and the message gives their number. Beyond the last one, the last one is transcribed. The voices of one staff are kept. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed. A long piece spans several pages: « Page » says which one to render, and the message gives their number. An ABC text carrying several tunes, one per X: field, engraves them all, each under its title and starting on a new page. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Notation | text (notation) |  |
+| output | SVG | text |  |
+| output | SVG file | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Notation | text | `X:1 T:Gamme M:4/4 L:1/4 K:G G, A, B, C \| D E F G \| [G,B,D…` |  | The notation to engrave, when no text is connected to the input. |
+| Format | choice | Auto | Auto / ABC / MusicXML / MEI / Humdrum | « Auto » recognises the format from the shape of the text. The others impose it. |
+| Display | choice | Staff and tablature | Staff and tablature / Tablature | « Staff and tablature » engraves the staff and, below it, the tablature, which then carries only the frets. « Tablature » engraves it alone, with its duration stems and rests. |
+| Tuning | choice | Standard | Standard / Drop D / DADGAD / Open G / Open D / Half step down / Standard 7-string | The open strings, from low to high, and their number: Standard, E A D G B E; Drop D, D A D G B E; DADGAD; Open G, D G D G B D; Open D, D A D F♯ A D; Half step down; Standard 7-string, B E A D G B E. |
+| Capo | slider | 0 | 0 – 12, step 1 | The fret where the capo sits, 0 without one. It raises every string by that many semitones, and the tablature's frets are counted from it. |
+| Last fret | slider | 20 | 12 – 24, step 1 | The highest fret of the neck, counted from the nut. A note higher than the highest string at this fret is refused. |
+| Stretch | slider | 4 | 2 – 6, step 1 | The number of frets the hand covers from the index finger: at 4, in position 5, it holds from fret 5 to fret 8. The hand moves only when a fret falls outside this window. A wider chord is refused. |
+| Octave | number | 0 | -2 – 2, step 1 | Moves every note by that many octaves, on the staff as on the tablature. At 0, the guitar plays the pitch of the text. |
+| Staff | number | 1 | 1 – 16, step 1 | The staff transcribed, when the score has several, counted from the top. Beyond the last one, the last one. |
 | Width | slider | 1800 | 600 – 6000, step 50 | Page width, in tenths of a millimetre: 2100 is an A4 sheet. Wider, more bars per line. No effect in unrolled mode. |
 | Scale | slider | 40 % | 10 – 200 %, step 5 | Size of the engraving. Small, the score fits whole in the node; large, it can be read. |
 | Unrolled | choice | No | No / Yes | The whole piece on a single system, as long as needed, instead of pages. |
