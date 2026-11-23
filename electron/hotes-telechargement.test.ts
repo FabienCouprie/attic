@@ -21,8 +21,8 @@ const ok = (adresse: string) => hoteDeTelechargementAutorise(new URL(adresse));
 
 describe("les hotes du telechargement", () => {
   it("LAISSE PASSER CE QUE L'APPLICATION VA CHERCHER VRAIMENT", () => {
-    // Seul `storage.googleapis.com` sert aujourd'hui : les points de controle DDSP. Les autres
-    // viennent du chargement TensorFlow Hub, qui redirige.
+    // Ce qu'on peut ecrire dans « URL modele » de DDSP : un point de controle publie par Magenta,
+    // ou sur TensorFlow Hub, qui redirige. Les quatre instruments et SPICE sont livres.
     expect(ok("https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/violin")).toBe(true);
     expect(ok("https://tfhub.dev/google/model/1")).toBe(true);
     expect(ok("https://www.kaggle.com/models/x")).toBe(true);

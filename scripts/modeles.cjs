@@ -508,6 +508,23 @@ const CONNUS = {
       note: "La table de licences d'audio.cpp donne MIT et l'usage commercial pour cette famille, en désignant `mlx-community/mel-roformer-mlx` comme poids d'origine ; ce dépôt déclare MIT à son tour. Les deux maillons concordent. À noter cependant que la fiche du second est vide : aucun point de contrôle d'entraînement n'est nommé, de sorte que l'attribution s'arrête à ces deux publications et ne remonte pas jusqu'à qui a entraîné le modèle. Le paquet f16 est épinglé plutôt que le q8_0, que la mesure a trouvé cassé." },
   },
 
+  // ── DDSP ET SPICE, sous `public/magenta/`, entrés le 2026-11-23 ──
+  //
+  // « DDSP Tone Transfer » les tirait à l'exécution : les quatre instruments de
+  // `storage.googleapis.com`, et SPICE de `tfhub.dev`, que Kaggle redirige. Un seul paquet pour les
+  // quatre instruments, que le nœud choisit par un réglage ; SPICE à part, sa licence étant écrite.
+  "ddsp": {
+    id: "magenta-ddsp", nom: "Transfert de timbre (DDSP)", nomEn: "Timbre transfer (DDSP)",
+    racine: "magenta", noeuds: ["ddsp-tone-transfer"], archive: true,
+    licence: { nom: "non écrite", credit: "Google Magenta — DDSP (Engel, Hantrakul, Gu, Roberts, « DDSP: Differentiable Digital Signal Processing », ICLR 2020), points de contrôle ddsp/violin, ddsp/flute, ddsp/tenor_saxophone et ddsp/trumpet", rediffusable: true,
+      note: "Aucune licence n'est écrite pour ces points de contrôle : leurs dossiers sous `magentadata/js/checkpoints/ddsp/` ne portent que les poids, `model.json` et `settings.json`, et le code de magenta-js est Apache-2.0. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-11-23, la même que pour Coconet : les points de contrôle sont rediffusés sur la release `assets`, et cette absence est écrite ici et dans THIRD_PARTY.md." },
+  },
+  "spice": {
+    id: "magenta-spice", nom: "Hauteur du transfert de timbre (SPICE)", nomEn: "Timbre transfer pitch (SPICE)",
+    racine: "magenta", noeuds: ["ddsp-tone-transfer"], archive: true,
+    licence: { nom: "Apache-2.0", credit: "Google — SPICE (Gfeller, Frank, Roblek, Sharifi, Tagliasacchi, Velimirović, « SPICE: Self-supervised Pitch Estimation », 2019), modèle TensorFlow.js google/spice, version 2, licence lue sur sa fiche Kaggle", rediffusable: true },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois

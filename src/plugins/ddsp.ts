@@ -1,6 +1,7 @@
 // plugins/ddsp.ts — Nœud de transfert de timbre (tone transfer) via DDSP.
 // @magenta/music : Apache 2.0, listé dans THIRD_PARTY.md depuis le 2026-11-22 ; il ne l'était pas,
-// quoi qu'en dît cette ligne. Les points de contrôle DDSP, eux, viennent encore de Google.
+// quoi qu'en dît cette ligne. Les points de contrôle DDSP et SPICE sont livrés depuis le
+// 2026-11-23, et THIRD_PARTY.md les nomme aussi.
 //
 // Utilise SPICE pour extraire f0/loudness d’un audio, puis un modèle DDSP
 // pré-entraîné pour resynthétiser le signal avec le timbre d’un instrument.
@@ -11,26 +12,34 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { withElectronFetch } from "./electronFetch";
+import { baseModeleLivre } from "./base-modeles";
+import { annoncerModele } from "./message-modele";
 
 const OUTPUT_SR = 48000;
 
-const DDSP_CHECKPOINTS: Record<string, string> = {
-  "Violon": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/violin",
-  "Flûte": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/flute",
-  "Saxophone ténor": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/tenor_saxophone",
-  "Trompette": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/trumpet",
+/**
+ * LES POINTS DE CONTRÔLE SONT LIVRÉS AVEC L'APPLICATION, depuis le 2026-11-23 : les quatre
+ * instruments sous `public/magenta/ddsp/`, SPICE sous `public/magenta/spice/`, publiés sur la release
+ * `assets` (paquets `magenta-ddsp` et `magenta-spice` du manifeste).
+ *
+ * Ils se chargeaient à l'exécution, les instruments depuis `storage.googleapis.com`, SPICE depuis
+ * `tfhub.dev` que Kaggle redirige : une installation sans réseau ne pouvait pas employer le nœud,
+ * rien ne vérifiait ce qui arrivait, et ils venaient d'un tiers, contre la règle du dépôt. Chaque
+ * instrument garde le dossier qu'il porte chez Magenta. Les libellés anglais sont lus aussi.
+ */
+export const DOSSIERS_DDSP: Record<string, string> = {
+  "Violon": "violin", "Flûte": "flute", "Saxophone ténor": "tenor_saxophone", "Trompette": "trumpet",
+  "Violin": "violin", "Flute": "flute", "Tenor saxophone": "tenor_saxophone", "Trumpet": "trumpet",
 };
 
-const DDSP_CHECKPOINTS_EN: Record<string, string> = {
-  "Violin": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/violin",
-  "Flute": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/flute",
-  "Tenor saxophone": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/tenor_saxophone",
-  "Trumpet": "https://storage.googleapis.com/magentadata/js/checkpoints/ddsp/trumpet",
-};
+/** Le dossier de SPICE. Sa bibliothèque y ajoute `/model.json?tfjs-format=file`, que le serveur ignore. */
+export const adresseSpice = (): string => baseModeleLivre("magenta/spice");
 
-function resolveDdspCheckpoint(value: string, customUrl: string): string | null {
+/** L'adresse du point de contrôle : celle qu'on a écrite dans « URL modèle », sinon l'instrument livré. */
+export function adresseDdsp(instrument: string, customUrl: string): string | null {
   if (customUrl.trim()) return customUrl.trim();
-  return DDSP_CHECKPOINTS[value] ?? DDSP_CHECKPOINTS_EN[value] ?? null;
+  const dossier = DOSSIERS_DDSP[instrument];
+  return dossier ? baseModeleLivre(`magenta/ddsp/${dossier}`) : null;
 }
 
 let spiceInstance: any = null;
@@ -41,7 +50,7 @@ async function getSpice() {
     try {
       const mm = await import("@magenta/music");
       spiceInstance = await withElectronFetch(async () => {
-        const s = new mm.SPICE();
+        const s = new mm.SPICE(adresseSpice());
         await s.initialize();
         return s;
       });
@@ -70,7 +79,7 @@ async function getDdsp(url: string) {
 }
 
 async function appliquerDDSP(buffer: AudioBuffer, instrument: string, customUrl: string): Promise<AudioBuffer> {
-  const url = resolveDdspCheckpoint(instrument, customUrl);
+  const url = adresseDdsp(instrument, customUrl);
   if (!url) throw new Error(`Instrument DDSP inconnu : ${instrument}`);
 
   const [spice, ddsp] = await Promise.all([getSpice(), getDdsp(url)]);
@@ -95,8 +104,8 @@ export const fiches: FicheAudio[] = ([
         options: ["Violon", "Flûte", "Saxophone ténor", "Trompette"], optionIds: ["Violon","Flûte","Saxophone ténor","Trompette"],
         optionsEn: ["Violin", "Flute", "Tenor saxophone", "Trumpet"],
         defaut: "Violon",
-        doc: "Instrument cible du transfert de timbre. Le modèle se télécharge au premier usage (~3-4 MB).",
-        docEn: "Target instrument for the timbre transfer. The model downloads on first use (~3-4 MB).", defautEn: "Violin" },
+        doc: "Instrument cible du transfert de timbre.",
+        docEn: "Target instrument for the timbre transfer.", defautEn: "Violin" },
       { nom: "URL modèle", nomEn: "Model URL", type: "texte", defaut: "",
         doc: "URL personnalisée d’un checkpoint DDSP. Si renseignée, elle remplace l’instrument choisi.",
         docEn: "Custom URL of a DDSP checkpoint. If set, it overrides the selected instrument.", defautEn: "" },
@@ -107,6 +116,8 @@ export const fiches: FicheAudio[] = ([
       const instrument = ctx.paramTexte("Instrument", "Violon");
       const customUrl = ctx.paramTexte("URL modèle", "");
       try {
+        // Une « URL modèle » écrite remplace l'instrument : son paquet n'est alors pas demandé.
+        await annoncerModele(ctx, "ddsp-tone-transfer", "", customUrl.trim() ? ["magenta-ddsp"] : []);
         const out = await appliquerDDSP(buffer, instrument, customUrl);
         // L'INSTRUMENT SE DIT PAR SON LIBELLÉ en anglais : son identifiant est le libellé français.
         const instrumentsEn: Record<string, string> = { "Violon": "Violin", "Flûte": "Flute", "Saxophone ténor": "Tenor saxophone", "Trompette": "Trumpet" };

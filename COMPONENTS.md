@@ -5879,7 +5879,7 @@ Optical character recognition (OCR) using Tesseract.js (WASM). Connect an image 
 
 *Transfers the timbre of an audio clip to an instrument via a DDSP model (violin, flute, saxophone, trumpet).*
 
-Transfers the timbre of an audio clip to another instrument via DDSP (Differentiable Digital Signal Processing). The spice model extracts pitch and loudness from the input audio, then a pretrained DDSP model resynthesizes the signal with the chosen timbre (violin, flute, tenor saxophone, trumpet). Requires an Internet connection to download spice and the instrument model (~3-4 MB). Output is mono at 48 kHz.
+Transfers the timbre of an audio clip to another instrument via DDSP (Differentiable Digital Signal Processing). The spice model extracts pitch and loudness from the input audio, then a pretrained DDSP model resynthesizes the signal with the chosen timbre (violin, flute, tenor saxophone, trumpet). The spice model and the four instrument models ship with the application (25.8 MB): the node works offline. Output is mono at 48 kHz.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5888,7 +5888,7 @@ Transfers the timbre of an audio clip to another instrument via DDSP (Differenti
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Instrument | choice | Violin | Violin / Flute / Tenor saxophone / Trumpet | Target instrument for the timbre transfer. The model downloads on first use (~3-4 MB). |
+| Instrument | choice | Violin | Violin / Flute / Tenor saxophone / Trumpet | Target instrument for the timbre transfer. |
 | Model URL | text | — |  | Custom URL of a DDSP checkpoint. If set, it overrides the selected instrument. |
 
 #### Drum Synth
