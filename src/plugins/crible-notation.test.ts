@@ -77,7 +77,8 @@ describe("UN CRIBLE QUI NE SE LIT PAS EST REFUSÉ, ET LE MESSAGE NOMME CE QUI NE
     ["un mot", "5@0 pouet 7@2", "« pouet »"],
     ["une classe sans résidu", "3@0 4@ 5@1", "« 4@ »"],
     ["un module nul", "0@1 3@0", "« 0@1 »"],
-    ["un signe hors de la notation", "3@0 ^ 4@1", "« ^ »"],
+    // « ^ » en était un jusqu'à la décision de Fabien du 2026-11-22, qui le lit comme music21.
+    ["un signe hors de la notation", "3@0 % 4@1", "« % »"],
     ["deux classes reliées par un tiret", "3@0-4@0", "« 3@0-4@0 »"],
     ["un opérateur sans classe après lui", "3@0 |", "« | »"],
     ["une parenthèse ouverte", "(3@0 | 4@1", "« ( »"],

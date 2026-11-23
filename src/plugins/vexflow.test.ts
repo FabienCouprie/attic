@@ -3,9 +3,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./vexflow";
 import { jetonsSansCordeFret, jetonsSansDuree } from "./vexflow-notation";
-import { easyScoreDe, mettreEnMesures, midiVersEvenements } from "../audio/notation-vexflow";
 import { accordsInconnus } from "../audio/theorie-romains";
-import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) {
@@ -16,26 +14,14 @@ function ctxSimple(valeur: any) {
   return ctxDEssai([valeur]);
 }
 
-function notesMelodieSimple() {
-  return [
-    { note: 60, debut: 0, fin: 0.5, velocite: 100 },
-    { note: 62, debut: 0.5, fin: 1.0, velocite: 100 },
-    { note: 64, debut: 1.0, fin: 1.5, velocite: 100 },
-  ];
-}
-
 beforeAll(() => {
   // jsdom n'implémente pas getBBox, requis par VexFlow pour mesurer le texte.
   (SVGElement.prototype as any).getBBox = () => ({ x: 0, y: 0, width: 10, height: 10 });
 });
 
 describe("nœuds VexFlow", () => {
-  it("les 5 fiches sont enregistrées", () => {
-    expect(trouver("vexflow-portee")).toBeDefined();
-    expect(trouver("vexflow-tab")).toBeDefined();
-    expect(trouver("vexflow-grille")).toBeDefined();
-    expect(trouver("vexflow-partition")).toBeDefined();
-    expect(trouver("vexflow-midi")).toBeDefined();
+  it("les 3 fiches sont enregistrées", () => {
+    expect(fiches.map((f) => f.id)).toEqual(["vexflow-portee", "vexflow-tab", "vexflow-grille"]);
   });
 
   it("vexflow-portee génère un SVG", async () => {
@@ -79,18 +65,12 @@ describe("nœuds VexFlow", () => {
     expect(res.message).toContain("<svg");
   });
 
-  it("vexflow-partition génère un SVG", async () => {
-    const f = trouver("vexflow-partition")!;
-    const res = await f.executer(ctxSimple(null) as any);
-    expect(res.message).toContain("<svg");
-  });
-
   // ── Ce que la bibliothèque ne doit plus dire à l'utilisateur ──
   //
   // LE DÉFAUT, MESURÉ DANS L'APPLICATION AVANT D'ÊTRE ÉCRIT ICI. Les quatre sorties nommées
   // « Notation » du catalogue — accords joués, gamme jouée, accords vers notation et grille
   // d'accords — écrivent toutes le format de « Texte → MIDI », où la durée est un jeton à part.
-  // Branchées sur ces deux nœuds, elles donnaient « [RuntimeError] IncompleteVoice: Voice does not
+  // Branchées sur la portée, elles donnaient « [RuntimeError] IncompleteVoice: Voice does not
   // have enough notes. », huit fois sur huit, au lieu d'un refus. Un jeton sans barre de fraction
   // recevait une noire par défaut : le texte étranger traversait l'analyse en se changeant en notes
   // plausibles, et c'est VexFlow qui s'arrêtait ensuite.
@@ -102,17 +82,6 @@ describe("nœuds VexFlow", () => {
     expect(res.message, "le jeton fautif doit être nommé").toContain("Tempo");
     expect(res.message, "et la forme attendue aussi").toContain("C4/q");
     expect(res.message).not.toContain("IncompleteVoice");
-  });
-
-  it("et la partition refuse la même sans laisser fuir l'erreur de la bibliothèque", async () => {
-    // CELLE-CI N'A PAS DE RECONNAISSEUR : sa progression se lit en accords, et c'est
-    // `genererPortee` qui la refuse en bout de course. Le cas tient donc l'autre moitié de la
-    // réparation — l'enveloppe du rendu — et non le reconnaisseur.
-    const f = trouver("vexflow-partition")!;
-    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
-    expect(res.erreur).toBe(true);
-    expect(res.message).not.toContain("IncompleteVoice");
-    expect(res.message).not.toContain("RuntimeError");
   });
 
   it("LA TABLATURE REFUSE AU LIEU DE GRAVER « NaN »", async () => {
@@ -139,12 +108,12 @@ describe("nœuds VexFlow", () => {
     expect(res.message).toContain("C Am F G");
   });
 
-  it("LES CINQ GRAVEURS RENDENT AUSSI LEUR SVG EN FICHIER, et l'export peut donc les lire", async () => {
+  it("LES TROIS GRAVEURS RENDENT AUSSI LEUR SVG EN FICHIER, et l'export peut donc les lire", async () => {
     // LE TROU QUE CE CAS FERME, MESURÉ DANS L'APPLICATION. « Export SVG » écrit un fichier et son
     // entrée est de type image ; ces nœuds ne rendaient qu'une chaîne. Graver une partition et en
     // sauvegarder le SVG était impossible dans un seul graphe : « connexion illégale : texte →
-    // image ». DÉFAUT REPLANTÉ en retirant la seconde sortie d'un des quatre : ce cas le nomme.
-    for (const id of ["vexflow-portee", "vexflow-tab", "vexflow-grille", "vexflow-partition"]) {
+    // image ». DÉFAUT REPLANTÉ en retirant la seconde sortie d'un des graveurs : ce cas le nomme.
+    for (const id of ["vexflow-portee", "vexflow-tab", "vexflow-grille"]) {
       const f = trouver(id)!;
       expect(f.sorties.map((s: any) => s.type), id).toEqual(["texte", "image"]);
       const res = await f.executer(ctxSimple(null) as any);
@@ -184,51 +153,10 @@ describe("nœuds VexFlow", () => {
     expect(jetonsSansDuree("Tempo 90 C4+E4+G4 2.000")).toEqual(["Tempo", "90", "C4+E4+G4", "2.000"]);
   });
 
-  // L'ÉCRIVAIN `midiVersNotationEasyScore` A ÉTÉ REMPLACÉ le 2026-11-22 par `midiVersEvenements` et
-  // la mise en mesures (revue des notations en texte) ; ces deux cas gardent ce qu'ils tenaient,
-  // jusqu'au jeton que la portée reçoit. La lecture complète de la partition MIDI est dans
-  // `vexflow-gravure.test.ts`.
-  it("midiVersEvenements convertit une mélodie simple", () => {
-    const jetons = mettreEnMesures(midiVersEvenements(notesMelodieSimple(), 120, 0.25)).flat().map(easyScoreDe);
-    expect(jetons.slice(0, 3)).toEqual(["C4/q", "D4/q", "E4/q"]);
-  });
-
-  it("midiVersEvenements regroupe les notes simultanées en accords", () => {
-    const notes = [
-      { note: 60, debut: 0, fin: 0.5, velocite: 100 },
-      { note: 64, debut: 0, fin: 0.5, velocite: 100 },
-      { note: 67, debut: 0, fin: 0.5, velocite: 100 },
-    ];
-    const [accord] = mettreEnMesures(midiVersEvenements(notes, 120, 0.25)).flat().map(easyScoreDe);
-    expect(accord).toBe("(C4 E4 G4)/q");
-  });
-
-  it("vexflow-midi génère un SVG à partir d'un fichier MIDI", async () => {
-    const f = trouver("vexflow-midi")!;
-    const midi = notesVersFichierMidi(notesMelodieSimple(), 120);
-    const res = await f.executer(ctxSimple(midi) as any);
-    expect(res.message).toContain("<svg");
-    expect(res.valeurs[0]).toBeInstanceOf(File);
-    expect((res.valeurs[0] as File).name).toBe("partition.svg");
-  });
-
   it("vexflow-portee affiche les accords et la syntaxe plus", async () => {
     const f = trouver("vexflow-portee")!;
     const ctx = ctxDEssai(["C4+E4+G4/q (C4 E4 G4)/h B4/q/r"]);
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
-  });
-
-  it("vexflow-midi gère les notes simultanées (accords)", async () => {
-    const f = trouver("vexflow-midi")!;
-    const notes = [
-      { note: 60, debut: 0, fin: 0.5, velocite: 100 },
-      { note: 64, debut: 0, fin: 0.5, velocite: 100 },
-      { note: 67, debut: 0, fin: 0.5, velocite: 100 },
-    ];
-    const midi = notesVersFichierMidi(notes, 120);
-    const res = await f.executer(ctxSimple(midi) as any);
-    expect(res.message).toContain("<svg");
-    expect(res.valeurs[0]).toBeInstanceOf(File);
   });
 });

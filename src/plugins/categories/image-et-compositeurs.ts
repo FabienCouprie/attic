@@ -8,6 +8,7 @@ import type { FicheAudio } from "../../audio/types-domaine";
 
 import { fiches as f_image_export } from "../image-export";
 import { fiches as f_export_svg } from "../export-svg";
+import { fiches as f_svg_vers_pdf } from "../svg-vers-pdf";
 import { fiches as f_image_rendu } from "../image-rendu";
 import { fiches as f_pixeltone } from "../pixeltone";
 import { fiches as f_palette_harmonique } from "../palette-harmonique";
@@ -57,6 +58,7 @@ import { fiches as f_csound } from "../csound";
 export const fiches = [
   ...f_image_export,
   ...f_export_svg,
+  ...f_svg_vers_pdf,
   ...f_image_rendu,
   ...f_pixeltone,
   ...f_palette_harmonique,

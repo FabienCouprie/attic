@@ -180,7 +180,7 @@ export const fiches: FicheAudio[] = ([
       const serie = entree && recue
         ? [...entree].sort((a, b) => a.debut - b.debut || a.note - b.note).map((n) => ((n.note % 12) + 12) % 12)
         : lireSuite(ecrite);
-      if (serie.length === 0) return { valeurs: [null, null, null], message: traduire("msg.serie.vide") };
+      if (serie.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.serie.vide") };
 
       const choix = ctx.paramTexte("Forme", "originale");
       const niveau = Math.round(ctx.paramNombre("Transposition", 0));
@@ -242,7 +242,7 @@ export const fiches: FicheAudio[] = ([
         const refus = refusDeSuite(ecrites, true);
         if (refus) return { valeurs: [null], erreur: true, message: refus };
         const notes = lireSuite(ecrites);
-        if (notes.length === 0) return { valeurs: [null], message: traduire("msg.serie.vide") };
+        if (notes.length === 0) return { valeurs: [null], erreur: true, message: traduire("msg.serie.vide") };
         const a = analyser(notes);
         return {
           valeurs: [rapportAnalyse(a, en ? "Set" : "Ensemble")],
@@ -362,9 +362,9 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
-      if (!recu) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (!recu) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const notes = recu.notes;
-      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      if (notes.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_note") };
       const groupes = accords(notes);
       const renversement = Math.round(ctx.paramNombre("Renversement", 0));
       const type = ctx.paramTexte("Disposition", "serre") as TypeVoicing;

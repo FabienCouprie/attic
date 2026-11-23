@@ -26,7 +26,7 @@ describe("les clés de portée", () => {
   });
 
   it("UN PROJET ANCIEN ROUVRE SUR SA CLÉ : il enregistrait le nom de VexFlow, qui est l'identifiant", () => {
-    for (const id of ["vexflow-portee", "vexflow-partition", "vexflow-midi"]) {
+    for (const id of ["vexflow-portee"]) {
       const p = registre.trouverDef(id)?.parametres?.find((x) => x.nom === "Clé");
       expect(p, id).toBeDefined();
       for (const clef of CLEFS_PORTEE.ids) expect(valeurCanoniqueChoix(p!, clef), `${id} · ${clef}`).toBe(clef);

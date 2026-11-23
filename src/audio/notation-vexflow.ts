@@ -182,43 +182,6 @@ export function mettreEnMesures(evenements: readonly Evenement[], longueurMesure
   return rendu;
 }
 
-const LETTRES_MIDI: [string, number][] = [["C", 0], ["C", 1], ["D", 0], ["D", 1], ["E", 0], ["F", 0], ["F", 1], ["G", 0], ["G", 1], ["A", 0], ["A", 1], ["B", 0]];
-
-/** Une hauteur MIDI, arrondie au demi-ton et écrite en dièses : la notation n'a pas de quart de ton. */
-export function hauteurDuMidi(note: number): Hauteur {
-  const m = Math.round(note);
-  const [lettre, alteration] = LETTRES_MIDI[((m % 12) + 12) % 12];
-  return { lettre, alteration, octave: Math.floor(m / 12) - 1 };
-}
-
-/**
- * Les notes d'un fichier MIDI en événements à graver, en noires, sur la grille de quantification.
- *
- * CHAQUE NOTE EST POSÉE À SA PROPRE ATTAQUE, décision de Fabien du 2026-11-22, « Dots and ties ».
- * L'écrivain d'avant posait chaque note après la fin ÉCRITE de la précédente, et une durée qui
- * n'était pas simple s'écrivait plus courte, suivie d'un silence : une noire pointée devenait une
- * noire et un demi-soupir ; un do de 1,75 temps, écrit en blanche, repoussait d'un temps tout ce
- * qui suivait. Ici, la longueur exacte part à la mise en mesures, qui l'écrit en valeurs pointées
- * et liées, et une note qui déborde sur l'attaque suivante s'arrête à elle : la portée n'a qu'une
- * voix. Les notes qui attaquent ensemble forment un accord, qui dure autant que la plus courte.
- */
-export function midiVersEvenements(notes: readonly { note: number; debut: number; fin: number }[], bpm: number, grille: number): Evenement[] {
-  const enNoires = (s: number) => Math.max(0, Math.round((s * bpm) / 60 / grille) * grille);
-  const groupes = new Map<number, { hauteurs: Set<number>; fin: number }>();
-  for (const n of notes) {
-    const debut = enNoires(n.debut), fin = enNoires(n.fin);
-    if (fin <= debut + EPS) continue;
-    const g = groupes.get(debut);
-    if (g) { g.hauteurs.add(Math.round(n.note)); g.fin = Math.min(g.fin, fin); } else groupes.set(debut, { hauteurs: new Set([Math.round(n.note)]), fin });
-  }
-  const debuts = [...groupes.keys()].sort((a, b) => a - b);
-  return debuts.map((debut, k) => {
-    const g = groupes.get(debut)!;
-    const fin = Math.min(g.fin, debuts[k + 1] ?? Infinity);
-    return { debut, longueur: fin - debut, silence: false, hauteurs: [...g.hauteurs].sort((a, b) => a - b).map(hauteurDuMidi) };
-  });
-}
-
 /** Une note de tablature : la corde, comptée depuis l'aiguë, la frette, et la durée. */
 export type NoteTab = { corde: number; frette: number; duree: Duree; points: number };
 export type FauteTab = { jeton: string; raison: "forme" | "duree" | "corde" };

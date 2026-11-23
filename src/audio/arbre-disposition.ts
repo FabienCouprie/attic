@@ -162,7 +162,31 @@ export function etatDe(n: NoeudRythme): Etat {
   return n.silence ? "silence" : n.liee ? "liee" : "note";
 }
 
+/** Les feuilles de l'arbre, dans l'ordre où elles sonnent, chacune avec son chemin. */
+function feuillesDe(mesures: readonly Mesure[]): { chemin: Chemin; noeud: NoeudRythme }[] {
+  const feuilles: { chemin: Chemin; noeud: NoeudRythme }[] = [];
+  const parcourir = (noeuds: readonly NoeudRythme[], chemin: Chemin) => noeuds.forEach((n, k) => {
+    if (n.enfants?.length) parcourir(n.enfants, [...chemin, k]);
+    else feuilles.push({ chemin: [...chemin, k], noeud: n });
+  });
+  mesures.forEach((m, i) => parcourir(m.contenu, [i]));
+  return feuilles;
+}
+
+/**
+ * La branche que le chemin désigne peut-elle se lier ? Seulement derrière ce qui sonne : une liaison
+ * prolonge la note qui la précède, et le lecteur refuse « une liaison sans note devant elle ». L'éditeur
+ * liait la première feuille, ou celle qui suit un silence. Décision de Fabien du 2026-11-22, « Forbid
+ * it in the editor ». Une division se juge par sa première feuille, puisque la lier la défait.
+ */
+export function peutEtreLiee(mesures: readonly Mesure[], chemin: Chemin): boolean {
+  const feuilles = feuillesDe(mesures);
+  const i = feuilles.findIndex((f) => chemin.every((rang, k) => f.chemin[k] === rang));
+  return i > 0 && !feuilles[i - 1].noeud.silence;
+}
+
 export function mettreEtat(mesures: readonly Mesure[], chemin: Chemin, etat: Etat): Mesure[] {
+  if (etat === "liee" && !peutEtreLiee(mesures, chemin)) return [...mesures];
   return retoucher(mesures, chemin, (noeud) => ({
     ...noeud,
     silence: etat === "silence" ? true : undefined,

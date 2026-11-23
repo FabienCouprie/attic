@@ -233,6 +233,9 @@ describe("le pilote de graphe", () => {
     // LES COPIES REMISES À ZÉRO Y PRENNENT `semerEtLancer`, puis `relancerEtAttendre` après chaque ↺,
     // et relisent ce que la fin fait entendre par `apercusEnWav` : le son seul dit si les copies d'une
     // boucle ou d'un instrument ont été refaites.
+    //
+    // « SVG VERS PDF » Y PREND `semerEtLancer` deux fois et `etatDesNoeuds` : une partition gravée puis
+    // imprimée, dans l'application construite, et le PDF écrit relu hors de la page.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
@@ -248,7 +251,8 @@ describe("le pilote de graphe", () => {
         "paquet-attic-dans-application.spec.ts", "prise-midi-dans-application.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
-        "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts",
+        "sorties-extensibles-dans-application.spec.ts", "svg-vers-pdf-dans-application.spec.ts",
+        "types-au-port.spec.ts",
         "zones-dans-une-boucle-dans-application.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));

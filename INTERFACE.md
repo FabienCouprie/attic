@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**513 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**512 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -115,8 +115,6 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Texte → image | `texte-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Texte → image (MOSS) | `texte-image-moss` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Grille d'accords VexFlow | `vexflow-grille` | VueVexFlow | — | 500 × 200 | oui | oui | oui |
-| Partition MIDI | `vexflow-midi` | VueVexFlow | — | 800 × 200 | oui | oui | oui |
-| Partition VexFlow | `vexflow-partition` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
 | Portée VexFlow | `vexflow-portee` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
 | Tablature VexFlow | `vexflow-tab` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
 | Visualisation Songsee | `visualisation-songsee` | VueImageDepuisAudio | — | 320 × 320 | non | oui | non |
@@ -498,6 +496,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Suites d'entiers | `suites-entieres` | 240 × 162 |
 | Suiveur de hauteur | `suiveur-hauteur` | 240 × 162 |
 | Suppression de clics | `suppression-clics` | 240 × 140 |
+| SVG vers PDF | `svg-vers-pdf` | 240 × 140 |
 | Synthèse par caractéristiques | `synthese-features` | 240 × 140 |
 | Synthèse par scanning | `synthese-scanning` | 240 × 118 |
 | Tempérament | `temperament` | 240 × 162 |
