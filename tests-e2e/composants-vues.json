@@ -372,6 +372,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "partition-piano",
+    "vue": "VueGravure",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
     "id": "partition-verovio",
     "vue": "VueGravure",
     "entreeAudio": false,

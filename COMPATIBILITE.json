@@ -5836,6 +5836,27 @@
     {"nom":"Page","type":"nombre","defaut":1,"min":1,"max":200}
    ]
   },
+  "partition-piano": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Notation","type":"texte","sousType":"notation","requis":false}
+   ],
+   "sorties": [
+    {"nom":"SVG","type":"texte"},
+    {"nom":"Fichier SVG","type":"image"}
+   ],
+   "reglages": [
+    {"nom":"Notation","type":"texte","defaut":"X:1\nT:Menuet\nM:3/4\nL:1/4\nK:G\n[G,,B,,D,] d c | [C,E,G,] B A | [D,^F,A,] G F | [G,,D,B,G]3 |]"},
+    {"nom":"Format","type":"choix","defaut":"auto","choix":["auto","abc","musicxml","mei","humdrum"]},
+    {"nom":"Partage","type":"choix","defaut":"main","choix":["main","fixe"]},
+    {"nom":"Point de partage","type":"curseur","defaut":60,"min":21,"max":108},
+    {"nom":"Écart","type":"curseur","defaut":12,"min":7,"max":17,"unite":"demi-tons"},
+    {"nom":"Largeur","type":"curseur","defaut":1800,"min":600,"max":6000},
+    {"nom":"Échelle","type":"curseur","defaut":40,"min":10,"max":200,"unite":"%"},
+    {"nom":"Déroulé","type":"choix","defaut":"non","choix":["non","oui"]},
+    {"nom":"Page","type":"nombre","defaut":1,"min":1,"max":200}
+   ]
+  },
   "partition-verovio": {
    "version": 1,
    "entrees": [

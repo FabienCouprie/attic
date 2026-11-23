@@ -28,11 +28,11 @@ const ALTERATIONS: Record<string, number> = {
   n: 0, s: 1, f: -1, ss: 2, x: 2, ff: -2, xs: 3, sx: 3, ts: 3, tf: -3, ns: 1, nf: -1,
   "1qs": 0.5, "3qs": 1.5, "1qf": -0.5, "3qf": -1.5, su: 1.5, sd: 0.5, fu: -0.5, fd: -1.5, nu: 0.5, nd: -0.5,
 };
-const CLASSES: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+export const CLASSES: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
 const DIESES = "fcgdaeb", BEMOLS = "beadgcf";
 
 /** Une armure : l'altération de chaque nom de note. */
-type Armure = Record<string, number>;
+export type Armure = Record<string, number>;
 
 /** L'armure d'un `sig` de MEI, « 3s » ou « 2f » ; vide pour « 0 » ou une valeur inconnue. */
 export function armureDe(sig: string | null): Armure {
@@ -47,7 +47,7 @@ export function armureDe(sig: string | null): Armure {
 const enfants = (e: Element, nom: string) => [...e.children].filter((c) => c.localName === nom);
 
 /** L'armure que porte un `scoreDef`, un `staffDef` ou un `keySig`, ou null s'il n'en porte pas. */
-function armurePortee(e: Element): Armure | null {
+export function armurePortee(e: Element): Armure | null {
   if (e.localName === "keySig") {
     const accids = enfants(e, "keyAccid");
     if (accids.length > 0) {
@@ -83,6 +83,16 @@ function accidEcrite(note: Element, ges: boolean): string | null {
   if (note.hasAttribute(nom)) return note.getAttribute(nom);
   for (const a of enfants(note, "accid")) if (a.hasAttribute(nom)) return a.getAttribute(nom);
   return null;
+}
+
+/**
+ * Les altérations sonnantes (`accid.ges`) retirées, pour un texte ABC. L'IMPORT ABC DE VEROVIO EN POSE DE
+ * FAUSSES, relevé le 2026-11-23 sur la version 6.3.0 : sous K:Bb, `c=B A2 B2` reçoit `accid.ges="f"` sur
+ * le second si, que l'altération portée laisse bécarre. Un ABC n'a pas d'altération sonnante à lui :
+ * l'armure, l'altération écrite et celle qui vaut jusqu'à la barre suffisent, et la lecture les a.
+ */
+export function sansAlterationsSonnantes(doc: Document): void {
+  for (const e of [...doc.getElementsByTagName("*")]) if (e.localName === "note" || e.localName === "accid") e.removeAttribute("accid.ges");
 }
 
 export type Temps = Map<string, { debut: number; fin: number }>;
