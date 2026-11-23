@@ -89,6 +89,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "gamme-jouee·Graine", quand: { reglage: "Sens", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "arpegiateur-midi·Graine", quand: { reglage: "Direction", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "harmoniser-choral·Graine", quand: { reglage: "Température", valeurs: ["0"] }, raison: "à température nulle, le choral est celui de moindre coût, trouvé sans tirage ; dit dans sa documentation" },
+  { ou: "harmoniser-choral·Pas", quand: { banc: true }, raison: "au banc, un modèle est branché sur « Modèle », et sa grille remplace celle de « Pas », ce que la notice dit ; sans modèle, « Pas » est tenu par audio/choral-harmoniser.test.ts" },
   { ou: "corpus-fabriquer-fin·Si le fichier existe", quand: { banc: true }, raison: "non mesurable au banc : le réglage n'agit que sur un fichier écrit, et le banc de node n'a ni dossier ni application de bureau ; tenu par plugins/fabriquer-corpus.test.ts" },
   { ou: "camelot·Graine", quand: { reglage: "Parcours", sauf: ["aleatoire"] }, raison: "la graine ne tire que le parcours aléatoire, et le parcours complet comme les voisins n'ont rien à tirer ; dit dans sa documentation" },
   { ou: "dither·Graine", quand: { reglage: "Dither", valeurs: ["aucun"] }, raison: "la graine ne tire que le bruit de dither, et sans dither rien n'est tiré ; dit dans sa documentation" },
@@ -165,6 +166,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
 
 /** Les coïncidences légitimes, chacune avec sa raison. */
 export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
+  { ou: "harmoniser-choral·Pas", valeurs: ["noire", "croche"], raison: "au banc, un modèle est branché sur « Modèle », et sa grille, la noire, remplace celle de « Pas » ; sans modèle, « Pas » est tenu par audio/choral-harmoniser.test.ts" },
   { ou: "corpus-fabriquer-debut·Graines", valeurs: ["Une par tour", "Identiques"], raison: "les graines du corps sont réglées par le pilote, pour les nœuds rejoués à chaque passe, et non par ce nœud, que le banc lance seul ; tenu par core/graines-de-passe.test.ts et l'exemple un-corpus-fabrique.json" },
   { ou: "corpus-fabriquer-fin·Format", valeurs: ["midi", "musicxml"], raison: "sans dossier ni application de bureau, le banc n'écrit aucun fichier, et les deux formats rendent le même corpus ; tenu par plugins/fabriquer-corpus.test.ts" },
   { ou: "corpus-fabriquer-fin·Si le fichier existe", valeurs: ["erreur", "ecraser"], raison: "le réglage n'agit que sur un fichier écrit, ce que le banc de node ne fait pas ; tenu par plugins/fabriquer-corpus.test.ts" },
@@ -187,8 +189,6 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "spectrogramme·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
   { ou: "arpegiateur-midi·Direction", valeurs: ["montant", "ordre-de-jeu"], raison: "le MIDI d'essai joue les notes de chaque accord du grave à l'aigu, et l'ordre de jeu y est l'ordre montant ; un accord joué sol, do, mi les sépare" },
   // RELEVÉES À LA NAISSANCE DU NŒUD, le 2026-11-22, sur le choral 175 de Bach, en do majeur.
-  { ou: "verifier-choral·Tonique", valeurs: ["1", "3", "6", "8"], raison: "sous ces toniques, aucun des 31 temps du choral d'essai, en do, ne forme un accord de la tonalité : chaque temps est relevé hors de la tonalité, et le rapport est le même ; un choral dans l'une de ces tonalités les sépare" },
-  { ou: "verifier-choral·Tonique", valeurs: ["4", "11"], raison: "sous mi et sous si, deux temps seulement du choral d'essai se lisent comme un accord, les mêmes, faits de mi et de si sans tierce, I en mi et IV en si ; le rapport ne nomme pas le degré, et il est le même" },
   // LE LOT 3d-2 (2026-11-15) : chacune voulue, ou non mesurable au banc pour la raison de l'inertie
   // déclarée sur le même réglage.
   { ou: "cercle-pulsant·Gamme", valeurs: ["roue", "majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "mineur-harmonique", "mineur-melodique", "pentatonique-majeure", "pentatonique-mineure", "blues", "alteree", "lydien-dominant", "phrygien-dominant", "bebop-dominant", "ton-entier", "diminuee-ton-demi", "diminuee-demi-ton", "augmentee", "double-seconde-augmentee", "hongroise-mineure", "hirajoshi", "in-sen", "chromatique"], raison: "en « Pulsation », le mode par défaut, la mélodie ne sonne pas, et la gamme n'a aucun degré à donner" },

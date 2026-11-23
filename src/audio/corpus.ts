@@ -36,6 +36,11 @@ export interface PieceDuCorpus {
 /** Un corpus : des pièces dans un ordre fixe, celui de la lecture ou de la fabrication. */
 export interface Corpus {
   pieces: PieceDuCorpus[];
+  /**
+   * Présent quand le corpus est encore en fabrication : la passe d'une boucle qui n'est pas la
+   * dernière rend les pièces faites jusqu'à elle. Ce qui coûte, un apprentissage, peut l'attendre.
+   */
+  enCours?: { piece: number; pieces: number };
 }
 
 export function estCorpus(valeur: unknown): valeur is Corpus {

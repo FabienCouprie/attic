@@ -13,7 +13,7 @@ import { sonDEssai } from "./lancer-fiche";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { comparerEvenementsMidi } from "./midi-ordre";
 import { etiqueter } from "./multicanal";
-import { sequenceDEssai } from "./valeurs-essai";
+import { modeleDEssai, sequenceDEssai } from "./valeurs-essai";
 import { lireTableDcml } from "./dcml-tsv";
 import { TABLE_175 } from "./choral-175-dcml";
 
@@ -205,11 +205,33 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
       valeur: () => ({ ...lireTableDcml(TABLE_175, 60).sequence, notes: lireTableDcml(TABLE_175, 60).sequence.notes.filter((n) => n.voix === 0) }),
       raison: "la séquence commune est une gamme de do, sous laquelle loin de do chaque note prend le même repli et les septièmes comme les renversements se confondent : le soprano du choral 175 de Bach a des notes répétées, des cadences et des degrés que chaque réglage départage",
     },
+    Modèle: {
+      valeur: () => modeleDEssai(),
+      raison: "sans modèle, « Part des règles » et « Faisceau » sont sans effet, et leur documentation le dit : un modèle appris sur le corpus d'essai les fait agir",
+    },
+  },
+  "apprendre-corpus": {
+    Corpus: {
+      valeur: () => ({
+        pieces: Array.from({ length: 6 }, (_, t) => t).map((t) => {
+          const s = lireTableDcml(TABLE_175, 60).sequence;
+          // LA TONALITÉ RESTE DÉCLARÉE EN DO : ramenées à leur vraie tonique, les six pièces
+          // redeviendraient le même choral, et la graine qui choisit la pièce mise de côté ne
+          // changerait rien.
+          return { sequence: { ...s, notes: s.notes.map((n) => ({ ...n, note: n.note + t })) }, source: `175 + ${t}`, tonalite: { tonique: 0, mode: "majeur" as const, origine: "notes" as const } };
+        }),
+      }),
+      raison: "le corpus d'essai n'a qu'une pièce majeure, et une validation n'y met rien de côté : le choral 175 de Bach monté de zéro à cinq demi-tons, sa tonalité déclarée en do, donne six pièces distinctes, assez pour que la part et la graine agissent",
+    },
   },
   "verifier-choral": {
     Séquence: {
       valeur: () => lireTableDcml(TABLE_175, 60).sequence,
       raison: "la séquence commune n'a qu'une voix, et le nœud refuse un choral auquel il en manque trois : le choral 175 de Bach a les quatre, et des avis dont la place, la tonalité et le mode changent le rapport",
+    },
+    Modèle: {
+      valeur: () => modeleDEssai(),
+      raison: "sans modèle, « Arêtes rapportées » est sans effet, et sa documentation le dit : un modèle appris sur le corpus d'essai lui donne des passages à nommer",
     },
   },
 };

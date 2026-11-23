@@ -20,6 +20,8 @@ import type { Mode } from "./choral-regles";
 import { accordsPossibles, dispositions, type AccordCandidat, type Septiemes } from "./choral-candidats";
 import { energieColonne, energiePassage, type ColonneChoisie } from "./choral-energie";
 import { meilleureSuite, suiteTiree } from "./choral-chaine";
+import { appliquerModele, rangsDuFaisceau } from "./choral-modele";
+import type { ModeleHarmonique } from "./modele-harmonique";
 
 export interface OptionsHarmonisation {
   tonique: number;
@@ -30,6 +32,8 @@ export interface OptionsHarmonisation {
   renversements: boolean;
   temperature: number;
   graine: number;
+  /** Un modèle appris, sa part et son faisceau. Sa grille l'emporte sur `pas`. */
+  modele?: { modele: ModeleHarmonique; partDesRegles: number; faisceau: number };
 }
 
 export interface HarmonisationRendue {
@@ -52,7 +56,11 @@ export const estRefusHarmonisation = (r: HarmonisationRendue | RefusHarmonisatio
 /** Harmonise la voix 0 de `seq`, la seule lue : les autres voix reçues sont ignorées. */
 export async function harmoniserChoral(seq: Sequence, o: OptionsHarmonisation): Promise<HarmonisationRendue | RefusHarmonisation> {
   const tempo = seq.tempo && seq.tempo > 0 ? seq.tempo : 120;
-  const pas = (60 / tempo) * o.pas;
+  // LA GRILLE D'UN MODÈLE BRANCHÉ L'EMPORTE : il n'a appris des passages que d'un pas à l'autre.
+  const pas = (60 / tempo) * (o.modele ? o.modele.modele.pas : o.pas);
+  const modele = o.modele ? appliquerModele(o.modele.modele, o.tonique) : null;
+  const regles = o.modele ? Math.max(0, Math.min(1, o.modele.partDesRegles)) : 1;
+  const melange = (r: number, m: () => number) => (modele ? regles * r + (1 - regles) * m() : r);
   const soprano = seq.notes.filter((n) => (n.voix ?? 0) === 0).sort((a, b) => a.debut - b.debut);
   const fin = Math.max(0, ...soprano.map((n) => n.fin));
   const instants: { debut: number; note: number }[] = [];
@@ -71,10 +79,13 @@ export async function harmoniserChoral(seq: Sequence, o: OptionsHarmonisation): 
   const colonnes: ColonneChoisie[][] = [];
   const couts: number[][] = [];
   for (const [k, { note }] of instants.entries()) {
-    const cs = accordsPossibles(note, o.tonique, o.mode, o.septiemes).flatMap((accord) =>
+    const tous = accordsPossibles(note, o.tonique, o.mode, o.septiemes).flatMap((accord) =>
       dispositions(accord, note, o.renversements).map((voix) => ({ accord, voix })));
-    colonnes.push(cs);
-    couts.push(cs.map((c) => energieColonne(c, ctx, rang(k))));
+    const coutsTous = tous.map((c) => melange(energieColonne(c, ctx, rang(k)), () => modele!.colonne(c.voix)));
+    // LE FAISCEAU NE GARDE QUE LES COLONNES DE MOINDRE COÛT, avant la chaîne ; à zéro, toutes.
+    const gardes = rangsDuFaisceau(coutsTous, o.modele?.faisceau ?? 0);
+    colonnes.push(gardes.map((i) => tous[i]));
+    couts.push(gardes.map((i) => coutsTous[i]));
     await souffle.tour();
   }
   const vides = instants.filter((_, k) => colonnes[k].length === 0);
@@ -84,7 +95,9 @@ export async function harmoniserChoral(seq: Sequence, o: OptionsHarmonisation): 
   const contigues = instants.map((x, k) => k > 0 && Math.abs(x.debut - instants[k - 1].debut - pas) < 1e-9);
   const chaine = {
     colonnes: couts,
-    passage: (t: number, i: number, j: number) => (contigues[t + 1] ? energiePassage(colonnes[t][i], colonnes[t + 1][j], ctx) : 0),
+    passage: (t: number, i: number, j: number) => (contigues[t + 1]
+      ? melange(energiePassage(colonnes[t][i], colonnes[t + 1][j], ctx), () => modele!.passage(colonnes[t][i].voix, colonnes[t + 1][j].voix))
+      : 0),
   };
   const suite = o.temperature > 0
     ? await suiteTiree(chaine, o.temperature, creerAleatoire(o.graine), souffle)

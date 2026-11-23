@@ -750,6 +750,52 @@
       },
       "erreurs": []
     },
+    "un-corpus-appris.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.017576121862991994,
+          "crete": 0.11818134039640427,
+          "trames": 529200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2024.32582223761,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "mele": {
+          "rms": 0.2573294206655659,
+          "crete": 0.8047736287117004,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 277.9902479230761,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.2573294206655659,
+          "crete": 0.8047736287117004,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 277.9902479230761,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-corpus-fabrique.json": {
       "lecteurs": {
         "melodie": {

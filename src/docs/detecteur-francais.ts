@@ -41,7 +41,9 @@
 // ET « HEIKKILÄ » RELÈVE DU MÊME CAS QUE « de Cheveigné » : Ville-Matias Heikkilä signe ainsi son
 // article d'arXiv, en anglais, et retirer son tréma ne serait pas une traduction mais une faute sur
 // un nom.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä)(?![a-zà-ÿ])/gi;
+// ET « GAËTAN » RELÈVE DU MÊME CAS : Gaëtan Hadjeres signe ainsi, en anglais, l'article de 2016 sur
+// le champ à paires que la notice d'« Apprendre sur un corpus » cite, avec François Pachet.
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä|gaëtan)(?![a-zà-ÿ])/gi;
 
 /**
  * Une affectation de script, « gamme=majeur » : du code cité, que l'anglais recopie tel quel.

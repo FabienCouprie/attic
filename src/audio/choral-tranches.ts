@@ -75,16 +75,20 @@ export function tranchesDuChoral(seq: Sequence, tempo: number, tempsParMesure: n
     });
     const attaques = lignes.map((ligne) => ligne.some((x) => Math.abs(x.debut - t) < 1e-9));
     const enNoires = t / noire;
-    const n = Math.max(1, tempsParMesure);
-    const a = Math.max(0, Math.min(anacrouse, n - 1));
-    // L'anacrouse occupe la fin d'une mesure zéro : ses noires en sont les derniers temps.
-    const compte = Math.floor(enNoires + 1e-9) - a + n;
     return {
       debut: t, hauteurs, attaques,
       surLeTemps: Math.abs(enNoires - Math.round(enNoires)) < 1e-6,
-      mesure: Math.floor(compte / n),
-      temps: (compte % n) + 1,
+      ...placeDe(t, noire, tempsParMesure, anacrouse),
     };
   });
   return { tranches, lignes, recouvertes };
+}
+
+/** La mesure et le temps d'un instant, en secondes, une noire durant `noire` secondes. */
+export function placeDe(t: number, noire: number, tempsParMesure: number, anacrouse = 0): { mesure: number; temps: number } {
+  const n = Math.max(1, tempsParMesure);
+  const a = Math.max(0, Math.min(anacrouse, n - 1));
+  // L'anacrouse occupe la fin d'une mesure zéro : ses noires en sont les derniers temps.
+  const compte = Math.floor(t / noire + 1e-9) - a + n;
+  return { mesure: Math.floor(compte / n), temps: (compte % n) + 1 };
 }

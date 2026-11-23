@@ -82,3 +82,10 @@ export function corpusDepuisJson(texte: string): CorpusRelu {
   const { nom = "", source = "", licence = "", corrections, nonVerifiees } = f;
   return { corpus: { pieces }, entete: { nom, source, licence, ...(corrections ? { corrections } : {}), ...(nonVerifiees ? { nonVerifiees } : {}) }, metriques };
 }
+
+/** Une empreinte de 32 bits, FNV-1a, d'un texte : de quoi voir d'un coup d'œil que deux corpus sont les mêmes. */
+export function empreinteCorpus(texte: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texte.length; i++) { h ^= texte.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, "0");
+}

@@ -31,6 +31,7 @@ export const TENUS_AILLEURS: Record<string, string> = {
   "glissando-de-gamme·Gamme de départ": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue initiale",
   "glissando-de-gamme·Gamme d'arrivée": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue finale",
   "verifier-choral·Gamme": "audio/choral-verifier.test.ts, qui plante une sensible doublée sous les douze toniques et les deux modes ; le nœud rend un rapport, que le banc ne lit pas",
+  "apprendre-corpus·Gamme": "plugins/apprendre-corpus.test.ts, qui écarte en les nommant les pièces de l'autre mode ; le nœud rend un modèle et un rapport, sans aucune note que le banc puisse lire",
 };
 
 /** Les nœuds dont la clé ne peut pas transposer le rendu, par construction, et pourquoi. */

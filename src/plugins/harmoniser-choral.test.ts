@@ -55,6 +55,22 @@ describe("Harmoniser à quatre voix", () => {
     expect((await lancer({}, choral175())).message).not.toMatch(/graine/);
   });
 
+  it("avec un modèle : sa grille au message, son corpus au rapport, et rien de changé à part entière pour les règles", async () => {
+    const { apprendreSurCorpus } = await import("../audio/champ-apprentissage");
+    const { corpusDEssaiParLesRegles } = await import("../audio/choral-corpus-essai");
+    const modele = apprendreSurCorpus({
+      corpus: await corpusDEssaiParLesRegles(12, 4), mode: "majeur", pas: 1,
+      voisinages: { vertical: true, horizontal: true, diagonal: true }, penalite: 0.0005, passes: 30, partValidation: 0, graine: 1,
+    }).modele!;
+    const avec = (reglages: Record<string, string | number>) => lancerFiche(fiche, reglages, { entrees: [choral175(), modele] });
+    const melange = await avec({ "Part des règles": 0 });
+    expect(melange.message).toMatch(/ · grille du modèle noire$/);
+    expect(String(melange.valeurs[1])).toContain(`modèle : corpus ${modele.empreinte} · majeur`);
+    const regles = await avec({ "Part des règles": 100 });
+    expect((regles.valeurs[0] as Sequence).notes).toEqual(((await lancer({}, choral175())).valeurs[0] as Sequence).notes);
+    expect((await avec({ Gamme: "mineur", Tonique: "9" })).message).toMatch(/ · modèle appris en majeur$/);
+  });
+
   it("refuse sans mélodie, et nomme le soprano trop grave avec son instant", async () => {
     const vide = await lancer({}, null);
     expect(vide.erreurRendue).toBe(true);

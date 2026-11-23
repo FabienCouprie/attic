@@ -49,6 +49,7 @@ describe("Fabriquer un corpus", () => {
     const s = await mener(3);
     expect(s.map((x) => x.rang)).toEqual(["1", "2", "3"]);
     expect(s.map((x) => x.corpus?.pieces.length)).toEqual([1, 2, 3]);
+    expect(s.map((x) => x.corpus?.enCours ?? null)).toEqual([{ piece: 1, pieces: 3 }, { piece: 2, pieces: 3 }, null]);
     expect(s.map((x) => x.message.replace(/[0-9a-f]{8}$/, "…"))).toEqual(["pièce 1/3", "pièce 2/3", "3 pièces · empreinte …"]);
     const corpus = s[2].corpus!;
     expect(corpus.pieces.map((p) => p.source)).toEqual(["piece-001", "piece-002", "piece-003"]);

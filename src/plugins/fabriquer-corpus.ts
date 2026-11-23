@@ -14,7 +14,7 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { estSequence, type Sequence } from "../audio/sequence";
 import type { Corpus, PieceDuCorpus } from "../audio/corpus";
-import { corpusVersJson } from "../audio/corpus-fichier";
+import { corpusVersJson, empreinteCorpus } from "../audio/corpus-fichier";
 import { sequenceVersMidiParVoix } from "../audio/corpus-midi";
 import { sequenceVersMusicXMLParVoix } from "../audio/musicxml-parties";
 import { tonaliteDesNotes } from "../audio/corpus-tonalite";
@@ -29,12 +29,7 @@ const en = () => langueCourante() === "en";
 /** Ce que la fin dépose à chaque passe : la pièce, et sa ligne de journal. */
 interface Recolte { piece: PieceDuCorpus; ligne: string }
 
-/** Une empreinte de 32 bits, FNV-1a, d'un texte : de quoi voir d'un coup d'œil que deux corpus sont les mêmes. */
-export function empreinteCorpus(texte: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < texte.length; i++) { h ^= texte.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return h.toString(16).padStart(8, "0");
-}
+export { empreinteCorpus };
 
 const EXTENSION = { midi: "mid", musicxml: "musicxml" } as const;
 
@@ -79,8 +74,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Harmonisation",
     resume: "Referme la boucle qui fabrique un corpus : chaque passe y dépose une pièce, écrite en fichier si on le demande.",
     resumeEn: "Closes the loop that makes a corpus: every pass lays one piece in it, written to a file when asked.",
-    notice: "Ce composant referme la boucle ouverte par « Fabriquer un corpus (début) » : à chaque passe, la séquence reçue devient une pièce du corpus, avec ses voix et sa tonalité estimée sur ses notes.\n\n« Format » dit si chaque pièce est aussi écrite en fichier. « MIDI » écrit une piste par voix, chacune sur son canal ; « MusicXML » écrit une partie par voix, en clé de fa pour une voix dont la plupart des notes sont sous le do central ; « Aucun » n'écrit rien, et le corpus ne vit que dans le graphe. Les fichiers vont dans le dossier désigné par « Dossier ».\n\n« Préfixe » commence le nom de chaque fichier, suivi du numéro de la pièce sur trois chiffres au moins : piece-001.mid, piece-002.mid.\n\n« Si le fichier existe » décide de ce qui arrive quand un fichier de ce nom est déjà dans le dossier : « Erreur » laisse le fichier en place et n'écrit pas la pièce, « Écraser » le remplace.\n\nL'entrée « Rang » reçoit le numéro de la pièce rendu par le début de la boucle ; sans elle, le numéro est celui de la passe.\n\nLa sortie « Corpus » rend les pièces fabriquées jusqu'à la passe en cours ; à la dernière, le corpus entier. Une exécution arrêtée garde ainsi ce qui a été fait. La sortie « Journal » donne une ligne par pièce : son nom, son nombre de notes et de voix, sa tonalité, et le fichier écrit ou la raison du refus. Le message donne, à la dernière passe, le nombre de pièces et une empreinte du corpus : deux corpus de même empreinte sont les mêmes.",
-    noticeEn: "This component closes the loop opened by « Make a Corpus (Start) »: at every pass, the received sequence becomes a piece of the corpus, with its voices and its key estimated on its notes.\n\n« Format » says whether every piece is also written to a file. « MIDI » writes one track per voice, each on its channel; « MusicXML » writes one part per voice, in bass clef for a voice most of whose notes are below middle C; « None » writes nothing, and the corpus only lives in the graph. Files go to the folder named by « Folder ».\n\n« Prefix » begins the name of every file, followed by the number of the piece on at least three digits: piece-001.mid, piece-002.mid.\n\n« If the file exists » decides what happens when a file of that name is already in the folder: « Error » leaves the file in place and does not write the piece, « Overwrite » replaces it.\n\nThe « Rank » input receives the number of the piece returned by the start of the loop; without it, the number is that of the pass.\n\nThe « Corpus » output returns the pieces made up to the current pass; at the last one, the whole corpus. A stopped run thus keeps what was done. The « Log » output gives one line per piece: its name, its number of notes and voices, its key, and the file written or the reason for the refusal. The message gives, at the last pass, the number of pieces and a fingerprint of the corpus: two corpora with the same fingerprint are the same.",
+    notice: "Ce composant referme la boucle ouverte par « Fabriquer un corpus (début) » : à chaque passe, la séquence reçue devient une pièce du corpus, avec ses voix et sa tonalité estimée sur ses notes.\n\n« Format » dit si chaque pièce est aussi écrite en fichier. « MIDI » écrit une piste par voix, chacune sur son canal ; « MusicXML » écrit une partie par voix, en clé de fa pour une voix dont la plupart des notes sont sous le do central ; « Aucun » n'écrit rien, et le corpus ne vit que dans le graphe. Les fichiers vont dans le dossier désigné par « Dossier ».\n\n« Préfixe » commence le nom de chaque fichier, suivi du numéro de la pièce sur trois chiffres au moins : piece-001.mid, piece-002.mid.\n\n« Si le fichier existe » décide de ce qui arrive quand un fichier de ce nom est déjà dans le dossier : « Erreur » laisse le fichier en place et n'écrit pas la pièce, « Écraser » le remplace.\n\nL'entrée « Rang » reçoit le numéro de la pièce rendu par le début de la boucle ; sans elle, le numéro est celui de la passe.\n\nLa sortie « Corpus » rend les pièces fabriquées jusqu'à la passe en cours, marquées comme un corpus en fabrication ; à la dernière, le corpus entier. Une exécution arrêtée garde ainsi ce qui a été fait. La sortie « Journal » donne une ligne par pièce : son nom, son nombre de notes et de voix, sa tonalité, et le fichier écrit ou la raison du refus. Le message donne, à la dernière passe, le nombre de pièces et une empreinte du corpus : deux corpus de même empreinte sont les mêmes.",
+    noticeEn: "This component closes the loop opened by « Make a Corpus (Start) »: at every pass, the received sequence becomes a piece of the corpus, with its voices and its key estimated on its notes.\n\n« Format » says whether every piece is also written to a file. « MIDI » writes one track per voice, each on its channel; « MusicXML » writes one part per voice, in bass clef for a voice most of whose notes are below middle C; « None » writes nothing, and the corpus only lives in the graph. Files go to the folder named by « Folder ».\n\n« Prefix » begins the name of every file, followed by the number of the piece on at least three digits: piece-001.mid, piece-002.mid.\n\n« If the file exists » decides what happens when a file of that name is already in the folder: « Error » leaves the file in place and does not write the piece, « Overwrite » replaces it.\n\nThe « Rank » input receives the number of the piece returned by the start of the loop; without it, the number is that of the pass.\n\nThe « Corpus » output returns the pieces made up to the current pass, marked as a corpus being made; at the last one, the whole corpus. A stopped run thus keeps what was done. The « Log » output gives one line per piece: its name, its number of notes and voices, its key, and the file written or the reason for the refusal. The message gives, at the last pass, the number of pieces and a fingerprint of the corpus: two corpora with the same fingerprint are the same.",
     entrees: [
       { nom: "Séquence", nomEn: "Sequence", type: "sequence", requis: true },
       { nom: "Rang", nomEn: "Rank", type: "texte", requis: false },
@@ -162,7 +157,10 @@ export const fiches: FicheAudio[] = ([
         const empreinte = empreinteCorpus(corpusVersJson(corpus, { nom: "", source: "", licence: "" }));
         return { valeurs: [corpus, journal], message: `${corpus.pieces.length} ${en() ? "pieces" : "pièces"} · ${en() ? "fingerprint" : "empreinte"} ${empreinte}` };
       }
-      return { valeurs: [corpus, journal], message: `${en() ? "piece" : "pièce"} ${passe + 1}/${total}` };
+      // LE CORPUS D'UNE PASSE QUI N'EST PAS LA DERNIÈRE SE DIT EN COURS : l'aval de la boucle rejoue à
+      // chaque passe, et un apprentissage refait sur chaque corpus commencé multipliait son coût par
+      // le nombre de pièces. Relevé sur `un-corpus-appris.json` : 120 s pour quarante pièces.
+      return { valeurs: [{ ...corpus, enCours: { piece: passe + 1, pieces: total } }, journal], message: `${en() ? "piece" : "pièce"} ${passe + 1}/${total}` };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

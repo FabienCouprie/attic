@@ -31,6 +31,7 @@ import { estObjet } from "./multicanal";
 import { estCercle } from "./cercle";
 import { estSequence } from "./sequence";
 import { estCorpus } from "./corpus";
+import { estModeleHarmonique } from "./modele-harmonique";
 import { depuisPaquetAudio, versPaquetAudio } from "./paquet-audio";
 import { ALIAS } from "./alias";
 
@@ -203,6 +204,16 @@ if (typeof window !== "undefined") {
   // UN PORT QUI PORTE DES PIÈCES SÉPARÉES, chacune une séquence à voix avec sa source et sa tonalité
   // lue. Voir `audio/corpus.ts`.
   registre.enregistrerTypeFlux({ id: "corpus", couleur: "#ffbbee", libelle: "Corpus", estDuType: estCorpus });
+  // MENTHE CLAIRE ET POINT EN LOSANGE, mesurés sur les seize couleurs et le fond.
+  //
+  // LA COULEUR : la meilleure de la recherche, à L* 90, 43,1 ΔE (CIE76) de l'audio et 25,3 en
+  // CIEDE2000. Hors de la famille des verts, la meilleure était un olive terne, à L* 55, 34,8 et
+  // 19,7. La menthe est de la teinte de l'audio, mais deux fois plus claire, et c'est la forme qui
+  // tranche.
+  //
+  // LE LOSANGE est celui de l'accordage, et pour la même raison : un modèle appris n'est ni du son ni
+  // des notes, c'est une règle qu'on applique à des hauteurs. Voir `audio/modele-harmonique.ts`.
+  registre.enregistrerTypeFlux({ id: "modele-harmonique", couleur: "#00ffcc", forme: "losange", libelle: "Modèle harmonique", estDuType: estModeleHarmonique });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

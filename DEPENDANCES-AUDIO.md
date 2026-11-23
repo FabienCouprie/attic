@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 98 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 278 · transposable tel quel
+- **pur** : 284 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -74,11 +74,16 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | cercle-rendu.ts | pur | — |
 | cercle-retouche.ts | pur | — |
 | cercle.ts | pur | — |
+| champ-apprentissage.ts | pur | — |
+| champ-corpus.ts | pur | — |
+| champ-paires.ts | pur | — |
 | choral-175-dcml.ts | pur | — |
 | choral-candidats.ts | pur | — |
 | choral-chaine.ts | pur | — |
+| choral-corpus-essai.ts | pur | — |
 | choral-energie.ts | pur | — |
 | choral-harmoniser.ts | pur | — |
+| choral-modele.ts | pur | — |
 | choral-regles.ts | pur | — |
 | choral-tranches.ts | pur | — |
 | choral-verifier.ts | pur | — |
@@ -274,6 +279,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | midi.ts | pur | — |
 | miroir.ts | pur | — |
 | mixage.ts | recipient | AudioBuffer |
+| modele-harmonique.ts | pur | — |
 | moebius.ts | recipient | AudioBuffer |
 | mono-grave.ts | pur | — |
 | mono-stereo.ts | pur | — |
