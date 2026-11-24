@@ -226,8 +226,8 @@ The animation is displayed in the node and is not available on an output port. I
         doc: "Graine de l'irrégularité des tailles. Une même graine rejoue la même pièce, image comprise.",
         docEn: "Seed for the irregularity of the sizes. The same seed replays the same piece, picture included." },
       { ...PARAMETRE_SYNTHESE,
-        doc: `${PARAMETRE_SYNTHESE.doc} Sans effet quand « Mode » vaut « Pulsation » : le battement y est une sinusoïde calculée ici. Sans effet non plus quand « Mode » vaut « Rythme » : la batterie y passe par son propre synthétiseur.`,
-        docEn: `${PARAMETRE_SYNTHESE.docEn} Without effect when « Mode » is « Pulse »: the beat there is a sine computed here. Nor when « Mode » is « Rhythm »: the drums there go through their own synthesizer.` },
+        doc: `${PARAMETRE_SYNTHESE.doc} Sans effet quand « Mode » vaut « Pulsation » : le battement y est une sinusoïde calculée ici. Quand « Mode » vaut « Rythme », la batterie joue au SoundFont un kit de sa banque 128 : le kit choisi sous « Instrument » s'il en est un, le kit 0 sinon. En FM, ou sans kit dans le SoundFont, elle passe par le synthétiseur de percussions.`,
+        docEn: `${PARAMETRE_SYNTHESE.docEn} Without effect when « Mode » is « Pulse »: the beat there is a sine computed here. When « Mode » is « Rhythm », the drums play, with the SoundFont, a kit from its bank 128: the kit picked under « Instrument » if it is one, kit 0 otherwise. In FM, or with no kit in the SoundFont, they go through the drum synthesizer.` },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu sonore.", docEn: "Level of the rendered sound." },
@@ -327,7 +327,8 @@ The animation is displayed in the node and is not available on an output port. I
         const voix = Math.round(Number(ctx.paramTexte("Percussion", String(PERCUSSIONS_JOUABLES[0].note))))
           || PERCUSSIONS_JOUABLES[0].note;
         // LE CANAL FAIT LA PERCUSSION, ici comme dans le fichier écrit : le rendu partage les notes
-        // sur le canal dix et les envoie au synthétiseur de batterie.
+        // sur le canal dix et les envoie à un kit du SoundFont, ou au synthétiseur de batterie en FM
+        // et sans kit : voir `rendreFrappes` de `audio/midi-sequence.ts`.
         const coups = frappes.map((f, i) => ({
           note: voix, velocite: f.force, debut: f.instant,
           fin: Math.min(o.dureeSec, i + 1 < frappes.length ? frappes[i + 1].instant : f.instant + 0.25),

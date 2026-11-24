@@ -16,6 +16,7 @@ import { analyserMidi } from "./midi";
 import { GRAINE_BATTERIE_MIDI, voieDuCanal } from "./midi-canal-percussion";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreMidiDepuisBytes } from "./midi-montage";
+import { rendreSequence } from "./midi-sequence";
 import type { Note } from "./note";
 import { RESERVE_BATTERIE } from "./sequence-percussion";
 import type { StructureSF2 } from "./soundfont";
@@ -76,7 +77,12 @@ function niveauDe(p: PresetFactice): number {
 
 /** Le preset entendu au milieu de la première frappe, ou `null` s'il n'est aucun d'eux. */
 function presetEntendu(b: AudioBuffer, presets: PresetFactice[]): string | null {
-  const v = b.getChannelData(0)[Math.round(0.05 * b.sampleRate)];
+  return presetA(b, 0.05, presets);
+}
+
+/** Le preset entendu à l'instant donné, ou `null` s'il n'est aucun d'eux. */
+function presetA(b: AudioBuffer, instant: number, presets: PresetFactice[]): string | null {
+  const v = b.getChannelData(0)[Math.round(instant * b.sampleRate)];
   const trouve = presets.find((p) => Math.abs(v - niveauDe(p)) < 1e-4);
   return trouve ? trouve.nom : null;
 }
@@ -185,6 +191,63 @@ describe("la règle, sans rendre de son", () => {
     expect(voieDuCanal([PIANO], 3, { programme: 48, banque: 0 })).toEqual({ voie: "soundfont", programme: 48, banque: 0 });
     expect(voieDuCanal([PIANO], 3, { programme: 48, banque: 0 }, { programme: 0, banque: 128 }))
       .toEqual({ voie: "soundfont", programme: 0, banque: 128 });
+  });
+});
+
+/** Les mêmes frappes, écrites sur le canal dix d'une séquence plutôt que dans un fichier. */
+const FRAPPES_CANAL_DIX: Note[] = FRAPPES.map((n) => ({ ...n, canal: 9 }));
+
+// LA VOIE SÉQUENCE SUIT LA MÊME RÈGLE, relevé le 2026-11-24 : une batterie jouée au kit par « Point
+// d'écoute MIDI » sonnait au synthétiseur par « Point d'écoute séquence » et par le « Cercle
+// pulsant » en « Rythme », SoundFont chargé. Les niveaux attendus sont ceux de `rendreAvecSF2` sans
+// réserve : un kit est rendu par le même moteur et à la même échelle que les hauteurs SoundFont.
+describe("le canal dix d'une séquence, au SoundFont", () => {
+  it("UNE SÉQUENCE QUI NE NOMME AUCUN KIT joue le Standard de la banque 128", async () => {
+    poserSF2(sf2Factice(TOUS));
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME);
+    expect(presetA(b, 0.05, TOUS)).toBe("Standard");
+  });
+
+  it("UN KIT CHOISI DANS « INSTRUMENT » s'applique au canal dix", async () => {
+    poserSF2(sf2Factice(TOUS));
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME, 25, 128);
+    expect(presetA(b, 0.05, TOUS)).toBe("TR-808");
+  });
+
+  it("UN PRESET MÉLODIQUE CHOISI joue les hauteurs et laisse le canal dix au Standard", async () => {
+    poserSF2(sf2Factice(TOUS));
+    const melodie: Note = { note: 36, velocite: VELOCITE, debut: 2, fin: 2.25 };
+    const b = await rendreSequence([...FRAPPES_CANAL_DIX, melodie], "SoundFont", VOLUME, 0, 0);
+    expect(presetA(b, 0.05, TOUS)).toBe("Standard");
+    expect(presetA(b, 2.05, TOUS)).toBe("Piano");
+  });
+
+  it("un kit choisi absent du SoundFont retombe sur le Standard", async () => {
+    poserSF2(sf2Factice(TOUS));
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME, 40, 128);
+    expect(presetA(b, 0.05, TOUS)).toBe("Standard");
+  });
+
+  it("LA DURÉE VOULUE L'EMPORTE, silence final compris", async () => {
+    poserSF2(sf2Factice(TOUS));
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME, undefined, undefined, undefined, 3);
+    expect(b.duration).toBeCloseTo(3, 2);
+  });
+
+  it("SANS AUCUN KIT DANS LE SOUNDFONT, le synthétiseur de percussions, avec sa réserve", async () => {
+    poserSF2(sf2Factice([PIANO]));
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME);
+    const { rendreBatterieMidi } = await import("./tone-synths");
+    // La grosse caisse est une membrane sans bruit : deux rendus en donnent les mêmes échantillons.
+    const attendu = await rendreBatterieMidi({ notes: FRAPPES_CANAL_DIX, volume: VOLUME * RESERVE_BATTERIE });
+    expect(crete(b)).toBeGreaterThan(0.05);
+    expect(ecartMax(b, attendu)).toBeLessThan(1e-6);
+  });
+
+  it("SANS SOUNDFONT CHARGÉ, une batterie seule passe encore au synthétiseur, sans erreur", async () => {
+    (globalThis as { __attic_sf2__?: unknown }).__attic_sf2__ = null;
+    const b = await rendreSequence(FRAPPES_CANAL_DIX, "SoundFont", VOLUME);
+    expect(crete(b)).toBeGreaterThan(0.05);
   });
 });
 

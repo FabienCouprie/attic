@@ -22,6 +22,12 @@
 // LE RÉGLAGE « INSTRUMENT » D'UN NŒUD : un kit choisi (banque 128 ou plus) s'applique au canal dix ;
 // un preset mélodique ne le touche pas, pour la même raison qu'un lecteur General MIDI ne joue pas
 // de violon sur son canal de batterie. Les autres canaux suivent le réglage comme avant.
+//
+// LA VOIE SÉQUENCE SUIT LA MÊME RÈGLE DEPUIS LE 2026-11-24, choix de Fabien : la même batterie
+// sonnait au kit par « Point d'écoute MIDI » et au synthétiseur par « Point d'écoute séquence » ou
+// par le « Cercle pulsant » en « Rythme ». Une séquence n'a pas de programme par canal ; elle passe
+// donc programme 0, banque 0, comme un fichier qui ne nomme rien. Voir `rendreFrappes` de
+// `midi-sequence.ts`, qui garde le synthétiseur, sans erreur, quand aucun SoundFont n'est chargé.
 
 import { CANAL_PERCUSSION } from "./batterie-midi";
 import type { Note } from "./note";
