@@ -23,6 +23,8 @@
 
 import type { Note } from "./note";
 import type { InfoVoix, Sequence } from "./sequence";
+import type { TonaliteLue } from "./corpus";
+import { tonaliteDuMei } from "./corpus-mode";
 
 /** Ce que ce module demande d'un toolkit Verovio chargé. */
 export interface ToolkitPartition {
@@ -47,6 +49,8 @@ export interface PartitionLue {
   liees: number;
   /** Les notes de la carte du temps dont le MEI ne dit ni la portée ni la couche. */
   sansVoix: number;
+  /** La tonalité que la partition écrit, mode compris, ou `null` (`audio/corpus-mode.ts`). */
+  tonaliteEcrite: TonaliteLue | null;
 }
 
 interface PlaceNote { portee: number; couche: number }
@@ -132,7 +136,8 @@ const idEcrit = (id: string) => id.replace(/-rend\d+$/, "");
  * du Humdrum (`hauteursHumdrum`). Une note absente de cette table prend la hauteur de Verovio.
  */
 export function lireDepuisVerovio(tk: ToolkitPartition, tempo?: number, ecrites?: ReadonlyMap<string, number>): PartitionLue {
-  const { places, finsDeLiaison, noms } = lireMei(tk.getMEI({}));
+  const mei = tk.getMEI({});
+  const { places, finsDeLiaison, noms } = lireMei(mei);
   const carte = tk.renderToTimemap({});
   const tempoLu = carte.find((e) => typeof e.tempo === "number" && e.tempo > 0)?.tempo;
   const bpm = tempo && tempo > 0 ? tempo : tempoLu ?? 120;
@@ -181,5 +186,5 @@ export function lireDepuisVerovio(tk: ToolkitPartition, tempo?: number, ecrites?
   });
   notes.sort((a, b) => a.debut - b.debut || (a.voix ?? 0) - (b.voix ?? 0));
   const duree = carte.length ? carte[carte.length - 1].qstamp * noire : 0;
-  return { sequence: { notes, tempo: bpm, duree, voix: infos }, tempoLu, liees, sansVoix };
+  return { sequence: { notes, tempo: bpm, duree, voix: infos }, tempoLu, liees, sansVoix, tonaliteEcrite: tonaliteDuMei(mei) };
 }

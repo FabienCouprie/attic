@@ -351,7 +351,7 @@
     {"nom":"Rapport","type":"texte"}
    ],
    "reglages": [
-    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
+    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur","dorien","phrygien","mixolydien"]},
     {"nom":"Pas","type":"choix","defaut":"noire","choix":["noire","croche"]},
     {"nom":"Verticaux","type":"case","defaut":1,"min":0,"max":1},
     {"nom":"Horizontaux","type":"case","defaut":1,"min":0,"max":1},
