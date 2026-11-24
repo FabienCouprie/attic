@@ -112,7 +112,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   ...parMode(["Gamme"], ["melodie"], "seule la mélodie prend ses degrés dans la gamme, et elle ne sonne qu'en « Mélodie et accords »"),
   ...parMode(["Percussion"], ["rythme"], "la voix de batterie n'est frappée qu'en « Rythme »"),
   { ou: "cercle-pulsant·Nuance des accords", quand: { une: [{ reglage: "Mode", sauf: ["melodie", "accords"] }, { reglage: "Accords", valeurs: ["aucun"] }] }, raison: "la force de frappe des accords n'a rien à frapper hors de la mélodie et des accords, ni quand « Accords » vaut « Aucun » ; dit dans sa documentation" },
-  { ou: "cercle-pulsant·Synthèse", quand: { reglage: "Mode", valeurs: ["pulsation", "rythme"] }, raison: "en « Pulsation », le battement est une sinusoïde calculée par le nœud, et en « Rythme » la batterie a son propre synthétiseur : aucun ne passe par le moteur ; dit dans sa documentation" },
+  { ou: "cercle-pulsant·Synthèse", quand: { reglage: "Mode", valeurs: ["pulsation", "rythme"] }, raison: "en « Pulsation », le battement est une sinusoïde calculée par le nœud ; en « Rythme », non mesurable au banc : sans SoundFont chargé, chaque moteur rend la batterie au synthétiseur de percussions, et seul un kit chargé la fait changer ; dit dans sa documentation" },
   { ou: "cercle-pulsant·Échos", quand: { banc: true }, raison: VUE_ANIMEE },
   { ou: "cercle-pulsant·Taille", quand: { banc: true }, raison: VUE_ANIMEE },
   { ou: "correction-hauteur·Tonique", quand: { reglage: "Gamme", valeurs: ["chromatique"] }, raison: CHROMATIQUE },

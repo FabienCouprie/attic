@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": 40 },
+      "width": 620,
+      "height": 300,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "DEUX PARTIES DANS UN SEUL MIDI\n\nDeux générateurs écrivent chacun son MIDI, à son tempo et avec son instrument : « Mélodie aléatoire » à 100 BPM, au piano, et « Accords joués » à 120 BPM, aux cordes. « Mélangeur MIDI » les réunit en un seul fichier, une piste par entrée, et « Point d'écoute MIDI » le fait entendre.\n\nLes deux fichiers arrivent sur le canal 1, et un canal ne porte qu'un instrument pour tout le fichier. Le canal « Automatique » place l'entrée 2 sur le canal 2 : la mélodie reste au piano, les accords restent aux cordes. Sur « Garder », les deux parties partageraient le canal 1, et un seul instrument, celui des cordes.\n\nLes deux tempos ne se mélangent pas en ticks mais en secondes : les accords gardent leurs quatre secondes, et le fichier porte le tempo de la première entrée, 100 BPM.\n\nL'entrée 2 est jouée à 70 % de sa vélocité et une octave plus bas, par ses réglages « Vélocité 2 » et « Transposition 2 ». Les boutons « + » et « − » sous les entrées en ajoutent, jusqu'à huit, chacune avec sa vélocité, son canal, sa transposition et son « Muet ».\n\nLe message du mélangeur dit où est passée chaque entrée : « 1:c1·19 2:c2·3 », le canal de chaque entrée dans le fichier et son nombre de notes.",
+        "nomEn": "TWO PARTS IN ONE MIDI\n\nTwo generators each write their own MIDI, at their own tempo and with their own instrument: « Random Melody » at 100 BPM, on piano, and « Chord Run » at 120 BPM, on strings. « MIDI Mixer » joins them into a single file, one track per input, and « MIDI Listening Point » plays it.\n\nBoth files arrive on channel 1, and a channel carries one instrument for the whole file. The « Automatic » channel puts input 2 on channel 2: the melody stays on piano, the chords stay on strings. On « Keep », both parts would share channel 1, and a single instrument, the strings.\n\nThe two tempos are not mixed in ticks but in seconds: the chords keep their four seconds, and the file carries the tempo of the first input, 100 BPM.\n\nInput 2 is played at 70 % of its velocity and an octave lower, by its « Velocity 2 » and « Transpose 2 » settings. The « + » and « - » buttons under the inputs add more, up to eight, each with its own velocity, channel, transposition and « Mute ».\n\nThe mixer's message says where each input went: « 1:c1·19 2:c2·3 », each input's channel in the file and its number of notes."
+      }
+    },
+    {
+      "id": "melodie",
+      "type": "atelier",
+      "position": { "x": 40, "y": 400 },
+      "data": { "ficheId": "melodie-aleatoire", "parametres": { "Tempo": 100, "Mesures": 4, "Graine": 7, "Instrument": 0 } }
+    },
+    {
+      "id": "accords",
+      "type": "atelier",
+      "position": { "x": 40, "y": 760 },
+      "data": { "ficheId": "accords-joues", "parametres": { "Tempo": 120, "Durée": 8, "Façon": "roule", "Graine": 1, "Instrument": 48 } }
+    },
+    {
+      "id": "melangeur",
+      "type": "atelier",
+      "position": { "x": 480, "y": 560 },
+      "data": { "ficheId": "melangeur-midi", "parametres": { "Vélocité 2": 70, "Transposition 2": -12 } }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 860, "y": 560 },
+      "data": { "ficheId": "point-ecoute-midi", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-melodie-melangeur", "source": "melodie", "target": "melangeur", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-accords-melangeur", "source": "accords", "target": "melangeur", "sourceHandle": "out:1", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-melangeur-ecoute", "source": "melangeur", "target": "ecoute", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 0, "y": 0, "zoom": 0.7 }
+}

@@ -12,6 +12,8 @@ import { rendreAvecSF2 } from "./midi-soundfont";
 import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { frequenceDeNoteMidi } from "./commun";
+import { CANAL_PERCUSSION } from "./batterie-midi";
+import { voieDuCanal } from "./midi-canal-percussion";
 
 export type NoteEvenement = Note;
 
@@ -57,8 +59,8 @@ function allongerA(buffer: AudioBuffer, duree: number): AudioBuffer {
  * LE CANAL DE BATTERIE EST HONORÉ, et il ne l'était pas. Toute note partait en hauteur, canal
  * compris : une grosse caisse écrite en 36 sur le canal dix s'entendait en sinusoïde de trente-trois
  * hertz, alors que le fichier MIDI rendu à côté sonnait juste dans un séquenceur. Les frappes vont
- * désormais au synthétiseur de percussions que partagent les autres rythmes du dépôt, ce qui fait
- * qu'une caisse claire y sonne comme une caisse claire ailleurs.
+ * désormais, au SoundFont, à un kit de sa banque 128, et en FM ou sans kit au synthétiseur de
+ * percussions que partagent les autres rythmes du dépôt : voir `rendreFrappes`.
  *
  * UNE SÉQUENCE SANS CANAL NE CHANGE PAS D'UN ÉCHANTILLON : le canal absent vaut zéro, le partage
  * rend alors toutes les notes du côté des hauteurs, et le chemin est celui d'avant, mot pour mot.
@@ -92,10 +94,7 @@ export async function rendreSequence(
 
   const { frappes, hauteurs } = separerPercussions(notes);
   if (frappes.length > 0) {
-    const { rendreBatterieMidi } = await import("./tone-synths");
-    // LA MÊME RÉSERVE QUE LA SYNTHÈSE DES HAUTEURS, et le niveau est un gain : multiplier le volume
-    // revient exactement à multiplier le rendu. Voir `RESERVE_BATTERIE` pour la mesure qui l'exige.
-    const batterie = await rendreBatterieMidi({ notes: frappes, volume: volume * RESERVE_BATTERIE });
+    const batterie = await rendreFrappes(frappes, mode, volume, instrument, banque);
     const melodie = hauteurs.length > 0
       ? await rendreHauteurs(hauteurs, mode, volume, instrument, banque, caractere, duree)
       : tamponSilencieux(duree, batterie.sampleRate);
@@ -103,6 +102,42 @@ export async function rendreSequence(
   }
 
   return rendreHauteurs(notes, mode, volume, instrument, banque, caractere, duree);
+}
+
+/**
+ * Les frappes du canal dix d'une séquence : un kit du SoundFont, ou le synthétiseur de percussions.
+ *
+ * LA RÈGLE EST CELLE DU FICHIER MIDI, `voieDuCanal`, et elle ne l'était pas avant le 2026-11-24 : la
+ * même batterie sonnait au kit par « Point d'écoute MIDI » et au synthétiseur par « Point d'écoute
+ * séquence ». Une séquence ne porte pas de programme par canal ; ce que le fichier dirait vaut donc
+ * programme 0, banque 0, et le réglage « Instrument » de l'appelant est ce qui s'impose : un kit y
+ * choisit le kit, un preset mélodique laisse le canal dix au Standard.
+ *
+ * LE KIT N'A PAS DE RÉSERVE. Il est rendu par le même moteur et à la même échelle que les hauteurs
+ * SoundFont ; `RESERVE_BATTERIE` corrige le niveau plein du synthétiseur, et lui seul.
+ *
+ * SANS SOUNDFONT CHARGÉ, UNE BATTERIE SEULE NE LÈVE PAS : elle passe au synthétiseur, comme avant.
+ * Ce sont les hauteurs, s'il y en a, qui disent qu'il manque.
+ */
+async function rendreFrappes(
+  frappes: NoteEvenement[],
+  mode: "FM/Oscillateurs" | "SoundFont",
+  volume: number,
+  instrument: number | undefined,
+  banque: number | undefined,
+): Promise<AudioBuffer> {
+  const sf2 = mode === "SoundFont" ? sf2Chargee() : null;
+  if (sf2) {
+    const voie = voieDuCanal(sf2.presets, CANAL_PERCUSSION, { programme: 0, banque: 0 }, { programme: instrument, banque });
+    if (voie.voie === "soundfont") {
+      console.log(`[attic] rendreSequence canal ${CANAL_PERCUSSION} -> kit programme ${voie.programme} banque=${voie.banque} (${frappes.length} frappes)`);
+      return rendreAvecSF2(sf2, frappes, volume, voie.programme, voie.banque);
+    }
+  }
+  const { rendreBatterieMidi } = await import("./tone-synths");
+  // LA MÊME RÉSERVE QUE LA SYNTHÈSE DES HAUTEURS, et le niveau est un gain : multiplier le volume
+  // revient exactement à multiplier le rendu. Voir `RESERVE_BATTERIE` pour la mesure qui l'exige.
+  return rendreBatterieMidi({ notes: frappes, volume: volume * RESERVE_BATTERIE });
 }
 
 /**
