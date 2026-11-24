@@ -415,6 +415,50 @@
       },
       "erreurs": []
     },
+    "deux-parties-dans-un-seul-midi.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.017320988835931615,
+          "crete": 0.11919143795967102,
+          "trames": 423360,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2288.3208667995696,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "accords": {
+          "rms": 0.16183631990719036,
+          "crete": 1,
+          "trames": 176400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1459.0983175517695,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.07890350308248333,
+          "crete": 0.8043524026870728,
+          "trames": 423360,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1795.3155081200196,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "deux-sons-deux-roles.json": {
       "lecteurs": {
         "sonAccords": {
