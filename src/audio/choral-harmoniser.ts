@@ -16,7 +16,7 @@ import type { Note } from "./note";
 import type { Sequence } from "./sequence";
 import { Respiration } from "../core/respirer";
 import { creerAleatoire } from "../core/hasard";
-import type { Mode } from "./choral-regles";
+import type { ModeChoral } from "./choral-regles";
 import { accordsPossibles, dispositions, type AccordCandidat, type Septiemes } from "./choral-candidats";
 import { energieColonne, energiePassage, type ColonneChoisie } from "./choral-energie";
 import { meilleureSuite, suiteTiree } from "./choral-chaine";
@@ -25,7 +25,7 @@ import type { ModeleHarmonique } from "./modele-harmonique";
 
 export interface OptionsHarmonisation {
   tonique: number;
-  mode: Mode;
+  mode: ModeChoral;
   /** La durée d'un pas, en noires : 1 ou 0,5. */
   pas: number;
   septiemes: Septiemes;

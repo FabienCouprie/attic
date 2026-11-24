@@ -188,10 +188,11 @@ export const DOMAINES: Domaine[] = [
     // quittent la paire « majeur, mineur » pour les dix-sept gammes où les chiffres se lisent, un
     // sous-ensemble borné calculé sur la table ; la paire reste aux trois nœuds des chorals.
     // DE DOUZE À TREIZE LE 2026-11-24, ET LA MONTÉE EST LÉGITIME : le juge des chorals passe aux cinq
-    // modes où Bach a écrit les siens, décision de Fabien ; l'harmoniseur et l'apprentissage les
-    // rejoindront à leur tour, et la paire disparaîtra avec eux.
+    // modes où Bach a écrit les siens, décision de Fabien ; l'harmoniseur les rejoint le même jour, sans
+    // forme de plus, sa liste étant celle du juge. La paire ne reste qu'à l'apprentissage, et
+    // disparaîtra avec elle.
     formesAssumees: 13,
-    pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, dix-sept gammes pour les chiffres romains, cinq modes pour le juge des chorals, deux gammes pour leur harmoniseur et leur apprentissage, dix gammes du monde, et les trente-cinq réunies",
+    pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, dix-sept gammes pour les chiffres romains, cinq modes pour le juge et l'harmoniseur des chorals, deux gammes pour leur apprentissage, dix gammes du monde, et les trente-cinq réunies",
     remede: "offrir la liste de `audio/gammes.ts`, par `completer` pour garder l'ordre d'un composant ancien",
     // LES COUPES GARDÉES, décision de Fabien du 2026-11-14 sur le relevé du lot 2. Huit réglages qui
     // n'offraient que quatre à sept gammes ont été élargis aux vingt-cinq tempérées le même jour.
@@ -217,7 +218,7 @@ export const DOMAINES: Domaine[] = [
       { ou: "tonal-gamme·Type", raison: "le nœud écrit ses notes en lettres et altérations, et les dix gammes en cents n'ont pas de nom de note" },
       { ou: "gammes-monde·Gamme", raison: "le nœud des gammes en cents, qui pose chaque degré à sa hauteur exacte ; les gammes tempérées ont leurs propres nœuds" },
       { ou: "verifier-choral·Gamme", raison: "un choral se juge dans les cinq modes où Bach a écrit les siens, majeur, mineur, dorien, phrygien et mixolydien ; le lydien et le locrien n'y paraissent pas, et les autres gammes n'ont ni la sensible ni la cadence que les règles du choral décrivent" },
-      { ou: "harmoniser-choral·Gamme", raison: "les accords, la sensible et la cadence d'un choral ne se bâtissent que dans une tonalité majeure ou mineure" },
+      { ou: "harmoniser-choral·Gamme", raison: "un choral s'harmonise dans les cinq modes où Bach a écrit les siens, majeur, mineur, dorien, phrygien et mixolydien ; le lydien et le locrien n'y paraissent pas, et les autres gammes n'ont ni les fréquences de degrés ni la cadence sur lesquelles les accords se choisissent" },
       { ou: "apprendre-corpus·Gamme", raison: "les pièces apprises sont ramenées en do majeur ou en la mineur, la tonalité qu'on leur lit ne connaissant que ces deux modes" },
     ],
   },

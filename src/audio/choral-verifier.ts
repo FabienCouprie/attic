@@ -19,14 +19,15 @@
 //
 // LA CADENCE SUIT LE MODE, décisions de Fabien du 2026-11-24. En dorien et en mixolydien, l'avant-
 // dernier temps est la dominante avec sa sensible ou la sous-dominante : chez Bach, aucun v ni ♭VII
-// n'y est lu. En phrygien, qui n'a pas de sensible, c'est le quatrième, le septième ou le deuxième
-// degré : la mineur, ré mineur ou fa majeur avant la finale mi.
+// n'y est lu. En phrygien, qui n'a pas de sensible, c'est le quatrième, le septième, le deuxième ou le
+// cinquième degré : la mineur, ré mineur, fa majeur ou si diminué avant la finale mi
+// (`avantDernierePermise`, que l'harmoniseur emploie aussi).
 
 import type { Sequence } from "./sequence";
 import { nomNote } from "./nom-note";
 import { tranchesDuChoral, VOIX_CHORAL, voixEnTrop, type Tranche } from "./choral-tranches";
 import {
-  consecutive, directe, lireAccord, sautFautif, sensibleDe, tierceMineure, type AccordLu, type ModeChoral,
+  avantDernierePermise, consecutive, directe, lireAccord, sautFautif, sensibleDe, tierceMineure, type AccordLu, type ModeChoral,
 } from "./choral-regles";
 import { NOMS_SATB, TESSITURES_SATB } from "./tessitures-satb";
 
@@ -267,19 +268,11 @@ function estTierceDePicardie(hauteurs: readonly number[], tonique: number): bool
  */
 const estSeptiemeDe = (h: number, accord: AccordLu): boolean => accord.septieme === pc(h);
 
-/**
- * L'avant-dernier temps que le mode permet : la dominante qui prend la sensible ou la sous-dominante,
- * et en phrygien le quatrième, le septième ou le deuxième degré. En majeur et en mineur, la dominante
- * porte toujours la sensible : la règle y est celle d'avant les modes.
- */
-const avantDernierePermise = (a: AccordLu, mode: ModeChoral): boolean =>
-  mode === "phrygien" ? a.degre === 3 || a.degre === 6 || a.degre === 1 : (a.degre === 4 && a.sensible) || a.degre === 3;
-
 /** L'avis d'une avant-dernière que le mode ne permet pas, dans les deux langues. */
 const AVANT_DERNIERE: Record<ModeChoral, [string, string]> = {
   majeur: ["l'avant-dernier temps n'est ni la dominante ni la sous-dominante", "the penultimate beat is neither the dominant nor the subdominant"],
   mineur: ["l'avant-dernier temps n'est ni la dominante ni la sous-dominante", "the penultimate beat is neither the dominant nor the subdominant"],
   dorien: ["l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante", "the penultimate beat is neither the dominant with its leading tone nor the subdominant"],
   mixolydien: ["l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante", "the penultimate beat is neither the dominant with its leading tone nor the subdominant"],
-  phrygien: ["l'avant-dernier temps n'est ni le quatrième degré, ni le septième, ni le deuxième", "the penultimate beat is neither the fourth degree, nor the seventh, nor the second"],
+  phrygien: ["l'avant-dernier temps n'est ni le quatrième degré, ni le septième, ni le deuxième, ni le cinquième", "the penultimate beat is neither the fourth degree, nor the seventh, nor the second, nor the fifth"],
 };

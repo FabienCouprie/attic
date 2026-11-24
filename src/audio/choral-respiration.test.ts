@@ -40,19 +40,21 @@ vi.mock("./choral-candidats", async (original) => {
 import { harmoniserChoral } from "./choral-harmoniser";
 import { accordsPossibles, dispositions } from "./choral-candidats";
 import type { Sequence } from "./sequence";
+import type { ModeChoral } from "./choral-regles";
 
 /** Un soprano de 190 noires, septièmes partout et renversements permis : les colonnes les plus larges. */
 const HAUTEURS = Array.from({ length: 190 }, (_, k) => [72, 71, 69, 67, 69, 71, 72, 74, 72, 71][k % 10]);
 const MELODIE: Sequence = { notes: HAUTEURS.map((note, k) => ({ note, velocite: 80, debut: k, fin: k + 1, voix: 0 })), tempo: 60 };
 
-const PLUS_GRANDE_COLONNE = Math.max(...[...new Set(HAUTEURS)].map((note) =>
-  accordsPossibles(note, 0, "majeur", "toutes").reduce((s, a) => s + dispositions(a, note, true).length, 0)));
+const plusGrandeColonne = (mode: ModeChoral) => Math.max(...[...new Set(HAUTEURS)].map((note) =>
+  accordsPossibles(note, 0, mode, "toutes").reduce((s, a) => s + dispositions(a, note, true).length, 0)));
+const PLUS_GRANDE_COLONNE = plusGrandeColonne("majeur");
 
 /** Le plus grand travail fait d'un seul tenant, entre deux points où la main peut se rendre. */
-async function plusLongTroncon(temperature: number) {
+async function plusLongTroncon(temperature: number, mode: ModeChoral = "majeur") {
   compte.travail = 0;
   compte.points = [];
-  const r = await harmoniserChoral(MELODIE, { tonique: 0, mode: "majeur", pas: 1, septiemes: "toutes", renversements: true, temperature, graine: 3 });
+  const r = await harmoniserChoral(MELODIE, { tonique: 0, mode, pas: 1, septiemes: "toutes", renversements: true, temperature, graine: 3 });
   const bornes = [0, ...compte.points, compte.travail];
   let pire = 0;
   for (let k = 1; k < bornes.length; k++) pire = Math.max(pire, bornes[k] - bornes[k - 1]);
@@ -75,5 +77,15 @@ describe("la main rendue à l'interface, comptée", () => {
     const { pire, rendu } = await plusLongTroncon(0.5);
     expect(rendu).toBe(true);
     expect(pire).toBeLessThanOrEqual(16 * PLUS_GRANDE_COLONNE);
+  });
+
+  it("en dorien, où la dominante et le vii° sont deux fois, les colonnes s'élargissent et la cadence tient", async () => {
+    const dorien = plusGrandeColonne("dorien");
+    expect(dorien).toBeGreaterThan(PLUS_GRANDE_COLONNE);
+    for (const temperature of [0, 0.5]) {
+      const { pire, rendu } = await plusLongTroncon(temperature, "dorien");
+      expect(rendu).toBe(true);
+      expect(pire, `température ${temperature}`).toBeLessThanOrEqual(16 * dorien);
+    }
   });
 });
