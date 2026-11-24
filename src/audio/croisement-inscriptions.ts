@@ -174,6 +174,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
 
 /** Les coïncidences légitimes, chacune avec sa raison. */
 export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
+  { ou: "verifier-choral·Gamme", valeurs: ["majeur", "mixolydien"], raison: "le choral d'essai, le 175 de Bach lu en do, n'a aucun si bémol et aucun temps sur le iii : le mixolydien, dont la dominante prend la sensible, n'y a rien à séparer du majeur, et le juge rend le même rapport ; tenu par audio/choral-verifier.test.ts, dont la cadence I ♭VII IV I les sépare" },
   { ou: "harmoniser-choral·Pas", valeurs: ["noire", "croche"], raison: "au banc, un modèle est branché sur « Modèle », et sa grille, la noire, remplace celle de « Pas » ; sans modèle, « Pas » est tenu par audio/choral-harmoniser.test.ts" },
   { ou: "corpus-fabriquer-debut·Graines", valeurs: ["Une par tour", "Identiques"], raison: "les graines du corps sont réglées par le pilote, pour les nœuds rejoués à chaque passe, et non par ce nœud, que le banc lance seul ; tenu par core/graines-de-passe.test.ts et l'exemple un-corpus-fabrique.json" },
   { ou: "corpus-fabriquer-fin·Format", valeurs: ["midi", "musicxml"], raison: "sans dossier ni application de bureau, le banc n'écrit aucun fichier, et les deux formats rendent le même corpus ; tenu par plugins/fabriquer-corpus.test.ts" },

@@ -308,8 +308,11 @@ describe("un concept, des formes déclarées", () => {
     // quitté le catalogue, et avec elle la part de la valeur de note faite de ses six durées simples.
     // PUIS DE CINQUANTE À CINQUANTE ET UN, le 2026-11-23, ET LA MONTÉE EST LÉGITIME : les quatre nœuds
     // à chiffres romains offrent les dix-sept gammes où les chiffres se lisent, un sous-ensemble borné.
+    // PUIS DE CINQUANTE ET UN À CINQUANTE-DEUX, le 2026-11-24, ET LA MONTÉE EST LÉGITIME : le juge des
+    // chorals offre les cinq modes où Bach a écrit les siens, décision de Fabien ; l'harmoniseur et
+    // l'apprentissage gardent la paire jusqu'à leur tour, et le chiffre redescendra avec eux.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(51);
+      .toBe(52);
   });
 });
