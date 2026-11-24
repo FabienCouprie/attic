@@ -9,7 +9,7 @@
 // une quinte demande rarement plus de quelques demi-tons de mouvement, à 0,15 le demi-ton. Les rendre
 // réglables ferait de chacun un réglage qu'aucune entrée d'essai ne ferait tous agir.
 
-import { consecutive, directe, sautFautif, sensibleDe, type Mode } from "./choral-regles";
+import { avantDernierePermise, consecutive, directe, sautFautif, sensibleDe, type ModeChoral } from "./choral-regles";
 import type { AccordCandidat, Disposition } from "./choral-candidats";
 
 export const POIDS = {
@@ -50,9 +50,9 @@ export const POIDS = {
   degre: 1,
   /** Le même degré deux fois de suite. */
   repetition: 0.3,
-  /** La dominante suivie de la sous-dominante. */
+  /** La dominante à sensible suivie de la sous-dominante. */
   retrogradation: 2,
-  /** Une fin qui n'est pas la tonique à l'état fondamental, une avant-dernière qui n'est ni V ni IV. */
+  /** Une fin qui n'est pas la tonique à l'état fondamental, une avant-dernière que le mode ne permet pas. */
   cadence: 20,
   avantDerniere: 2,
 } as const;
@@ -63,28 +63,44 @@ export const POIDS = {
  * temps en majeur, 5 786 en mineur. Sans elle, l'harmoniseur ne préférait aucun degré, et le soprano
  * du choral 175 recevait iii et vii° plus souvent que IV. Le III du mineur est fréquent parce que
  * Bach y module au relatif majeur.
+ *
+ * LES TROIS MODES DE CHORALS, relevés le 2026-11-24 par le même relevé, décision de Fabien du même
+ * jour : chaque choral modal dans son mode, le v et le V d'un même degré comptés ensemble ; 1 233 temps
+ * sur les 37 chorals que Sapp écrit dorien, 1 100 sur 24 phrygiens, les deux qu'il écrit et 22 lus par
+ * l'armure et la finale, et 298 seulement sur les 9 qu'il écrit mixolydiens. Le phrygien de Bach est
+ * fait de la mineur vu de mi : iv avant i.
  */
-const FREQUENCES_BACH: Record<Mode, readonly number[]> = {
+const FREQUENCES_BACH: Record<ModeChoral, readonly number[]> = {
   majeur: [34.2, 10.1, 3.9, 11.2, 25.7, 12.4, 2.5],
   mineur: [29.9, 6.7, 23.1, 11.9, 17.4, 8.5, 2.5],
+  dorien: [31.1, 2.2, 17.1, 5.9, 28.2, 3.1, 12.4],
+  phrygien: [20.6, 10.5, 13.4, 22.1, 4.2, 16.8, 12.5],
+  mixolydien: [28.9, 9.1, 3.0, 20.8, 20.1, 8.7, 9.4],
 };
 
 /** Ce que coûte un degré : l'opposé du logarithme de sa fréquence chez Bach, rapportée à la plus haute. */
-export const coutDuDegre = (mode: Mode, degre: number): number =>
+export const coutDuDegre = (mode: ModeChoral, degre: number): number =>
   -Math.log(FREQUENCES_BACH[mode][degre] / Math.max(...FREQUENCES_BACH[mode]));
 
 const pc = (h: number) => ((Math.round(h) % 12) + 12) % 12;
 
 export interface ColonneChoisie { accord: AccordCandidat; voix: Disposition }
 
-export interface Contexte { tonique: number; mode: Mode }
+export interface Contexte { tonique: number; mode: ModeChoral }
+
+/**
+ * La dominante ou le vii° qui portent la sensible, là où elle se juge : en majeur et en mineur, ces
+ * deux degrés la portent toujours ; en dorien et en mixolydien, seulement quand elle est ajoutée ; en
+ * phrygien, jamais.
+ */
+const portantLaSensible = (a: AccordCandidat) => !a.repli && (a.degre === 4 || a.degre === 6) && a.sensible;
 
 /** Ce que coûte une colonne seule ; `rang` dit si elle est la dernière ou l'avant-dernière. */
 export function energieColonne(c: ColonneChoisie, ctx: Contexte, rang: "derniere" | "avant-derniere" | "autre"): number {
   const { accord, voix } = c;
   const pcs = voix.map(pc);
   let e = accord.repli ? POIDS.repli : POIDS.degre * coutDuDegre(ctx.mode, accord.degre);
-  if (!accord.repli && (accord.degre === 4 || accord.degre === 6) && pcs.filter((p) => p === sensibleDe(ctx.tonique)).length >= 2) e += POIDS.sensibleDoublee;
+  if (portantLaSensible(accord) && pcs.filter((p) => p === sensibleDe(ctx.tonique)).length >= 2) e += POIDS.sensibleDoublee;
   if (!pcs.includes(accord.quinte)) e += POIDS.quinteOmise;
   if (pc(accord.tierce - accord.racine) === 4 && pcs.filter((p) => p === accord.tierce).length >= 2) e += POIDS.tierceDoublee;
   const basse = pcs[3];
@@ -92,7 +108,7 @@ export function energieColonne(c: ColonneChoisie, ctx: Contexte, rang: "derniere
   else if (basse === accord.quinte) e += POIDS.quarteEtSixte;
   else if (basse === accord.septieme) e += POIDS.septiemeALaBasse;
   if (rang === "derniere" && (accord.repli || accord.degre !== 0 || basse !== accord.racine)) e += POIDS.cadence;
-  if (rang === "avant-derniere" && (accord.repli || (accord.degre !== 4 && accord.degre !== 3))) e += POIDS.avantDerniere;
+  if (rang === "avant-derniere" && (accord.repli || !avantDernierePermise(accord, ctx.mode))) e += POIDS.avantDerniere;
   return e;
 }
 
@@ -119,7 +135,7 @@ export function energiePassage(c1: ColonneChoisie, c2: ColonneChoisie, ctx: Cont
   }
   const [a1, a2] = [c1.accord, c2.accord];
   const sensible = sensibleDe(ctx.tonique);
-  if (!a1.repli && (a1.degre === 4 || a1.degre === 6) && !a2.repli && a2.degre === 0) {
+  if (portantLaSensible(a1) && !a2.repli && a2.degre === 0) {
     for (let v = 1; v < 4; v++) {
       if (pc(p[v]) !== sensible || q[v] - p[v] === 1) continue;
       const versLaQuinte = pc(q[v]) === pc(ctx.tonique + 7) && p[v] - q[v] >= 3 && p[v] - q[v] <= 4;
@@ -135,6 +151,8 @@ export function energiePassage(c1: ColonneChoisie, c2: ColonneChoisie, ctx: Cont
     }
   }
   if (!changement) e += POIDS.repetition;
-  if (!a1.repli && !a2.repli && a1.degre === 4 && a2.degre === 3) e += POIDS.retrogradation;
+  // LA RÉTROGRADATION EST CELLE DE LA DOMINANTE À SENSIBLE : le v sans sensible suivi de IV est un
+  // enchaînement du mode, en dorien et en mixolydien, comme le v° suivi de iv en phrygien.
+  if (portantLaSensible(a1) && a1.degre === 4 && !a2.repli && a2.degre === 3) e += POIDS.retrogradation;
   return e;
 }

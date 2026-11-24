@@ -47,7 +47,7 @@ export const SANS_TRANSPOSITION: Record<string, string> = {
 /** Les nœuds dont l'appartenance ne se juge pas sous le banc, et pourquoi. */
 export const APPARTENANCE_DECLAREE: Record<string, string> = {
   "accords-vers-notation·Gamme": "sous sa source par défaut, « Accords détectés », il écrit les accords d'une entrée fixe, que la gamme ne gouverne pas",
-  "harmoniser-choral·Gamme": "le soprano reçu ressort tel quel, ses notes hors de la gamme comprises, et une note qu'aucun accord de la tonalité ne contient reçoit une dominante secondaire ou un accord emprunté, hors de la gamme par nature",
+  "harmoniser-choral·Gamme": "le soprano reçu ressort tel quel, ses notes hors de la gamme comprises, et une note qu'aucun accord de la tonalité ne contient reçoit une dominante secondaire ou un accord emprunté, hors de la gamme par nature ; en dorien, en phrygien et en mixolydien, les accords de la sensible ajoutée et la tonique majeure du phrygien en sortent aussi",
 };
 
 /**

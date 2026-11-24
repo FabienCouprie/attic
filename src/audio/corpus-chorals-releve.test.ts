@@ -71,6 +71,29 @@ function modeKern(texte: string): ModeChoral | null {
   return MODAUX[m[3]] ?? (m[1] === m[1].toUpperCase() ? "majeur" : "mineur");
 }
 
+/** L'armure que déclare le Humdrum, `*k[f#c#]`, en quintes : les dièses comptent en plus, les bémols en moins. */
+function armureKern(texte: string): number | null {
+  const m = /^\*k\[([^\]]*)\]/m.exec(texte);
+  return m ? (m[1].match(/#/g)?.length ?? 0) - (m[1].match(/-/g)?.length ?? 0) : null;
+}
+
+type ModeDeChoral = Exclude<ModeChoral, Mode>;
+
+/**
+ * LE MODE D'UN CHORAL MODAL ET SA TONIQUE, pour les fréquences des degrés de l'harmoniseur : le dorien
+ * et le mixolydien que Sapp écrit, sur sa tonique ; le phrygien par l'armure et la finale, sur la
+ * finale, la basse de la dernière attaque. Sapp n'écrit que deux chorals phrygiens ; l'armure et la
+ * finale en trouvent vingt-deux autres (relevé du 2026-11-24), et la finale est leur tonique, décision de
+ * Fabien du même jour.
+ */
+function modeDuChoral(s: { notes: Note[]; tonalite: { tonique: number } | null; modeEcrit: ModeChoral | null; armure: number | null }): { tonique: number; mode: ModeDeChoral; parLArmure: boolean } | null {
+  if (s.tonalite && (s.modeEcrit === "dorien" || s.modeEcrit === "mixolydien" || s.modeEcrit === "phrygien")) return { tonique: s.tonalite.tonique, mode: s.modeEcrit, parLArmure: false };
+  if (s.armure === null || s.notes.length === 0) return null;
+  const t = Math.max(...s.notes.map((n) => n.debut));
+  const finale = ((Math.min(...s.notes.filter((n) => n.debut <= t + 1e-9 && n.fin > t + 1e-9).map((n) => n.note)) % 12) + 12) % 12;
+  return ((finale - 7 * s.armure) % 12 + 12) % 12 === 4 ? { tonique: finale, mode: "phrygien", parLArmure: true } : null;
+}
+
 /** Les notes d'une voix, indexées par attaque arrondie au millionième de noire. */
 const parAttaque = (notes: Note[], v: number) => new Map(notes.filter((n) => n.voix === v).map((n) => [Math.round(n.debut * 1e6), n]));
 
@@ -92,7 +115,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
     const { VerovioToolkit } = (await import("verovio/esm")) as unknown as { VerovioToolkit: new (m: unknown) => ToolkitPartition & { setOptions(o: object): void; loadData(t: string): unknown; destroy(): void } };
 
     // Tout Sapp d'abord, une fois : chaque table du DCML se mesure ensuite à chacun de ses chorals.
-    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[]; tonalite: { tonique: number; mode: Mode } | null; modeEcrit: ModeChoral | null }[] = [];
+    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[]; tonalite: { tonique: number; mode: Mode } | null; modeEcrit: ModeChoral | null; armure: number | null }[] = [];
     for (const f of readdirSync(kernSapp).filter((x) => /^chor\d+\.krn$/.test(x)).sort()) {
       const texteKern = readFileSync(join(kernSapp, f), "utf8");
       const tk = new VerovioToolkit(await creer());
@@ -105,7 +128,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         numero: Number(/\d+/.exec(f)![0]),
         titre: decoder(/^!!!OTL@@DE:\s*(.+)$/m.exec(texteKern)?.[1] ?? /^!!!OTL[^:]*:\s*(.+)$/m.exec(texteKern)?.[1] ?? ""),
         notes, index: [0, 1, 2, 3].map((v) => parAttaque(notes, v)),
-        tonalite: tonaliteKern(texteKern), modeEcrit: modeKern(texteKern),
+        tonalite: tonaliteKern(texteKern), modeEcrit: modeKern(texteKern), armure: armureKern(texteKern),
       });
     }
 
@@ -215,6 +238,24 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         if (a) degres[s.tonalite.mode][a.degre]++;
       }
     }
+    // LES MÊMES DANS LES TROIS MODES DE CHORALS, chaque choral modal lu dans son mode (`modeDuChoral`),
+    // le v et le V d'un même degré comptés ensemble. Le majeur et le mineur ci-dessus restent ceux du
+    // 2026-11-22, les chorals modaux ramenés compris : l'harmoniseur les emploie tels quels.
+    const modaux = new Map<ModeDeChoral, { pieces: number; parLArmure: number; degres: number[] }>(
+      (["dorien", "phrygien", "mixolydien"] as const).map((m) => [m, { pieces: 0, parLArmure: 0, degres: new Array(7).fill(0) }]));
+    for (const s of sapps) {
+      const lu = modeDuChoral(s);
+      if (!lu) continue;
+      const m = modaux.get(lu.mode)!;
+      m.pieces++;
+      if (lu.parLArmure) m.parLArmure++;
+      for (const t of tranchesDuChoral({ notes: s.notes, tempo: 60 }, 60, 4).tranches) {
+        const sonnantes = t.hauteurs.filter((x): x is number => x !== null);
+        if (!t.surLeTemps || sonnantes.length < 3) continue;
+        const a = lireAccord(sonnantes, lu.tonique, lu.mode);
+        if (a) m.degres[a.degre]++;
+      }
+    }
     // LA TONALITÉ LUE CONTRE LA TONALITÉ ÉCRITE CHEZ SAPP (`*G:`), sous plusieurs marges de la basse
     // finale : la lecture que le corpus et sa fabrication emploient, jugée là où la réponse est écrite.
     const ecrites = sapps.filter((s) => s.tonalite);
@@ -223,10 +264,14 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       const lue = tonaliteDesNotes({ notes: s.notes, tempo: 60 }, m);
       return lue?.tonique === s.tonalite!.tonique && lue.mode === s.tonalite!.mode;
     }).length);
-    const frequences = (["majeur", "mineur"] as const).map((m) => {
-      const total = degres[m].reduce((x: number, y: number) => x + y, 0);
-      return `- ${m} : ${total} temps · ${degres[m].map((c: number, d: number) => `${["I", "II", "III", "IV", "V", "VI", "VII"][d]} ${(100 * c / total).toFixed(1)} %`).join(" · ")}`;
-    });
+    const ligneDeFrequences = (nom: string, compte: number[]) => {
+      const total = compte.reduce((x: number, y: number) => x + y, 0);
+      return `- ${nom} : ${total} temps · ${compte.map((c: number, d: number) => `${["I", "II", "III", "IV", "V", "VI", "VII"][d]} ${(100 * c / total).toFixed(1)} %`).join(" · ")}`;
+    };
+    const frequences = [
+      ...(["majeur", "mineur"] as const).map((m) => ligneDeFrequences(m, degres[m])),
+      ...[...modaux].map(([m, x]) => ligneDeFrequences(`${m}, ${x.pieces} chorals dans leur mode, dont ${x.parLArmure} par l'armure et la finale`, x.degres)),
+    ];
     const nomRegle = (id: RegleChoral) => REGLES_CHORAL.find((r) => r.id === id)!.fr;
     const verification = [
       `## Le vérificateur sur les chorals de Sapp, ${verifies} chorals dans leur tonalité et le mode qu'il écrit`,

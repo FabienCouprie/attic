@@ -311,6 +311,8 @@ describe("un concept, des formes déclarées", () => {
     // PUIS DE CINQUANTE ET UN À CINQUANTE-DEUX, le 2026-11-24, ET LA MONTÉE EST LÉGITIME : le juge des
     // chorals offre les cinq modes où Bach a écrit les siens, décision de Fabien ; l'harmoniseur et
     // l'apprentissage gardent la paire jusqu'à leur tour, et le chiffre redescendra avec eux.
+    // L'HARMONISEUR LES REJOINT LE MÊME JOUR, ET LE CHIFFRE NE BOUGE PAS : sa liste est celle du juge.
+    // La paire ne tient plus qu'à l'apprentissage.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
       .toBe(52);

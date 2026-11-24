@@ -173,6 +173,18 @@ describe("les modes du choral : chaque cadence de référence est propre dans so
     expect(ou(verdict(choral(CADENCE_PHRYGIENNE), en("mineur")), "hors-tonalite")).toEqual([["1.3", "avis", []]]);
   });
 
+  it("en phrygien, le v° à l'avant-dernier temps est permis, et le ♭III ne l'est pas", () => {
+    // DÉCISION DE FABIEN DU 2026-11-24 : Bach écrit le si diminué de mi avant 3 de ses 26 finales
+    // phrygiennes. Ici sol, si bémol, ré bémol sur do, au premier renversement, le ré bémol du soprano
+    // descendant sur la finale.
+    const vDiminue = [CADENCE_PHRYGIENNE[0], CADENCE_PHRYGIENNE[1], [73, 67, 58, 46], CADENCE_PHRYGIENNE[3]];
+    expect(lireAccord([46, 58, 67, 73], 0, "phrygien")).toMatchObject({ degre: 4, sensible: false });
+    expect(fautes(verdict(choral(vDiminue), en("phrygien")), "cadence")).toEqual([]);
+    const troisieme = [CADENCE_PHRYGIENNE[0], CADENCE_PHRYGIENNE[1], [70, 67, 63, 51], CADENCE_PHRYGIENNE[3]];
+    expect(fautes(verdict(choral(troisieme), en("phrygien")), "cadence").map((i) => [i.gravite, i.fr]))
+      .toEqual([["avis", "l'avant-dernier temps n'est ni le quatrième degré, ni le septième, ni le deuxième, ni le cinquième"]]);
+  });
+
   it("en mixolydien, le ♭VII à l'avant-dernier temps est un avis", () => {
     const septiemeAvant = [CADENCE_MIXOLYDIENNE[0], CADENCE_MIXOLYDIENNE[2], CADENCE_MIXOLYDIENNE[1], CADENCE_MIXOLYDIENNE[3]];
     expect(fautes(verdict(choral(septiemeAvant), en("mixolydien")), "cadence").map((i) => [i.gravite, i.fr]))

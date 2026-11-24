@@ -72,6 +72,16 @@ export interface AccordDeLaTonalite {
   sensible: boolean;
 }
 
+/** L'accord d'un degré, un degré sur deux dans les `degres` d'une gamme, sur `tonique`. */
+function bati(tonique: number, degre: number, degres: readonly number[]): AccordDeLaTonalite {
+  const r = degres[degre];
+  const notes = [0, 2, 4, 6].map((k) => pc(tonique + r + ecartDansLaGamme(degres, r, k)));
+  return {
+    degre, racine: notes[0], tierce: notes[1], quinte: notes[2], septieme: notes[3],
+    sensible: notes.slice(0, 3).includes(sensibleDe(tonique)),
+  };
+}
+
 /**
  * Les accords du mode, classes de hauteurs : les sept de ses degrés, puis ceux que la sensible
  * ajoutée bâtit à côté d'eux, en dorien, en phrygien et en mixolydien. Le même degré peut donc y
@@ -79,21 +89,34 @@ export interface AccordDeLaTonalite {
  */
 export function accordsDeLaTonalite(tonique: number, mode: ModeChoral): AccordDeLaTonalite[] {
   const { gamme, sensible } = TONALITES[mode];
-  const bati = (degre: number, degres: readonly number[]): AccordDeLaTonalite => {
-    const r = degres[degre];
-    const notes = [0, 2, 4, 6].map((k) => pc(tonique + r + ecartDansLaGamme(degres, r, k)));
-    return {
-      degre, racine: notes[0], tierce: notes[1], quinte: notes[2], septieme: notes[3],
-      sensible: notes.slice(0, 3).includes(sensibleDe(tonique)),
-    };
-  };
   const naturels = degresDeGamme(gamme);
   const empruntes = sensible ? degresDeGamme(sensible.gamme) : naturels;
   // Les rangs des sept degrés, et non une gamme : les degrés eux-mêmes viennent de `degresDeGamme`.
   const sept = Array.from({ length: 7 }, (_, degre) =>
-    bati(degre, sensible && !sensible.ajoutee && sensible.degres.includes(degre) ? empruntes : naturels));
-  return sensible?.ajoutee ? [...sept, ...sensible.degres.map((d) => bati(d, empruntes))] : sept;
+    bati(tonique, degre, sensible && !sensible.ajoutee && sensible.degres.includes(degre) ? empruntes : naturels));
+  return sensible?.ajoutee ? [...sept, ...sensible.degres.map((d) => bati(tonique, d, empruntes))] : sept;
 }
+
+/**
+ * Les sept accords d'une gamme de la table, un degré sur deux, sans sensible ajoutée : ceux de
+ * l'éolien, que le dorien et le phrygien empruntent, ne sont pas ceux du mineur, dont la dominante
+ * prend la sensible.
+ */
+export function accordsDeLaGamme(tonique: number, gamme: string): AccordDeLaTonalite[] {
+  const degres = degresDeGamme(gamme);
+  return Array.from({ length: 7 }, (_, degre) => bati(tonique, degre, degres));
+}
+
+/**
+ * L'AVANT-DERNIER TEMPS QUE LE MODE PERMET, devant la tonique finale : la dominante qui prend la
+ * sensible ou la sous-dominante ; en phrygien, qui n'a pas de sensible, le quatrième, le septième ou
+ * le deuxième degré, la mineur, ré mineur ou fa majeur avant mi, et le cinquième, le si diminué que
+ * Bach écrit dans 3 de ses 26 fins phrygiennes (décision de Fabien du 2026-11-24). En majeur et en
+ * mineur, la dominante porte toujours la sensible : la règle y est celle d'avant les modes. Le juge
+ * en fait un avis, l'harmoniseur un coût.
+ */
+export const avantDernierePermise = (a: { degre: number; sensible: boolean }, mode: ModeChoral): boolean =>
+  mode === "phrygien" ? a.degre === 3 || a.degre === 6 || a.degre === 1 || a.degre === 4 : (a.degre === 4 && a.sensible) || a.degre === 3;
 
 export interface AccordLu {
   degre: number;

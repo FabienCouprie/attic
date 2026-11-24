@@ -10,6 +10,7 @@ import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { lireTableDcml } from "../audio/dcml-tsv";
 import { TABLE_175 } from "../audio/choral-175-dcml";
+import { SOPRANOS_MODAUX, tableDuSoprano } from "../audio/sopranos-modaux-dcml";
 import type { Sequence } from "../audio/sequence";
 
 const fiche = registre.trouverDef("harmoniser-choral") as unknown as FicheLancable;
@@ -45,6 +46,17 @@ describe("Harmoniser à quatre voix", () => {
     expect(r.message).toMatch(/ · 0 erreurs au jugement$/);
     const accords = String(r.valeurs[1]).split("\n").find((l) => l.startsWith("accords"))!;
     expect(accords.split(" ").at(-1)).toBe("i");
+  });
+
+  it("lit les trois modes des chorals : « Dies sind die heilgen zehn Gebot » en sol mixolydien, son v écrit, sans erreur", async () => {
+    const mixo = SOPRANOS_MODAUX.find((s) => s.mode === "mixolydien")!;
+    const melodie: Sequence = { notes: lireTableDcml(tableDuSoprano(mixo), 60).sequence.notes, tempo: 60 };
+    const r = await lancer({ Gamme: "mixolydien", Tonique: "7" }, melodie);
+    expect(r.message).toMatch(/ · 0 erreurs au jugement$/);
+    const accords = String(r.valeurs[1]).split("\n").find((l) => l.startsWith("accords"))!;
+    expect(accords.split(" ")).toContain("v");
+    const majeur = String((await lancer({ Gamme: "majeur", Tonique: "7" }, melodie)).valeurs[1]).split("\n").find((l) => l.startsWith("accords"))!;
+    expect(majeur.split(" ")).not.toContain("v");
   });
 
   it("nomme la graine quand la température est au-dessus de zéro, et la tient", async () => {

@@ -9,9 +9,10 @@ import { lireTableDcml } from "./dcml-tsv";
 import { TABLE_175 } from "./choral-175-dcml";
 import { estRefusHarmonisation, harmoniserChoral, type HarmonisationRendue, type OptionsHarmonisation } from "./choral-harmoniser";
 import { estRefusChoral, verifierChoral } from "./choral-verifier";
-import { accordsPossibles } from "./choral-candidats";
+import { accordsPossibles, type Septiemes } from "./choral-candidats";
 import type { Sequence } from "./sequence";
-import type { Mode } from "./choral-regles";
+import { MODES_CHORAL, type ModeChoral } from "./choral-regles";
+import { SOPRANOS_MODAUX, tableDuSoprano, type SopranoModal } from "./sopranos-modaux-dcml";
 
 const DEFAUT: OptionsHarmonisation = { tonique: 0, mode: "majeur", pas: 1, septiemes: "dominante", renversements: true, temperature: 0, graine: 1 };
 
@@ -30,7 +31,7 @@ const harmoniser = async (s: Sequence, o: Partial<OptionsHarmonisation> = {}): P
   if (estRefusHarmonisation(r)) throw new Error(`refus : ${JSON.stringify(r)}`);
   return r;
 };
-const erreurs = (r: HarmonisationRendue, tonique: number, mode: Mode) => {
+const erreurs = (r: HarmonisationRendue, tonique: number, mode: ModeChoral) => {
   const v = verifierChoral({ notes: r.notes, tempo: 60 }, { tonique, mode, tempo: 60, tempsParMesure: 4 });
   if (estRefusChoral(v)) throw new Error("refus du juge");
   return v.infractions.filter((i) => i.gravite === "erreur").map((i) => `${i.mesure}.${i.temps} ${i.fr}`);
@@ -123,6 +124,77 @@ describe("le soprano, les soupirs et les refus", () => {
   it("refuse en la nommant une note que nulle disposition ne porte", async () => {
     const r = await harmoniserChoral(enNoires([72, 48, 72]), DEFAUT);
     expect(r).toEqual({ sansDisposition: [{ note: 48, debut: 1 }] });
+  });
+});
+
+// LES TROIS MODES DES CHORALS DE BACH, décisions de Fabien du 2026-11-24. Chaque soprano s'harmonise
+// dans son mode et dans la tonalité que le juge lisait avant les modes, le majeur ou le mineur de même
+// tierce, et le phrygien sur la mineur, où Sapp écrit « Aus tiefer Not ».
+const sopranoModal = (s: SopranoModal): Sequence => ({ notes: lireTableDcml(tableDuSoprano(s), 60).sequence.notes, tempo: 60 });
+const RAMENE: Record<string, { mode: ModeChoral; tonique: number }> = {
+  "127": { mode: "majeur", tonique: 7 }, "015": { mode: "mineur", tonique: 2 }, "010": { mode: "mineur", tonique: 9 },
+};
+const noms = (r: HarmonisationRendue) => r.accords.map((a) => a.accord.nom);
+
+describe("les trois modes des chorals de Bach", () => {
+  for (const s of SOPRANOS_MODAUX) {
+    it(`${s.titre}, en ${s.mode} : aucune erreur au juge du même mode, et pas plus de replis que dans la tonalité ramenée`, async () => {
+      const dans = await harmoniser(sopranoModal(s), { tonique: s.tonique, mode: s.mode });
+      const ramene = await harmoniser(sopranoModal(s), RAMENE[s.numero]);
+      expect(erreurs(dans, s.tonique, s.mode)).toEqual([]);
+      expect(dans.replis).toBeLessThanOrEqual(ramene.replis);
+    });
+  }
+
+  it("le mixolydien écrit le v sans sensible et la sous-dominante, que le majeur ramené remplace par des emprunts", async () => {
+    const [mixo] = SOPRANOS_MODAUX;
+    const dans = noms(await harmoniser(sopranoModal(mixo), { tonique: 7, mode: "mixolydien" }));
+    const ramene = noms(await harmoniser(sopranoModal(mixo), RAMENE["127"]));
+    expect(dans.filter((n) => n === "v").length).toBeGreaterThan(0);
+    expect(ramene.filter((n) => n === "v")).toEqual([]);
+    expect(ramene.some((n) => n.includes("emprunté") || n.includes("/"))).toBe(true);
+  });
+
+  it("le phrygien finit sur sa tonique, précédée de ce que le mode permet, et le iv y passe avant le V", async () => {
+    const phry = SOPRANOS_MODAUX.find((s) => s.mode === "phrygien")!;
+    const r = await harmoniser(sopranoModal(phry), { tonique: 4, mode: "phrygien" });
+    const n = noms(r);
+    expect(["i", "I"]).toContain(n.at(-1));
+    expect(r.accords.at(-2)!.accord.repli).toBe(false);
+    expect([1, 3, 4, 6]).toContain(r.accords.at(-2)!.accord.degre);
+    expect(n.filter((x) => x === "iv").length).toBeGreaterThan(n.filter((x) => x.startsWith("V")).length);
+  });
+
+  it("sous « Dominante », seule la dominante à sensible porte sa septième : le V7 du dorien, et non son v7", () => {
+    // Sol en ré dorien : septième de la, du v comme du V.
+    const septiemes = accordsPossibles(67, 2, "dorien", "dominante").filter((a) => a.septieme !== null).map((a) => a.nom);
+    expect(septiemes).toEqual(["V7"]);
+    expect(accordsPossibles(67, 2, "dorien", "toutes").map((a) => a.nom)).toContain("v7");
+  });
+
+  it("les emprunts viennent du mode parallèle de même tierce, l'éolien pour le phrygien", () => {
+    // Fa dièse en mi phrygien : aucun accord du mode ; l'éolien de mi le porte dans ii°, v et VII.
+    const empruntes = accordsPossibles(66, 4, "phrygien", "aucune").filter((a) => a.nom.endsWith("emprunté")).map((a) => a.nom);
+    expect(empruntes).toEqual(["ii° emprunté", "v emprunté", "VII emprunté"]);
+  });
+
+  it("la tonique du phrygien a sa dominante à sensible en repli, et seul ce mode, faute de sensible", () => {
+    expect(accordsPossibles(63, 4, "phrygien", "aucune").map((a) => a.nom)).toContain("V/i");
+    for (const mode of MODES_CHORAL.filter((m) => m !== "phrygien")) {
+      expect(accordsPossibles(63, 4, mode, "aucune").map((a) => a.nom), mode).not.toContain("V/i");
+    }
+  });
+
+  it("toute note du soprano reçoit un accord, sous chaque mode, chaque tonique et chaque réglage des septièmes", () => {
+    const vides: string[] = [];
+    for (const mode of MODES_CHORAL) {
+      for (let tonique = 0; tonique < 12; tonique++) {
+        for (const septiemes of ["aucune", "dominante", "toutes"] as Septiemes[]) {
+          for (let note = 60; note < 72; note++) if (accordsPossibles(note, tonique, mode, septiemes).length === 0) vides.push(`${mode} ${tonique} ${septiemes} ${note}`);
+        }
+      }
+    }
+    expect(vides).toEqual([]);
   });
 });
 
