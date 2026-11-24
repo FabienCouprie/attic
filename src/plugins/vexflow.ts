@@ -15,7 +15,8 @@ import { lireTablature, type FauteGravure } from "../audio/notation-vexflow";
 
 /** Les cordes de chaque accordage de la tablature. */
 const CORDES: Record<string, number> = { "Guitare standard": 6, "Ukulélé": 4, Basse: 4 };
-import { accordsInconnus } from "../audio/theorie-romains";
+import { CHOIX_GAMME_ROMAINE, accordsInconnus, estProgressionRomaine, gammeDesRomains } from "../audio/theorie-romains";
+import { refusHorsGamme } from "./romains-hors-gamme";
 import { choixClefPortee } from "../audio/clefs-portee";
 
 /** Le refus d'une notation fautive : chaque jeton nommé avec sa raison, les huit premiers. */
@@ -162,11 +163,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C",
         doc: "Tonalité pour interpréter une progression en chiffres romains. Accepte une tonique seule (« A ») ou un libellé complet (« A minor »), tel que l'émet « Analyse harmonique », dans ce cas le mode nommé l'emporte sur « Gamme ».",
         docEn: "Key used to interpret a roman numeral progression. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ».", defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
-        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
-        doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la.",
-        docEn: "Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A." },
+      { nom: "Gamme", nomEn: "Scale", ...CHOIX_GAMME_ROMAINE,
+        doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode : chaque chiffre prend pour fondamentale la note de la gamme à son rang, et la casse décide de la qualité. En « Mineur naturel », III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la ; dans une gamme de six degrés, VII n'existe pas.",
+        docEn: "Scale the degrees are read in, when the key names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. In « Natural minor », III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A; in a six-degree scale, VII does not exist." },
       { nom: "Mesures par ligne", nomEn: "Measures per line", plage: [1, 8], pas: 1, defaut: 4,
         doc: "Nombre de mesures par ligne.", docEn: "Number of measures per line." },
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
@@ -184,6 +183,10 @@ export const fiches: FicheAudio[] = ([
       if (illisibles.length > 0) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
       }
+      const jetons = texte.split(/\s+/).filter(Boolean);
+      const gamme = gammeDesRomains(ctx.paramTexte("Tonalité", "C"), ctx.paramTexte("Gamme", "majeur"));
+      const hors = estProgressionRomaine(jetons) ? refusHorsGamme(jetons, gamme, 2) : null;
+      if (hors) return hors;
       const accords = accordsDeProgression(texte, ctx.paramTexte("Tonalité", "C"), ctx.paramTexte("Gamme", "majeur"));
       // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAIT EST REFUSE EN LE NOMMANT. Mesure : nourri du format
       // de « Texte -> MIDI », ce noeud annoncait « Termine » et dessinait quatre-vingts elements sans

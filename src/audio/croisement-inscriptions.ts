@@ -23,6 +23,7 @@ import type { CoincidenceInscrite, InertieConditionnee, InertieInscrite } from "
 import { COINCIDENCES_DES_CHOIX, INERTIES_DES_CHOIX } from "./croisement-choix";
 import dette from "./croisement-dette.json";
 import { SIGNATURES } from "./signatures";
+import { GAMMES_DES_ROMAINS } from "./theorie-romains";
 
 /** Les métriques en seizièmes de la table commune, sous lesquelles la grille descend à la double croche. */
 const EN_SEIZIEMES = SIGNATURES.filter((s) => s.endsWith("/16"));
@@ -40,6 +41,9 @@ const UNE_SUITE = "la suite trouvée à la graine d'essai évite les degrés où
 // fait naître ou grandir. Chacune remplace une ligne de la dette, devenue fausse quand la liste a
 // gagné des valeurs, et chaque raison d'entrée a été vue se défaire sous une entrée qui donne prise.
 const VUE_SEULE = "la taille ne règle que la vue, qui calcule son propre spectre : le nœud rend son entrée telle quelle";
+
+/** Les numéros des huit entrées du mélangeur MIDI, dont chacune porte les mêmes réglages. */
+const ENTREES_DU_MELANGEUR = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** Les inerties légitimes, chacune dite dans la documentation du réglage gouverné. */
 export const INERTIES_DECLAREES: InertieInscrite[] = [
@@ -91,6 +95,10 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "harmoniser-choral·Graine", quand: { reglage: "Température", valeurs: ["0"] }, raison: "à température nulle, le choral est celui de moindre coût, trouvé sans tirage ; dit dans sa documentation" },
   { ou: "harmoniser-choral·Pas", quand: { banc: true }, raison: "au banc, un modèle est branché sur « Modèle », et sa grille remplace celle de « Pas », ce que la notice dit ; sans modèle, « Pas » est tenu par audio/choral-harmoniser.test.ts" },
   { ou: "corpus-fabriquer-fin·Si le fichier existe", quand: { banc: true }, raison: "non mesurable au banc : le réglage n'agit que sur un fichier écrit, et le banc de node n'a ni dossier ni application de bureau ; tenu par plugins/fabriquer-corpus.test.ts" },
+  ...ENTREES_DU_MELANGEUR.map((n) => ({
+    ou: `melangeur-midi·Transposition ${n}`, quand: { reglage: `Canal ${n}`, valeurs: ["10"] },
+    raison: "le canal 10 est celui des percussions, dont le numéro de note désigne un instrument et non une hauteur : ses notes ne se transposent pas ; dit dans sa documentation",
+  })),
   { ou: "camelot·Graine", quand: { reglage: "Parcours", sauf: ["aleatoire"] }, raison: "la graine ne tire que le parcours aléatoire, et le parcours complet comme les voisins n'ont rien à tirer ; dit dans sa documentation" },
   { ou: "dither·Graine", quand: { reglage: "Dither", valeurs: ["aucun"] }, raison: "la graine ne tire que le bruit de dither, et sans dither rien n'est tiré ; dit dans sa documentation" },
   { ou: "tonal-grille·Durée", quand: { reglage: "Mode", valeurs: ["arpege"] }, raison: "en arpège, chaque note dure une croche, et la durée de l'accord n'a plus rien à régler ; dit dans sa documentation" },
@@ -187,6 +195,10 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "solveur-contraintes·Gamme", valeurs: ["phrygien-dominant", "double-seconde-augmentee"], raison: UNE_SUITE },
   { ou: "analyseur-spectre·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
   { ou: "spectrogramme·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
+  ...ENTREES_DU_MELANGEUR.map((n) => ({
+    ou: `melangeur-midi·Canal ${n}`, valeurs: ["auto", "garder"],
+    raison: "l'entrée d'essai occupe deux canaux, et « Automatique » garde les canaux d'une telle entrée, comme « Garder » ; une entrée d'un seul canal les sépare, ce que tient audio/melange-midi.test.ts",
+  })),
   { ou: "arpegiateur-midi·Direction", valeurs: ["montant", "ordre-de-jeu"], raison: "le MIDI d'essai joue les notes de chaque accord du grave à l'aigu, et l'ordre de jeu y est l'ordre montant ; un accord joué sol, do, mi les sépare" },
   // RELEVÉES À LA NAISSANCE DU NŒUD, le 2026-11-22, sur le choral 175 de Bach, en do majeur.
   // LE LOT 3d-2 (2026-11-15) : chacune voulue, ou non mesurable au banc pour la raison de l'inertie
@@ -210,7 +222,7 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Plier", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
-  { ou: "accords-vers-notation·Gamme", valeurs: ["majeur", "mineur"], raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
+  { ou: "accords-vers-notation·Gamme", valeurs: GAMMES_DES_ROMAINS.map((g) => g.id), raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
   ...COINCIDENCES_DES_CHOIX,
 ];
 

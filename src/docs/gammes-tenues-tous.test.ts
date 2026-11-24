@@ -138,22 +138,33 @@ describe("les nœuds qui dépendent d'une gamme sans réglage de gamme", () => {
   const classesDe = async (f: FicheDuBanc, valeurs: readonly unknown[], port: string) =>
     (await lireSorties(f.sorties ?? [], valeurs, lireNotation)).lues.filter((s) => s.port === port).flatMap((s) => s.hauteurs);
 
-  it("la Gamme liste les sept degrés de son mode sur sa tonique, sous les douze toniques", async () => {
-    const MODES: Record<string, string> = { major: "majeur", minor: "mineur", dorian: "dorien", mixolydian: "mixolydien", lydian: "lydien", phrygian: "phrygien", locrian: "locrien" };
+  it("la Gamme liste les degrés de chaque gamme offerte sur sa tonique, sous les douze toniques", async () => {
+    // TOUTES LES GAMMES QUE LE NŒUD OFFRE, lues dans son réglage : il n'en offrait que les sept modes,
+    // sous les noms de Tonal, jusqu'au 2026-11-23, et ce cas les nommait lui-même.
+    const f = fiche("tonal-gamme")!;
+    const offertes = (f.parametres.find((p) => p.nom === "Type")!.optionIds ?? []) as string[];
+    expect(offertes.length).toBeGreaterThanOrEqual(25);
     const fautes: string[] = [];
-    for (const [type, id] of Object.entries(MODES)) {
+    for (const id of offertes) {
       for (let t = 0; t < 12; t++) {
-        const r = await lancerFiche(fiche("tonal-gamme")!, { "Tonalité": CLES[t], Type: type }, { entrees: [null] });
+        const r = await lancerFiche(f, { "Tonalité": CLES[t], Type: id }, { entrees: [null] });
         const noms = String(r.valeurs[0] ?? "").split(" ").filter(Boolean);
         const attendu = degresDe(id)!.map((d) => (d + t) % 12);
-        // Sept lettres distinctes : une gamme diatonique s'écrit une fois chaque lettre.
-        if (JSON.stringify(noms.map((n) => Note.chroma(n))) !== JSON.stringify(attendu) || new Set(noms.map((n) => n[0])).size !== 7) {
-          fautes.push(`${CLES[t]} ${type} : ${noms.join(" ")}`);
+        // Sept lettres distinctes : une gamme de sept degrés s'écrit une fois chaque lettre.
+        const lettres = new Set(noms.map((n) => n[0])).size;
+        if (JSON.stringify(noms.map((n) => Note.chroma(n))) !== JSON.stringify(attendu) || (attendu.length === 7 && lettres !== 7)) {
+          fautes.push(`${CLES[t]} ${id} : ${noms.join(" ")}`);
         }
       }
     }
     expect(fautes).toEqual([]);
   }, 60_000);
+
+  it("la Gamme relit les sept noms de Tonal qu'un projet ancien porte", async () => {
+    const f = fiche("tonal-gamme")!;
+    const r = await lancerFiche(f, { "Tonalité": "D", Type: "dorian" }, { entrees: [null] });
+    expect(r.valeurs[0]).toBe("D E F G A B C");
+  });
 
   it("la Roue de Camelot joue à chaque pas la triade de sa case, sur les vingt-quatre départs", async () => {
     // LA TABLE EST CELLE DE LA ROUE, écrite ici sans rien lire du nœud : la fondamentale de chaque case,

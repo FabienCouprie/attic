@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **522 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **523 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2856,7 +2856,7 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 *Converts Harmonic Analysis output into the notation expected by Text → MIDI.*
 
-Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
+Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input; each numeral takes as its root the « Scale » note at its rank, when the key names no mode, and a VII is refused in a six-degree scale.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2868,7 +2868,7 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Source | choice | Detected chords | Detected chords / Progression | « Detected chords » transcribes the actual harmony with its measured durations. « Progression » expands the suggested roman numerals, which requires the Key input. |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. No effect when « Source » is « Detected chords », which reads no degrees. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in, when the Key input names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In « Natural minor », III, VI and VII drop a semitone; in a six-degree scale, VII does not exist. No effect when « Source » is « Detected chords », which reads no degrees. |
 | Octave | number | 3 | 1 – 6, step 1 | Octave of the root note of the generated chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
 | Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
@@ -4162,6 +4162,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Micromontage](#micromontage) | Assembles a sound from thousands of fragments, each cut and laid at its own place. |
 | [MIDI Join](#midi-join) | Places two MIDI files one after another with an overlap. |
 | [MIDI Loop](#midi-loop) | Repeats a MIDI file a given number of times. |
+| [MIDI Mixer](#midi-mixer) | Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition. |
 | [MIDI Splitter](#midi-splitter) | Splits a MIDI file into parts, one per instrument, to play them with four different banks. |
 | [Mixer](#mixer) | Sums several tracks into one. Each track's level is set on the node that produces it. |
 | [Montage](#montage) | Lays sounds on a timeline, each at its own instant and level, with its own fades; the node grows one track at a time. |
@@ -4678,6 +4679,61 @@ Repeats a MIDI file several times in a row. The Fade parameter sets the overlap 
 |---|---|---|---|---|
 | Repeats | number | 4 | 1 – 32, step 1 | Number of times the MIDI file is replayed in a row. |
 | Fade | number | 0 ms | 0 – 1000 ms, step 1 | Overlap between two repetitions. 0 = no overlap (hard join). |
+
+#### MIDI Mixer
+
+`melangeur-midi` · Processing → Editing
+
+*Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition.*
+
+Joins several MIDI files into one, one track per input, each with its own velocity, channel and transposition. The node shows two inputs to begin with; the « + » and « - » buttons under its inputs make it longer or shorter, up to eight. Inputs are numbered: input 3 stays input 3 whatever order the cables were drawn in. Each input has four settings, which only appear for connected inputs. « Velocity » multiplies the velocity of each note of the input, in percent. The result is bounded from 1 to 127: a note never becomes silent, and none exceeds the format's maximum. « Channel » selects the input's MIDI channel: • « Automatic » puts the input on the channel of its number when all its notes fit on one channel. An input played on channel 10, which General MIDI reserves for percussion, stays there. An input whose notes occupy several channels keeps them. • « Keep » leaves every event on its original channel. • A number from 1 to 16 puts all the input's notes on that channel. A channel carries one instrument for the whole file, and two notes of the same pitch on one channel close each other: two inputs left on one channel sound with a single instrument. When an input changes channel, the events of its channels that carry none of its notes are removed. « Transpose » moves the input's pitches, in semitones. Notes on channel 10 are not transposed: their number there names a percussion instrument and not a pitch. A note that would leave the MIDI range, 0 to 127, is removed, and the message gives their number. « Mute » takes the input out of the mix. Inputs are aligned in seconds: each keeps its instants as its own tempo gives them. The rendered file carries the tempo, resolution, time signature and key of the first mixed input that has notes. The instants of inputs of another tempo or resolution are converted to it, each rounded to the nearest tick; those of inputs of the same tempo and resolution are kept as they are. The « MIDI » output carries the file, one track per mixed input, in the order of their numbers. A muted input or one without notes has no track. The message gives the number of tracks, the number of notes, the length and the written tempo, then, for each connected input, its channels in the file and its number of notes, or « muted ».
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI 1 | MIDI |  |
+| input | MIDI 2 | MIDI |  |
+| input | MIDI 3 | MIDI |  |
+| input | MIDI 4 | MIDI |  |
+| input | MIDI 5 | MIDI |  |
+| input | MIDI 6 | MIDI |  |
+| input | MIDI 7 | MIDI |  |
+| input | MIDI 8 | MIDI |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Velocity 1 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 1. The result is bounded from 1 to 127. |
+| Channel 1 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 1. Automatic: channel 1 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 1 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 1's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 1 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 1 | checkbox | 0 | 0 / 1 | Takes input 1 out of the mix. |
+| Velocity 2 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 2. The result is bounded from 1 to 127. |
+| Channel 2 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 2. Automatic: channel 2 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 2 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 2's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 2 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 2 | checkbox | 0 | 0 / 1 | Takes input 2 out of the mix. |
+| Velocity 3 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 3. The result is bounded from 1 to 127. |
+| Channel 3 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 3. Automatic: channel 3 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 3 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 3's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 3 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 3 | checkbox | 0 | 0 / 1 | Takes input 3 out of the mix. |
+| Velocity 4 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 4. The result is bounded from 1 to 127. |
+| Channel 4 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 4. Automatic: channel 4 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 4 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 4's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 4 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 4 | checkbox | 0 | 0 / 1 | Takes input 4 out of the mix. |
+| Velocity 5 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 5. The result is bounded from 1 to 127. |
+| Channel 5 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 5. Automatic: channel 5 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 5 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 5's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 5 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 5 | checkbox | 0 | 0 / 1 | Takes input 5 out of the mix. |
+| Velocity 6 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 6. The result is bounded from 1 to 127. |
+| Channel 6 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 6. Automatic: channel 6 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 6 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 6's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 6 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 6 | checkbox | 0 | 0 / 1 | Takes input 6 out of the mix. |
+| Velocity 7 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 7. The result is bounded from 1 to 127. |
+| Channel 7 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 7. Automatic: channel 7 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 7 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 7's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 7 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 7 | checkbox | 0 | 0 / 1 | Takes input 7 out of the mix. |
+| Velocity 8 | slider | 100 % | 1 – 200 %, step 1 | Factor applied to the velocity of each note of input 8. The result is bounded from 1 to 127. |
+| Channel 8 | choice | Automatic | Automatic / Keep / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 / 12 / 13 / 14 / 15 / 16 | MIDI channel of input 8. Automatic: channel 8 when its notes fit on one channel, the drums' channel 10 kept, several channels kept. Keep: the original channels. A number: all its notes on that channel. |
+| Transpose 8 | slider | 0 st | -24 – 24 st, step 1 | Shift of input 8's pitches, in semitones. A note on channel 10, whether the input is played there or « Channel 8 » puts it there, is not transposed; a note that would leave 0 to 127 is removed. |
+| Mute 8 | checkbox | 0 | 0 / 1 | Takes input 8 out of the mix. |
 
 #### MIDI Splitter
 
@@ -5798,7 +5854,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 
 *Generates a full accompaniment in text-to-MIDI format.*
 
-Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
+Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Roman numerals are read in the chosen « Scale »: each numeral takes as its root the scale note at its rank, and case decides the quality; in a six-degree scale, VII does not exist, and a numeral naming it is refused. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5808,9 +5864,9 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
-| Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The scale is set in « Scale »; the Progression input wins over the setting when it names a key. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A; in « Dorian », « vi° » gives B° in D. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist. No effect on a list of symbols. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
 | Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -9859,7 +9915,7 @@ This node engraves a piano score from a notation text: two staves joined by a br
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when its first token is one, « V7 », « ii° », « bVII », « V65 » and « V/V » included, an unreadable numeral further on being refused and named, and each numeral taking as its root the « Scale » note at its rank, a VII being refused in a six-degree scale; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9871,7 +9927,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 |---|---|---|---|---|
 | Chords | text | `C Am F G` |  | Chords to display, separated by spaces. Also accepts a roman numeral progression if a key is set. |
 | Key | text | `C` |  | Key used to interpret a roman numeral progression. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ». |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A. |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in, when the key names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. In « Natural minor », III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A; in a six-degree scale, VII does not exist. |
 | Measures per line | number | 4 | 1 – 8, step 1 | Number of measures per line. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 600 px, step 10 | SVG height. |
@@ -12442,7 +12498,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 *Generates a chord progression from a key and roman numerals.*
 
-Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Numerals are read the way roman-numeral analysis writes them: - case gives the quality: I major, ii minor; ° diminished, ø half-diminished, + augmented; - inversion figures follow the degree: 6 and 64 for a triad, I6 = C/E; 7, 65, 43 and 42 for a seventh, V65 = G7/B; the seventh of a major chord is dominant, that of a minor chord is minor, ii7 = Dm7; - a chord-symbol suffix may also be written: IVmaj7, V9, Vsus4; the added sixth is written Iadd6; - an accidental, bVII, #iv°, is taken on the major scale; - X/Y is chord X built on degree Y, taken as a tonic: V/V = D, V7/IV = C7, vii°/V = F#°. In minor, III, VI and VII drop a semitone, except the diminished or half-diminished vii, built on the leading tone: vii° = G#° in A. A numeral the reading does not know, « X », is refused, and the message names it: nothing is returned.
+Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Numerals are read the way roman-numeral analysis writes them: - case gives the quality: I major, ii minor; ° diminished, ø half-diminished, + augmented; - inversion figures follow the degree: 6 and 64 for a triad, I6 = C/E; 7, 65, 43 and 42 for a seventh, V65 = G7/B; the seventh of a major chord is dominant, that of a minor chord is minor, ii7 = Dm7; - a chord-symbol suffix may also be written: IVmaj7, V9, Vsus4; the added sixth is written Iadd6; - an accidental, bVII, #iv°, is taken on the major scale; - X/Y is chord X built on degree Y, taken as a tonic: V/V = D, V7/IV = C7, vii°/V = F#°. Each numeral takes as its root the « Scale » note at its rank. In « Natural minor », III, VI and VII drop a semitone, except the diminished or half-diminished vii, built on the leading tone: vii° = G#° in A; in « Dorian », vi° = B° in D. « Scale » offers the seventeen scales whose every degree carries a major, minor, diminished or augmented chord. In a six-degree scale, « Whole tone » or « Augmented », VII does not exist, and a numeral naming it is refused. When « Scale » changes, the default progression follows the scale. A numeral the reading does not know, « X », is refused, and the message names it: nothing is returned.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12451,9 +12507,9 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
-| Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The scale is set in « Scale »; the Key input wins over the setting when it names a mode (« A minor »). |
+| Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented | Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A, except the diminished vii, built on the leading tone; in « Dorian », « vi° » gives B° in D. Case only decides the chord quality. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is taken on the major scale. When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten. |
 
 #### Rhythm Analysis
 
@@ -12480,7 +12536,7 @@ Analyses a rhythm by its geometry on the circle. After Godfried Toussaint, « Th
 
 *Lists the notes of a scale from a tonic and a scale type.*
 
-Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available types include major, minor, dorian, mixolydian, lydian, phrygian and locrian.
+Lists the notes of a scale on a tonic, from the first degree to the last. Example: C and « Major » give C D E F G A B. « Type » offers the twenty-five tempered scales of the common table, from the seven modes to « Chromatic ». Each note carries the letter and accidental of its scale's usual spelling: one letter per degree for a seven-degree scale, C D E F# G# A# for « Whole tone ». The tonic is read from the « Tonic » input when it is connected, otherwise from the « Key » setting. The « Notes » output returns the names separated by spaces.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12490,7 +12546,7 @@ Lists the notes of a chosen scale. Example: C major → C D E F G A B. Available
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Starting tonic. |
-| Type | choice | major | major / minor / dorian / mixolydian / lydian / phrygian / locrian | Scale type. |
+| Type | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale whose notes are listed, among the twenty-five tempered scales of the common table, from the seven modes to the chromatic. |
 
 #### Species Counterpoint
 

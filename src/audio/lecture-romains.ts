@@ -21,31 +21,43 @@
 //
 // EN MINEUR, III, VI et VII descendent d'un demi-ton, la gamme étant la mineure naturelle, sauf le
 // vii diminué ou demi-diminué : c'est l'accord de la sensible, qui reste un demi-ton sous la tonique.
+//
+// DANS TOUTE AUTRE GAMME DE LA TABLE, le degré prend pour fondamentale la note de la gamme à ce rang,
+// et la casse dit toujours la qualité : en ré dorien, « vi° » donne B°, « IV » donne G. Décision de
+// Fabien du 2026-11-23, la Progression offrant la table commune. Un degré que la gamme n'a pas, le VII
+// d'une gamme de six degrés, ne se lit pas. Les degrés de passage ne comptent pas : la bebop dominante
+// se lit sur ses sept degrés d'harmonie.
 
 import { Note } from "tonal";
 import { accordDuSymbole } from "./symboles-accords";
+import { intervalleDuDegre, notesDeGamme } from "./gamme-epelee";
+import { gammeDe } from "./gammes";
 
-export type ModeRomain = "majeur" | "mineur";
+/** La gamme dans laquelle les chiffres se lisent : un identifiant de la table, `majeur` et `mineur` compris. */
+export type ModeRomain = string;
 
 const CHIFFRE = /^([b#♭♯]*)(VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)([^/]*)$/;
 const CLASSIQUE = /^(°|o|ø|\+)?(64|65|43|42|2|6|7)?$/;
 const DEGRES = ["I", "II", "III", "IV", "V", "VI", "VII"];
-/** Le degré dont l'intervalle est juste, et non majeur : I, IV et V. */
-const JUSTES = new Set([0, 3, 4]);
 
-/** L'intervalle depuis la tonique d'un degré déplacé de `decalage` demi-tons, « 3m », « 4A ». */
-function intervalleDuDegre(degre: number, decalage: number): string | null {
-  const qualites = JUSTES.has(degre) ? { [-1]: "d", 0: "P", 1: "A" } : { [-2]: "d", [-1]: "m", 0: "M", 1: "A" };
-  const q = (qualites as Record<number, string>)[decalage];
-  return q ? `${degre + 1}${q}` : null;
+/** Les fondamentales d'une gamme sur une tonique, ses degrés de passage retirés, ou null. */
+function fondamentalesDeGamme(tonique: string, mode: ModeRomain): string[] | null {
+  const g = gammeDe(mode);
+  const notes = g ? notesDeGamme(tonique, g.id) : null;
+  return g && notes ? notes.filter((_, i) => !(g.passage ?? []).includes(g.degres[i])) : null;
 }
 
 /** La fondamentale d'un chiffre, ou null. */
 function fondamentale(alteration: string, numeral: string, tonique: string, mode: ModeRomain, sensible: boolean): string | null {
   const degre = DEGRES.indexOf(numeral.toUpperCase());
   const explicite = [...alteration].reduce((s, a) => s + (a === "b" || a === "♭" ? -1 : 1), 0);
-  const mineure = mode === "mineur" && [2, 5, 6].includes(degre) && !(degre === 6 && sensible) ? -1 : 0;
-  const intervalle = intervalleDuDegre(degre, alteration ? explicite : mineure);
+  // UNE ALTÉRATION SE PREND SUR LA GAMME MAJEURE, et la sensible du mineur aussi, quelle que soit la gamme.
+  const surLeMajeur = alteration ? explicite : mode === "mineur" && degre === 6 && sensible ? 0 : null;
+  if (surLeMajeur === null) {
+    const n = fondamentalesDeGamme(tonique, mode)?.[degre];
+    return n ? Note.pitchClass(n) : null;
+  }
+  const intervalle = intervalleDuDegre(degre, surLeMajeur);
   if (!intervalle) return null;
   const n = Note.transpose(tonique, intervalle);
   return n ? Note.pitchClass(n) : null;

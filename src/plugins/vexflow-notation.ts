@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordsDepuisRomains, estProgressionRomaine, gammeDesRomains, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
   barreDeDuree, easyScoreDe, jetonsDe, lireNotationVexflow, longueurDe, mettreEnMesures,
@@ -22,8 +22,7 @@ import { BarNote, GhostNote, Renderer, Factory, TabStave, TabNote, Voice, Format
  */
 export function accordsPourPartition(tonalite: string, gammeReglee: string, tokens: string[]): string[] {
   const tonique = toniqueDepuisTonalite(tonalite) ?? "C";
-  const mode = modeDepuisTonalite(tonalite) ?? (gammeReglee === "mineur" ? "mineur" : "majeur");
-  return accordsDepuisRomains(tonique, tokens, mode);
+  return accordsDepuisRomains(tonique, tokens, gammeDesRomains(tonalite, gammeReglee));
 }
 
 // `barreDeDuree` VIVAIT ICI et habite `audio/notation-vexflow.ts`, avec le lecteur de la notation :
