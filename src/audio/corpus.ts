@@ -12,16 +12,24 @@
 // passe par `audio/accords.ts`, qui touche à `AudioBuffer`.
 
 import { estSequence, type Sequence } from "./sequence";
+import type { ModeChoral } from "./choral-regles";
 
-/** Le mode d'une tonalité lue. */
-export type ModeLu = "majeur" | "mineur";
+/**
+ * Le mode d'une tonalité lue : ceux du juge des chorals. Les trois modes anciens ne se lisent que
+ * dans ce que la pièce écrit (`audio/corpus-mode.ts`) ; l'estimation sur les notes ne rend que le
+ * majeur et le mineur.
+ */
+export type ModeLu = ModeChoral;
 
 /** Une tonalité, et d'où on la tient. */
 export interface TonaliteLue {
-  /** Classe de hauteur de la tonique, 0 = do. */
+  /** Classe de hauteur de la tonique, 0 = do ; en mode ancien, la finale. */
   tonique: number;
   mode: ModeLu;
-  /** `armure` : écrite dans la pièce ; `notes` : estimée sur les durées par classe de hauteur. */
+  /**
+   * `armure` : écrite dans la pièce, ou lue sur son armure et sa finale ; `notes` : estimée sur les
+   * durées par classe de hauteur.
+   */
   origine: "armure" | "notes";
 }
 

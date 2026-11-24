@@ -58,6 +58,22 @@ describe("Lire un corpus", () => {
     expect(rapport).not.toContain("lisez-moi");
   });
 
+  it("garde le mode qu'une partition écrit, et estime sur ses notes ce qui n'en écrit pas", async () => {
+    const [majeur] = corpusDEssai().pieces;
+    const deuxVoix = { ...majeur.sequence, notes: majeur.sequence.notes.filter((n) => n.voix === 0 || n.voix === 3).map((n) => ({ ...n, voix: n.voix === 3 ? 1 : 0 })) };
+    poserPont({
+      "a-dorien.krn": [["**kern", "**kern"], ["*M4/4", "*M4/4"], ["*k[]", "*k[]"], ["*d:dor", "*d:dor"], ["=1", "=1"],
+        ["4D", "4d"], ["4A", "4c"], ["4D", "4d"], ["4C", "4e"], ["==", "=="], ["*-", "*-"]].map((l) => l.join("\t")).join("\n"),
+      "b-majeur.mid": await sequenceVersMidiParVoix(deuxVoix),
+    });
+    const r = await lire({ Source: "dossier", Dossier: "D:/corpus", Voix: 2 });
+    const c = r.valeurs[0] as Corpus;
+    expect(c.pieces.map((p) => [p.source, p.tonalite])).toEqual([
+      ["a-dorien.krn", { tonique: 2, mode: "dorien", origine: "armure" }],
+      ["b-majeur.mid", { tonique: 0, mode: "majeur", origine: "notes" }],
+    ]);
+  });
+
   it("s'arrête à « Limite » pièces gardées", async () => {
     const [majeur, mineur] = corpusDEssai().pieces;
     poserPont({ "a.mid": await sequenceVersMidiParVoix(majeur.sequence), "b.mid": await sequenceVersMidiParVoix(mineur.sequence) });

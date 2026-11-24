@@ -16,6 +16,8 @@ import { etiqueter } from "./multicanal";
 import { modeleDEssai, sequenceDEssai } from "./valeurs-essai";
 import { lireTableDcml } from "./dcml-tsv";
 import { TABLE_175 } from "./choral-175-dcml";
+import { MODES_CHORAL } from "./choral-regles";
+import { TONIQUE_REFERENCE } from "./champ-corpus";
 
 /** Quatre accords d'une seconde : do, fa majeur septième, sol septième, la mineur. */
 const ACCORDS_D_ESSAI = [[60, 64, 67], [65, 69, 72, 76], [67, 71, 74, 77], [57, 60, 64]];
@@ -215,15 +217,15 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
   "apprendre-corpus": {
     Corpus: {
       valeur: () => ({
-        pieces: Array.from({ length: 6 }, (_, t) => t).map((t) => {
+        pieces: MODES_CHORAL.flatMap((mode) => Array.from({ length: 6 }, (_, t) => t).map((t) => {
           const s = lireTableDcml(TABLE_175, 60).sequence;
-          // LA TONALITÉ RESTE DÉCLARÉE EN DO : ramenées à leur vraie tonique, les six pièces
-          // redeviendraient le même choral, et la graine qui choisit la pièce mise de côté ne
-          // changerait rien.
-          return { sequence: { ...s, notes: s.notes.map((n) => ({ ...n, note: n.note + t })) }, source: `175 + ${t}`, tonalite: { tonique: 0, mode: "majeur" as const, origine: "notes" as const } };
-        }),
+          // LA TONALITÉ RESTE DÉCLARÉE SUR LA TONIQUE DE RÉFÉRENCE DU MODE : ramenées à leur vraie
+          // tonique, les six pièces redeviendraient le même choral, et la graine qui choisit la pièce
+          // mise de côté ne changerait rien.
+          return { sequence: { ...s, notes: s.notes.map((n) => ({ ...n, note: n.note + t })) }, source: `175 + ${t}, ${mode}`, tonalite: { tonique: TONIQUE_REFERENCE[mode], mode, origine: "notes" as const } };
+        })),
       }),
-      raison: "le corpus d'essai n'a qu'une pièce majeure, et une validation n'y met rien de côté : le choral 175 de Bach monté de zéro à cinq demi-tons, sa tonalité déclarée en do, donne six pièces distinctes, assez pour que la part et la graine agissent",
+      raison: "le corpus d'essai n'a qu'une pièce majeure et une mineure, et une validation n'y met rien de côté : le choral 175 de Bach monté de zéro à cinq demi-tons, sa tonalité déclarée sur la tonique de référence de chacun des cinq modes, donne six pièces distinctes par mode, assez pour que la part et la graine agissent sous chaque « Gamme »",
     },
   },
   "verifier-choral": {

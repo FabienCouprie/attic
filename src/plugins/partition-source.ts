@@ -9,6 +9,7 @@ import { detecterFormat, entreeVerovio, type FormatNotation } from "../audio/ver
 import { hauteursHumdrum, lireDepuisVerovio } from "../audio/partition-lecture";
 import { lireTableDcml } from "../audio/dcml-tsv";
 import type { Sequence } from "../audio/sequence";
+import type { TonaliteLue } from "../audio/corpus";
 import { outilVerovio } from "./verovio-outil";
 
 const en = () => langueCourante() === "en";
@@ -38,9 +39,12 @@ export function octetsLus(reponse: unknown): Uint8Array | null {
 
 export const NOMS_FORMAT: Record<FormatLu, string> = { abc: "ABC", musicxml: "MusicXML", mei: "MEI", humdrum: "Humdrum", dcml: "DCML" };
 
-/** Ce que la lecture rend : la séquence et ses lignes de rapport, ou le refus et sa raison. */
+/**
+ * Ce que la lecture rend : la séquence, la tonalité que la partition écrit (jamais une table du DCML,
+ * qui n'en porte pas) et ses lignes de rapport ; ou le refus et sa raison.
+ */
 export type PartitionSource =
-  | { ok: true; sequence: Sequence; format: FormatLu; lignes: string[] }
+  | { ok: true; sequence: Sequence; format: FormatLu; tonaliteEcrite: TonaliteLue | null; lignes: string[] }
   | { ok: false; message: string; lignes: string[] };
 
 /**
@@ -50,6 +54,7 @@ export type PartitionSource =
 export async function lirePartitionSource(source: SourcePartition, tempoImpose: number): Promise<PartitionSource> {
   let sequence: Sequence;
   let format: FormatLu;
+  let tonaliteEcrite: TonaliteLue | null = null;
   const lignes: string[] = [];
   if (source.texte !== undefined && estTableDcml(source.texte)) {
     format = "dcml";
@@ -80,6 +85,7 @@ export async function lirePartitionSource(source: SourcePartition, tempoImpose: 
       const ecrites = format === "humdrum" && source.texte ? hauteursHumdrum(source.texte) : undefined;
       const lue = lireDepuisVerovio(tk, tempoImpose, ecrites);
       sequence = lue.sequence;
+      tonaliteEcrite = lue.tonaliteEcrite;
       lignes.push(`${en() ? "tied notes joined" : "notes liées jointes"} : ${lue.liees}`);
       if (lue.sansVoix > 0) lignes.push(`${en() ? "notes without staff or layer, left out" : "notes sans portée ni couche, écartées"} : ${lue.sansVoix}`);
     } catch (e: any) {
@@ -89,5 +95,5 @@ export async function lirePartitionSource(source: SourcePartition, tempoImpose: 
     }
   }
   if (sequence.notes.length === 0) return { ok: false, lignes, message: en() ? "No note in the score." : "Aucune note dans la partition." };
-  return { ok: true, sequence, format, lignes };
+  return { ok: true, sequence, format, tonaliteEcrite, lignes };
 }

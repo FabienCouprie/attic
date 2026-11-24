@@ -1,22 +1,25 @@
-// audio/champ-corpus.ts — Les colonnes qu'un corpus donne à apprendre, ramenées en do majeur ou en la mineur.
+// audio/champ-corpus.ts — Les colonnes qu'un corpus donne à apprendre, ramenées à la tonique de référence de leur mode.
 //
 // UNE COLONNE PAR PAS DE LA GRILLE où les quatre voix sonnent, chacune à la hauteur qu'elle tient à
 // cet instant. Une colonne où une voix se tait, ou sort des bornes, n'est pas gardée, et la suivante
 // ne la suit pas : un passage ne s'apprend que d'une colonne vraie à la suivante.
 //
-// LA TONALITÉ DE RÉFÉRENCE EST DO MAJEUR OU LA MINEUR, et chaque pièce y est transposée du plus petit
-// écart, entre une quarte augmentée vers le bas et une quarte vers le haut, sa tonalité lue disant de
-// combien. Un modèle appris en do s'applique en ré en décalant les hauteurs de la même façon.
+// LA TONALITÉ DE RÉFÉRENCE EST LA FINALE DU MODE SUR LES TOUCHES BLANCHES : do majeur, la mineur, ré
+// dorien, mi phrygien, sol mixolydien (décision D10 du 2026-11-24). Chaque pièce y est transposée du
+// plus petit écart, entre une quarte augmentée vers le bas et une quarte vers le haut, sa tonalité lue
+// disant de combien. Un modèle appris en do s'applique en ré en décalant les hauteurs de la même façon.
 
 import type { Corpus } from "./corpus";
 import type { Sequence } from "./sequence";
+import type { ModeChoral } from "./choral-regles";
 import { TESSITURES_SATB } from "./tessitures-satb";
 import { NB_VOIX, type DonneesChamp } from "./champ-paires";
 
-export type ModeChamp = "majeur" | "mineur";
+/** Le mode d'un modèle : ceux du juge et de l'harmoniseur des chorals. */
+export type ModeChamp = ModeChoral;
 
-/** La tonique de référence d'un mode : do en majeur, la en mineur. */
-export const TONIQUE_REFERENCE: Record<ModeChamp, number> = { majeur: 0, mineur: 9 };
+/** La tonique de référence d'un mode : la finale du mode sur les touches blanches. */
+export const TONIQUE_REFERENCE: Record<ModeChamp, number> = { majeur: 0, mineur: 9, dorien: 2, phrygien: 4, mixolydien: 7 };
 
 /** Les bornes d'un modèle : l'étendue de Bach dans ses chorals, élargie d'une tierce mineure de chaque côté. */
 export const BORNES_CHAMP: readonly (readonly [number, number])[] = TESSITURES_SATB.map((t) => [t.entiere[0] - 3, t.entiere[1] + 3] as const);
