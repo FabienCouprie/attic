@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 99 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 297 · transposable tel quel
+- **pur** : 298 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |

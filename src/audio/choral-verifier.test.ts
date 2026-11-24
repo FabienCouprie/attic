@@ -13,7 +13,7 @@ import { lireTableDcml } from "./dcml-tsv";
 import { TABLE_175 } from "./choral-175-dcml";
 import { estRefusChoral, verifierChoral, type OptionsChoral, type RegleChoral, type VerdictChoral } from "./choral-verifier";
 import type { Sequence } from "./sequence";
-import type { Mode } from "./choral-regles";
+import { accordsDeLaTonalite, lireAccord, MODES_CHORAL, sautFautif, type ModeChoral } from "./choral-regles";
 
 const C_MAJEUR: OptionsChoral = { tonique: 0, mode: "majeur", tempo: 60, tempsParMesure: 4 };
 
@@ -46,6 +46,15 @@ const choral = (colonnes: number[][]): Sequence => ({
 const CADENCE = [[72, 64, 55, 48], [72, 65, 57, 41], [71, 62, 55, 43], [72, 64, 55, 48]];
 /** i iv V i en do mineur, la dominante sur la sensible. */
 const CADENCE_MINEURE = [[72, 63, 55, 48], [72, 65, 56, 41], [71, 62, 55, 43], [72, 63, 55, 48]];
+/** i IV V i en do dorien : le IV majeur du mode, la dominante qui prend la sensible. */
+const CADENCE_DORIENNE = [[72, 63, 55, 48], [72, 65, 57, 41], [71, 62, 55, 43], [72, 63, 55, 48]];
+/** I ♭VII IV I en do mixolydien : le si bémol du mode, et la sous-dominante avant la fin. */
+const CADENCE_MIXOLYDIENNE = [[72, 64, 55, 48], [74, 65, 58, 46], [72, 65, 57, 41], [72, 64, 55, 48]];
+/**
+ * i iv ♭vii I en do phrygien : la finale atteinte d'en haut par le ré bémol du soprano, l'accord
+ * majeur de la tonique pour finir, aucune sensible.
+ */
+const CADENCE_PHRYGIENNE = [[72, 63, 55, 48], [72, 65, 56, 41], [73, 65, 58, 46], [72, 64, 55, 48]];
 const avec = (base: number[][], col: number, voix: number, h: number) => base.map((c, i) => (i === col ? c.map((x, v) => (v === voix ? h : x)) : c));
 
 describe("sur Bach, le choral 175", () => {
@@ -142,15 +151,115 @@ describe("une faute plantée dans une cadence propre", () => {
   });
 });
 
-describe("la sensible doublée, sous les douze toniques et les deux modes", () => {
+describe("les modes du choral : chaque cadence de référence est propre dans son mode, et le dit hors de lui", () => {
+  const en = (mode: ModeChoral): OptionsChoral => ({ ...C_MAJEUR, mode });
+
+  it("i IV V i en dorien ne relève rien, et son la naturel sort du mineur", () => {
+    expect(verdict(choral(CADENCE_DORIENNE), en("dorien")).infractions).toEqual([]);
+    expect(ou(verdict(choral(CADENCE_DORIENNE), en("mineur")), "hors-tonalite")).toEqual([["1.2", "avis", []]]);
+  });
+
+  it("I ♭VII IV I en mixolydien ne relève rien, et son si bémol sort du majeur", () => {
+    expect(verdict(choral(CADENCE_MIXOLYDIENNE), en("mixolydien")).infractions).toEqual([]);
+    expect(ou(verdict(choral(CADENCE_MIXOLYDIENNE), en("majeur")), "hors-tonalite")).toEqual([["1.2", "avis", []]]);
+  });
+
+  it("I IV V I se lit en mixolydien comme en majeur : le V y prend la sensible", () => {
+    expect(verdict(choral(CADENCE), en("mixolydien")).infractions).toEqual([]);
+  });
+
+  it("i iv ♭vii I en phrygien ne relève rien, et son ré bémol sort du mineur", () => {
+    expect(verdict(choral(CADENCE_PHRYGIENNE), en("phrygien")).infractions).toEqual([]);
+    expect(ou(verdict(choral(CADENCE_PHRYGIENNE), en("mineur")), "hors-tonalite")).toEqual([["1.3", "avis", []]]);
+  });
+
+  it("en mixolydien, le ♭VII à l'avant-dernier temps est un avis", () => {
+    const septiemeAvant = [CADENCE_MIXOLYDIENNE[0], CADENCE_MIXOLYDIENNE[2], CADENCE_MIXOLYDIENNE[1], CADENCE_MIXOLYDIENNE[3]];
+    expect(fautes(verdict(choral(septiemeAvant), en("mixolydien")), "cadence").map((i) => [i.gravite, i.fr]))
+      .toEqual([["avis", "l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante"]]);
+  });
+
+  it("en dorien, le v sans sensible à l'avant-dernier temps est un avis, et son si bémol doublé n'est pas une sensible doublée", () => {
+    const v = [CADENCE_DORIENNE[0], CADENCE_DORIENNE[1], [70, 58, 55, 43], CADENCE_DORIENNE[3]];
+    const juge = verdict(choral(v), en("dorien"));
+    expect(ou(juge, "sensible-doublee")).toEqual([]);
+    // Aucun accord de ce choral ne porte la sensible : la règle n'y a rien eu à juger.
+    expect(juge.jugees["sensible-doublee"]).toBe(0);
+    // Et sol, si bémol, ré s'y lit comme le v du mode, non comme un III7 privé de sa fondamentale.
+    expect(lireAccord([43, 55, 58, 70], 0, "dorien")).toMatchObject({ degre: 4, sensible: false });
+    expect(ou(juge, "hors-tonalite")).toEqual([]);
+    expect(fautes(juge, "cadence").map((i) => [i.gravite, i.fr]))
+      .toEqual([["avis", "l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante"]]);
+  });
+
+  it("la fin sur la dominante est un avis en dorien comme en mineur, une erreur en mixolydien", () => {
+    expect(ou(verdict(choral(CADENCE_DORIENNE.slice(0, 3)), en("dorien")), "cadence")).toEqual([["1.3", "avis", []]]);
+    expect(ou(verdict(choral(CADENCE.slice(0, 3)), en("mixolydien")), "cadence")).toEqual([["1.3", "erreur", []]]);
+  });
+
+  it("la tierce picarde finit un dorien sans faute", () => {
+    const picarde = [...CADENCE_DORIENNE.slice(0, 3), [72, 64, 55, 48]];
+    expect(verdict(choral(picarde), en("dorien")).infractions).toEqual([]);
+  });
+});
+
+describe("la seconde augmentée de chaque mode", () => {
+  // Trois demi-tons entre deux degrés voisins d'une gamme du mode, en do.
+  const cas: [ModeChoral, number, number, boolean][] = [
+    ["mineur", 68, 71, true], ["mineur", 61, 64, false],
+    ["dorien", 68, 71, true], ["dorien", 61, 64, false],
+    ["phrygien", 61, 64, true], ["phrygien", 68, 71, true],
+    ["majeur", 68, 71, false], ["mixolydien", 68, 71, false], ["mixolydien", 61, 64, false],
+  ];
+  for (const [mode, de, vers, attendue] of cas) {
+    it(`${mode}, ${de} vers ${vers} : ${attendue ? "seconde augmentée" : "rien"}`, () => {
+      expect(sautFautif(de, vers, 0, mode) === "seconde-augmentee").toBe(attendue);
+      expect(sautFautif(vers, de, 0, mode) === "seconde-augmentee").toBe(attendue);
+    });
+  }
+});
+
+describe("les accords que chaque mode bâtit, en do", () => {
+  const notes = (mode: ModeChoral) => accordsDeLaTonalite(0, mode).map((a) => [a.degre, a.racine, a.tierce, a.quinte, a.sensible]);
+  it("le majeur et le mineur en bâtissent sept, la dominante du mineur sur la sensible", () => {
+    expect(notes("majeur")).toEqual([[0, 0, 4, 7, false], [1, 2, 5, 9, false], [2, 4, 7, 11, true], [3, 5, 9, 0, false], [4, 7, 11, 2, true], [5, 9, 0, 4, false], [6, 11, 2, 5, true]]);
+    expect(notes("mineur")).toEqual([[0, 0, 3, 7, false], [1, 2, 5, 8, false], [2, 3, 7, 10, false], [3, 5, 8, 0, false], [4, 7, 11, 2, true], [5, 8, 0, 3, false], [6, 11, 2, 5, true]]);
+  });
+  it("le dorien et le mixolydien ajoutent la dominante et le septième degré à sensible", () => {
+    expect(notes("dorien").slice(4)).toEqual([[4, 7, 10, 2, false], [5, 9, 0, 3, false], [6, 10, 2, 5, false], [4, 7, 11, 2, true], [6, 11, 2, 5, true]]);
+    expect(notes("mixolydien").slice(4)).toEqual([[4, 7, 10, 2, false], [5, 9, 0, 4, false], [6, 10, 2, 5, false], [4, 7, 11, 2, true], [6, 11, 2, 5, true]]);
+  });
+  it("le phrygien ajoute l'accord majeur de sa tonique, et aucun accord n'y porte la sensible", () => {
+    expect(notes("phrygien")).toEqual([[0, 0, 3, 7, false], [1, 1, 5, 8, false], [2, 3, 7, 10, false], [3, 5, 8, 0, false], [4, 7, 10, 1, false], [5, 8, 0, 3, false], [6, 10, 1, 5, false], [0, 0, 4, 7, false]]);
+  });
+});
+
+describe("la sensible doublée, sous les douze toniques et les cinq modes", () => {
   // LE GARDE DÉCLARÉ DANS `gamme-banc-inscriptions.ts`, pour le réglage « Gamme » du nœud : le banc des
-  // gammes ne lit pas un rapport, ce test lit ce que la gamme et la tonique changent au jugement.
+  // gammes ne lit pas un rapport, ce test lit ce que la gamme et la tonique changent au jugement. Le
+  // phrygien n'a pas de sensible : sa faute plantée est la seconde augmentée de sa tonique, ré bémol
+  // puis mi naturel à l'alto en do.
   const transposer = (c: number[][], t: number) => c.map((col) => col.map((h) => h + t - (t >= 6 ? 12 : 0)));
-  for (const mode of ["majeur", "mineur"] as Mode[]) {
+  const BASES: Record<ModeChoral, number[][]> = {
+    majeur: CADENCE, mineur: CADENCE_MINEURE, dorien: CADENCE_DORIENNE, mixolydien: CADENCE, phrygien: CADENCE_PHRYGIENNE,
+  };
+  for (const mode of MODES_CHORAL) {
     for (let t = 0; t < 12; t++) {
       it(`${mode}, tonique ${t}`, () => {
-        const base = transposer(mode === "majeur" ? CADENCE : CADENCE_MINEURE, t);
+        const base = transposer(BASES[mode], t);
         const o = { ...C_MAJEUR, tonique: t, mode };
+        if (mode === "phrygien") {
+          expect(ou(verdict(choral(base), o), "saut")).toEqual([]);
+          const seconde = base.map((col, i) => (i === 2 ? col.map((h, v) => (v === 1 ? h - 4 : h)) : col));
+          expect(ou(verdict(choral(seconde), o), "saut")).toEqual([["1.4", "erreur", [1]]]);
+          expect(ou(verdict(choral(seconde), { ...o, tonique: (t + 1) % 12 }), "saut")).toEqual([]);
+          // Le phrygien n'a pas de sensible : une dominante majeure à la sensible doublée, si 4 et si 3
+          // en do, n'est pas un accord du mode, et la doublure n'y est pas jugée.
+          const doublee = base.map((col, i) => (i === 2 ? [71, 59, 55, 43].map((h) => h + t - (t >= 6 ? 12 : 0)) : col));
+          expect(ou(verdict(choral(doublee), o), "sensible-doublee")).toEqual([]);
+          expect(ou(verdict(choral(doublee), o), "hors-tonalite")).toEqual([["1.3", "avis", []]]);
+          return;
+        }
         expect(ou(verdict(choral(base), o), "sensible-doublee")).toEqual([]);
         const doublee = base.map((col, i) => (i === 2 ? col.map((h, v) => (v === 1 ? col[0] - 12 : h)) : col));
         expect(ou(verdict(choral(doublee), o), "sensible-doublee")).toEqual([["1.3", "erreur", [0, 1]]]);

@@ -29,7 +29,7 @@ import { join } from "path";
 import { lireTableDcml } from "./dcml-tsv";
 import { hauteursHumdrum, lireDepuisVerovio, type ToolkitPartition } from "./partition-lecture";
 import type { Note } from "./note";
-import { lireAccord, type Mode } from "./choral-regles";
+import { lireAccord, type Mode, type ModeChoral } from "./choral-regles";
 import { tranchesDuChoral } from "./choral-tranches";
 import { tonaliteDesNotes } from "./corpus-tonalite";
 import { estRefusChoral, REGLES_CHORAL, verifierChoral, type RegleChoral } from "./choral-verifier";
@@ -59,6 +59,18 @@ function tonaliteKern(texte: string): { tonique: number; mode: Mode } | null {
   return { tonique: (base + alteration + 12) % 12, mode: m[1] === m[1].toUpperCase() ? "majeur" : "mineur" };
 }
 
+/**
+ * Le mode que Sapp écrit après sa tonique, `*g:dor`, `*G:mix`, `*e:phr`, ou le majeur et le mineur de
+ * la casse. `tonaliteKern` le ramène au majeur ou au mineur, que la lecture de Krumhansl et les
+ * fréquences de l'harmoniseur connaissent seuls ; le juge, depuis le 2026-11-24, lit les cinq.
+ */
+function modeKern(texte: string): ModeChoral | null {
+  const m = /^\*([A-Ga-g])([#-]?):([a-z]*)/m.exec(texte);
+  if (!m) return null;
+  const MODAUX: Record<string, ModeChoral> = { dor: "dorien", phr: "phrygien", mix: "mixolydien" };
+  return MODAUX[m[3]] ?? (m[1] === m[1].toUpperCase() ? "majeur" : "mineur");
+}
+
 /** Les notes d'une voix, indexées par attaque arrondie au millionième de noire. */
 const parAttaque = (notes: Note[], v: number) => new Map(notes.filter((n) => n.voix === v).map((n) => [Math.round(n.debut * 1e6), n]));
 
@@ -80,7 +92,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
     const { VerovioToolkit } = (await import("verovio/esm")) as unknown as { VerovioToolkit: new (m: unknown) => ToolkitPartition & { setOptions(o: object): void; loadData(t: string): unknown; destroy(): void } };
 
     // Tout Sapp d'abord, une fois : chaque table du DCML se mesure ensuite à chacun de ses chorals.
-    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[]; tonalite: { tonique: number; mode: Mode } | null }[] = [];
+    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[]; tonalite: { tonique: number; mode: Mode } | null; modeEcrit: ModeChoral | null }[] = [];
     for (const f of readdirSync(kernSapp).filter((x) => /^chor\d+\.krn$/.test(x)).sort()) {
       const texteKern = readFileSync(join(kernSapp, f), "utf8");
       const tk = new VerovioToolkit(await creer());
@@ -93,7 +105,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         numero: Number(/\d+/.exec(f)![0]),
         titre: decoder(/^!!!OTL@@DE:\s*(.+)$/m.exec(texteKern)?.[1] ?? /^!!!OTL[^:]*:\s*(.+)$/m.exec(texteKern)?.[1] ?? ""),
         notes, index: [0, 1, 2, 3].map((v) => parAttaque(notes, v)),
-        tonalite: tonaliteKern(texteKern),
+        tonalite: tonaliteKern(texteKern), modeEcrit: modeKern(texteKern),
       });
     }
 
@@ -144,18 +156,39 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       return `- ${NOMS[v]} : ${h.length} notes, de ${h[0]} à ${h[h.length - 1]} ; du 1er au 99e centile, de ${q(0.01)} à ${q(0.99)}`;
     });
 
-    // LE VÉRIFICATEUR SUR BACH : chaque choral de Sapp dans sa tonalité, lue dans son Humdrum. C'est le
-    // cas dont on attend la réponse : Bach enfreint peu les règles de l'usage, et ce qu'il enfreint dit
-    // ce que le vérificateur compte à tort, ou ce que l'usage scolaire ne tient pas de lui.
+    // LE VÉRIFICATEUR SUR BACH : chaque choral de Sapp dans sa tonalité, lue dans son Humdrum, et dans le
+    // mode qu'il y écrit. C'est le cas dont on attend la réponse : Bach enfreint peu les règles de
+    // l'usage, et ce qu'il enfreint dit ce que le vérificateur compte à tort, ou ce que l'usage scolaire
+    // ne tient pas de lui.
     const bilan = new Map<RegleChoral, { erreur: number; avis: number; jugees: number }>(REGLES_CHORAL.map((r) => [r.id, { erreur: 0, avis: 0, jugees: 0 }]));
     const parChoral: { numero: number; erreurs: number }[] = [];
     const detailsVerif: string[] = [];
     const finales: string[] = [];
+    // LES CHORALS MODAUX, JUGÉS DEUX FOIS : dans leur mode, et dans la tonalité ramenée au majeur ou au
+    // mineur, la seule que le juge lisait avant le 2026-11-24. Ce que le mode change se lit là.
+    const REGLES_MODALES: RegleChoral[] = ["hors-tonalite", "cadence", "sensible-doublee", "sensible-non-resolue", "saut"];
+    const parMode = new Map<ModeChoral, { chorals: number; mode: Map<RegleChoral, number[]>; ramene: Map<RegleChoral, number[]> }>();
     let verifies = 0;
     for (const s of sapps) {
-      if (!s.tonalite) continue;
-      const v = verifierChoral({ notes: s.notes, tempo: 60 }, { ...s.tonalite, tempo: 60, tempsParMesure: 4 });
+      if (!s.tonalite || !s.modeEcrit) continue;
+      const v = verifierChoral({ notes: s.notes, tempo: 60 }, { tonique: s.tonalite.tonique, mode: s.modeEcrit, tempo: 60, tempsParMesure: 4 });
       if (estRefusChoral(v)) continue;
+      if (s.modeEcrit !== s.tonalite.mode) {
+        const r = verifierChoral({ notes: s.notes, tempo: 60 }, { ...s.tonalite, tempo: 60, tempsParMesure: 4 });
+        if (!estRefusChoral(r)) {
+          const m = parMode.get(s.modeEcrit) ?? { chorals: 0, mode: new Map(REGLES_MODALES.map((x) => [x, [0, 0, 0]])), ramene: new Map(REGLES_MODALES.map((x) => [x, [0, 0, 0]])) };
+          m.chorals++;
+          for (const [juge, cible] of [[v, m.mode], [r, m.ramene]] as const) {
+            for (const regle of REGLES_MODALES) {
+              const c = cible.get(regle)!;
+              c[0] += juge.infractions.filter((i) => i.regle === regle && i.gravite === "erreur").length;
+              c[1] += juge.infractions.filter((i) => i.regle === regle && i.gravite === "avis").length;
+              c[2] += juge.jugees[regle];
+            }
+          }
+          parMode.set(s.modeEcrit, m);
+        }
+      }
       verifies++;
       for (const r of REGLES_CHORAL) bilan.get(r.id)!.jugees += v.jugees[r.id];
       for (const i of v.infractions) bilan.get(i.regle)![i.gravite]++;
@@ -194,14 +227,22 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       const total = degres[m].reduce((x: number, y: number) => x + y, 0);
       return `- ${m} : ${total} temps · ${degres[m].map((c: number, d: number) => `${["I", "II", "III", "IV", "V", "VI", "VII"][d]} ${(100 * c / total).toFixed(1)} %`).join(" · ")}`;
     });
+    const nomRegle = (id: RegleChoral) => REGLES_CHORAL.find((r) => r.id === id)!.fr;
     const verification = [
-      `## Le vérificateur sur les chorals de Sapp, ${verifies} chorals dans leur tonalité`,
+      `## Le vérificateur sur les chorals de Sapp, ${verifies} chorals dans leur tonalité et le mode qu'il écrit`,
       "",
       `- chorals sans aucune erreur : ${sansErreur}`,
       "",
       "| règle | erreurs | avis | jugées |",
       "|---|---|---|---|",
       ...REGLES_CHORAL.map((r) => { const b = bilan.get(r.id)!; return `| ${r.fr} | ${b.erreur} | ${b.avis} | ${b.jugees} |`; }),
+      "",
+      "## Les chorals que Sapp écrit modaux, jugés dans leur mode et dans la tonalité ramenée",
+      "",
+      "| mode | chorals | règle | dans le mode : erreurs · avis · jugées | ramené au majeur ou au mineur |",
+      "|---|---|---|---|---|",
+      ...[...parMode].flatMap(([mode, m]) => REGLES_MODALES.map((regle) =>
+        `| ${mode} | ${m.chorals} | ${nomRegle(regle)} | ${m.mode.get(regle)!.join(" · ")} | ${m.ramene.get(regle)!.join(" · ")} |`)),
     ];
 
     const parEcart = new Map<number, number>();

@@ -8802,7 +8802,7 @@
     {"nom":"Rapport","type":"texte"}
    ],
    "reglages": [
-    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur"]},
+    {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur","dorien","phrygien","mixolydien"]},
     {"nom":"Tonique","type":"choix","defaut":"0","choix":["0","1","2","3","4","5","6","7","8","9","10","11"],"optionsHeritees":{"A":"9","A#":"10","B":"11","Bb":"10","C":"0","C#":"1","D":"2","D#":"3","Do":"0","Do#":"1","Do♯":"1","E":"4","Eb":"3","F":"5","F#":"6","Fa":"5","Fa#":"6","Fa♯":"6","G":"7","G#":"8","La":"9","La#":"10","La♯":"10","Mi":"4","Mib":"3","Mi♭":"3","Ré":"2","Ré#":"3","Ré♯":"3","Si":"11","Sib":"10","Si♭":"10","Sol":"7","Sol#":"8","Sol♯":"8","a":"9","a#":"10","b":"11","bb":"10","b♭":"10","c":"0","c#":"1","d":"2","d#":"3","do":"0","do#":"1","do♯":"1","e":"4","eb":"3","e♭":"3","f":"5","f#":"6","fa":"5","fa#":"6","fa♯":"6","g":"7","g#":"8","la":"9","la#":"10","la♯":"10","mi":"4","mib":"3","mi♭":"3","ré":"2","ré#":"3","ré♯":"3","si":"11","sib":"10","si♭":"10","sol":"7","sol#":"8","sol♯":"8"}},
     {"nom":"Temps par mesure","type":"nombre","defaut":4,"min":1,"max":12},
     {"nom":"Anacrouse","type":"nombre","defaut":0,"min":0,"max":11},

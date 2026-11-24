@@ -13,13 +13,20 @@
 //
 // LA DERNIÈRE TRANCHE ADMET LA TIERCE PICARDE. Un choral en mineur finit souvent sur l'accord majeur
 // de la tonique, chez Bach comme dans l'usage : le juger hors de la tonalité ferait une faute de ce
-// qui est une manière de finir.
+// qui est une manière de finir. Le dorien et le phrygien l'admettent de même : 32 des 37 chorals que
+// Sapp écrit dorien finissent sur l'accord majeur de leur tonique, et les 25 fins phrygiennes de Bach
+// sur celui de leur finale (relevé du 2026-11-24).
+//
+// LA CADENCE SUIT LE MODE, décisions de Fabien du 2026-11-24. En dorien et en mixolydien, l'avant-
+// dernier temps est la dominante avec sa sensible ou la sous-dominante : chez Bach, aucun v ni ♭VII
+// n'y est lu. En phrygien, qui n'a pas de sensible, c'est le quatrième, le septième ou le deuxième
+// degré : la mineur, ré mineur ou fa majeur avant la finale mi.
 
 import type { Sequence } from "./sequence";
 import { nomNote } from "./nom-note";
 import { tranchesDuChoral, VOIX_CHORAL, voixEnTrop, type Tranche } from "./choral-tranches";
 import {
-  accordsDeLaTonalite, consecutive, directe, lireAccord, sautFautif, sensibleDe, type AccordLu, type Mode,
+  consecutive, directe, lireAccord, sautFautif, sensibleDe, tierceMineure, type AccordLu, type ModeChoral,
 } from "./choral-regles";
 import { NOMS_SATB, TESSITURES_SATB } from "./tessitures-satb";
 
@@ -69,7 +76,7 @@ export interface VerdictChoral {
 
 export interface RefusChoral { voixEnTrop: number[]; voixAbsentes: number[] }
 
-export interface OptionsChoral { tonique: number; mode: Mode; tempo: number; tempsParMesure: number; anacrouse?: number }
+export interface OptionsChoral { tonique: number; mode: ModeChoral; tempo: number; tempsParMesure: number; anacrouse?: number }
 
 const nomVoix = (v: number) => NOMS_SATB[v];
 const paire = (i: number, j: number) => ({ fr: `${nomVoix(i).fr}–${nomVoix(j).fr}`, en: `${nomVoix(i).en}–${nomVoix(j).en}` });
@@ -173,7 +180,7 @@ export function verifierChoral(seq: Sequence, o: OptionsChoral): VerdictChoral |
   const accords: (AccordLu | null)[] = temps.map((t, k) => {
     const sonnantes = t.hauteurs.filter((x): x is number => x !== null);
     const accord = lireAccord(sonnantes, o.tonique, o.mode);
-    const picarde = k === temps.length - 1 && o.mode === "mineur" && estTierceDePicardie(sonnantes, o.tonique);
+    const picarde = k === temps.length - 1 && tierceMineure(o.mode) && estTierceDePicardie(sonnantes, o.tonique);
     jugees["hors-tonalite"]++;
     if (!accord && !picarde) {
       const notes = sonnantes.map((x) => nomNote(x)).join(" ");
@@ -182,18 +189,20 @@ export function verifierChoral(seq: Sequence, o: OptionsChoral): VerdictChoral |
     if (accord) {
       jugees["accord-sans-tierce"]++;
       if (accord.sansTierce) noter("accord-sans-tierce", "avis", t, [], "accord sans tierce", "chord without a third");
-      if (accord.degre === 4 || accord.degre === 6) {
+      // LA SENSIBLE NE SE JUGE QUE DANS L'ACCORD QUI LA PORTE : le v du dorien et du mixolydien, et
+      // toute la dominante du phrygien, n'en ont pas.
+      if ((accord.degre === 4 || accord.degre === 6) && accord.sensible) {
         jugees["sensible-doublee"]++;
         const porteuses = [0, 1, 2, 3].filter((v) => t.hauteurs[v] !== null && pc(t.hauteurs[v]!) === sensible);
         if (porteuses.length >= 2) noter("sensible-doublee", "erreur", t, porteuses, `sensible ${nomNote(t.hauteurs[porteuses[0]]!)} doublée`, `leading tone ${nomNote(t.hauteurs[porteuses[0]]!)} doubled`);
       }
     }
-    return picarde ? { degre: 0, racine: pc(o.tonique), avecSeptieme: false, sansTierce: false, sansFondamentale: false, etatFondamental: pc(Math.min(...sonnantes)) === pc(o.tonique) } : accord;
+    return picarde ? { degre: 0, racine: pc(o.tonique), septieme: pc(o.tonique + 11), sensible: false, avecSeptieme: false, sansTierce: false, sansFondamentale: false, etatFondamental: pc(Math.min(...sonnantes)) === pc(o.tonique) } : accord;
   });
   for (let k = 1; k < temps.length; k++) {
     const [a1, a2] = [accords[k - 1], accords[k]];
     const [t1, t2] = [temps[k - 1], temps[k]];
-    if (a1 && a2 && (a1.degre === 4 || a1.degre === 6) && a2.degre === 0) {
+    if (a1 && a2 && (a1.degre === 4 || a1.degre === 6) && a1.sensible && a2.degre === 0) {
       for (let v = 0; v < VOIX_CHORAL; v++) {
         const [x1, x2] = [t1.hauteurs[v], t2.hauteurs[v]];
         if (x1 === null || x2 === null || pc(x1) !== sensible) continue;
@@ -213,7 +222,7 @@ export function verifierChoral(seq: Sequence, o: OptionsChoral): VerdictChoral |
     if (a1?.avecSeptieme && !a1.sansFondamentale && a2?.degre !== a1.degre) {
       for (let v = 0; v < VOIX_CHORAL; v++) {
         const x1 = t1.hauteurs[v];
-        if (x1 === null || !estSeptiemeDe(x1, a1, o)) continue;
+        if (x1 === null || !estSeptiemeDe(x1, a1)) continue;
         const ligne = lignes[v];
         const ici = ligne.findIndex((n) => n.debut <= t1.debut + 1e-9 && n.fin > t1.debut + 1e-9);
         const suivante = ligne[ici + 1];
@@ -225,17 +234,20 @@ export function verifierChoral(seq: Sequence, o: OptionsChoral): VerdictChoral |
       }
     }
   }
-  // La cadence finale : la tonique à l'état fondamental, précédée de la dominante ou de la sous-dominante.
+  // La cadence finale : la tonique à l'état fondamental, précédée de ce que le mode permet.
   if (temps.length >= 2) {
     jugees.cadence++;
     const [fin, avant] = [accords[temps.length - 1], accords[temps.length - 2]];
     const t = temps[temps.length - 1];
     // LA FIN SUR LA DOMINANTE D'UN MINEUR EST UN AVIS, ET NON UNE ERREUR. Relevé le 2026-11-22 : des 30
     // chorals de Sapp que la règle condamnait, les premiers lus finissent tous sur l'accord majeur de la
-    // dominante, en mineur ou en dorien : la cadence phrygienne des chorals modaux.
-    if (fin && o.mode === "mineur" && fin.degre === 4) noter("cadence", "avis", t, [], "le choral finit sur la dominante, cadence phrygienne", "the chorale ends on the dominant, a Phrygian cadence");
+    // dominante, en mineur ou en dorien : la cadence phrygienne des chorals modaux. Le dorien la garde
+    // donc en avis, sur la dominante qui prend la sensible ; le phrygien, qui la lit sur sa finale, n'en a
+    // pas besoin.
+    const surLaDominante = fin && (o.mode === "mineur" || o.mode === "dorien") && fin.degre === 4 && fin.sensible;
+    if (surLaDominante) noter("cadence", "avis", t, [], "le choral finit sur la dominante, cadence phrygienne", "the chorale ends on the dominant, a Phrygian cadence");
     else if (!fin || fin.degre !== 0 || !fin.etatFondamental) noter("cadence", "erreur", t, [], "le choral ne finit pas sur la tonique à l'état fondamental", "the chorale does not end on the root-position tonic");
-    else if (!avant || (avant.degre !== 4 && avant.degre !== 3)) noter("cadence", "avis", t, [], "l'avant-dernier temps n'est ni la dominante ni la sous-dominante", "the penultimate beat is neither the dominant nor the subdominant");
+    else if (!avant || !avantDernierePermise(avant, o.mode)) noter("cadence", "avis", t, [], ...AVANT_DERNIERE[o.mode]);
   }
   infractions.sort((a, b) => a.debut - b.debut || (a.voix[0] ?? -1) - (b.voix[0] ?? -1));
   return { infractions, jugees, tranches: tranches.length, recouvertes };
@@ -249,6 +261,25 @@ function estTierceDePicardie(hauteurs: readonly number[], tonique: number): bool
   return hauteurs.every((x) => permises.has(pc(x))) && hauteurs.some((x) => pc(x) === pc(tonique + 4));
 }
 
-/** La hauteur est-elle la septième de l'accord lu ? Elle se relit sur la tonalité, par son degré. */
-const estSeptiemeDe = (h: number, accord: AccordLu, o: OptionsChoral): boolean =>
-  accordsDeLaTonalite(o.tonique, o.mode)[accord.degre].septieme === pc(h);
+/**
+ * La hauteur est-elle la septième de l'accord lu ? Elle se lit sur l'accord même, et non sur son seul
+ * degré : le v et le V du dorien ont le même degré et pas la même septième.
+ */
+const estSeptiemeDe = (h: number, accord: AccordLu): boolean => accord.septieme === pc(h);
+
+/**
+ * L'avant-dernier temps que le mode permet : la dominante qui prend la sensible ou la sous-dominante,
+ * et en phrygien le quatrième, le septième ou le deuxième degré. En majeur et en mineur, la dominante
+ * porte toujours la sensible : la règle y est celle d'avant les modes.
+ */
+const avantDernierePermise = (a: AccordLu, mode: ModeChoral): boolean =>
+  mode === "phrygien" ? a.degre === 3 || a.degre === 6 || a.degre === 1 : (a.degre === 4 && a.sensible) || a.degre === 3;
+
+/** L'avis d'une avant-dernière que le mode ne permet pas, dans les deux langues. */
+const AVANT_DERNIERE: Record<ModeChoral, [string, string]> = {
+  majeur: ["l'avant-dernier temps n'est ni la dominante ni la sous-dominante", "the penultimate beat is neither the dominant nor the subdominant"],
+  mineur: ["l'avant-dernier temps n'est ni la dominante ni la sous-dominante", "the penultimate beat is neither the dominant nor the subdominant"],
+  dorien: ["l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante", "the penultimate beat is neither the dominant with its leading tone nor the subdominant"],
+  mixolydien: ["l'avant-dernier temps n'est ni la dominante avec sa sensible ni la sous-dominante", "the penultimate beat is neither the dominant with its leading tone nor the subdominant"],
+  phrygien: ["l'avant-dernier temps n'est ni le quatrième degré, ni le septième, ni le deuxième", "the penultimate beat is neither the fourth degree, nor the seventh, nor the second"],
+};
