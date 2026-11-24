@@ -306,8 +306,10 @@ describe("un concept, des formes déclarées", () => {
     // et l'arpège spectral les quatre sens d'un balayage, deux sous-ensembles bornés au lieu d'un.
     // PUIS DE CINQUANTE ET UN À CINQUANTE, le 2026-11-23 : la partition qui gravait un fichier MIDI a
     // quitté le catalogue, et avec elle la part de la valeur de note faite de ses six durées simples.
+    // PUIS DE CINQUANTE À CINQUANTE ET UN, le 2026-11-23, ET LA MONTÉE EST LÉGITIME : les quatre nœuds
+    // à chiffres romains offrent les dix-sept gammes où les chiffres se lisent, un sous-ensemble borné.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(50);
+      .toBe(51);
   });
 });

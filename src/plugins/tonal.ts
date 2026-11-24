@@ -6,25 +6,19 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
-import { Chord, Scale, Note } from "tonal";
+import { Chord, Note } from "tonal";
+import { GAMMES, LIBELLES_HERITES_GAMMES } from "../audio/gammes";
+import { notesDeGamme } from "../audio/gamme-epelee";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } from "../audio/symboles-accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { lireNomDeNote, nomAnglais, refusDeSuite } from "../audio/noms-de-notes";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
-  accordsDepuisRomains, accordsInconnus, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
-  type ModeProgression,
+  CHOIX_GAMME_ROMAINE, PROGRESSIONS_PAR_GAMME, accordsDepuisRomains, accordsInconnus, estProgressionRomaine,
+  gammeDesRomains, romainsInconnus, toniqueDepuisTonalite, type ModeProgression,
 } from "../audio/theorie-romains";
-
-/**
- * LA PROGRESSION PAR DÉFAUT DU MINEUR, décision de Fabien du 2026-11-21. La casse décide de la
- * qualité, comme la notice le dit : « I V vi IV », écrite pour le majeur, jouait mi bémol majeur sur le
- * i de mi bémol mineur. Celle-ci est le pendant de la progression du majeur, i, ♭VI, ♭III, ♭VII, le
- * mineur abaissant de lui-même III, VI et VII (`theorie-romains.ts`). Elle se pose quand « Gamme »
- * passe en mineur, par `defautSelon`, sur une progression restée au défaut.
- */
-const PROGRESSION_MINEURE = "i VI III VII";
+import { refusHorsGamme } from "./romains-hors-gamme";
 
 function parserNotes(texte: string): string[] {
   return texte
@@ -75,9 +69,7 @@ function progressionSuggest(type: "major" | "minor"): string {
  * muet sur le mode — une simple tonique « A » — laisse le paramètre décider.
  */
 function gammeDemandee<N extends string>(ctx: ContexteQuiDeclare<N, "Gamme">, entree: unknown): ModeProgression {
-  const duTexte = typeof entree === "string" ? modeDepuisTonalite(entree) : null;
-  if (duTexte) return duTexte;
-  return lecteurDe<"Gamme">(ctx).paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur";
+  return gammeDesRomains(entree, lecteurDe<"Gamme">(ctx).paramTexte("Gamme", "majeur"));
 }
 
 export const fiches: FicheAudio[] = ([
@@ -138,18 +130,22 @@ export const fiches: FicheAudio[] = ([
       { ...PARAMETRE_CLE, nom: "Tonalité",
         doc: "Tonalité de départ.",
         docEn: "Starting tonic." },
-      { nom: "Type", nomEn: "Type", type: "choix", options: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defaut: "major",
-        doc: "Type de gamme.",
-        docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
+      // LA TABLE COMMUNE DES GAMMES, et non les sept noms de Tonal (`major` à `locrian`) que ce réglage
+      // offrait seuls jusqu'au 2026-11-23 : les anciennes valeurs se relisent par `optionsHeritees`.
+      { nom: "Type", nomEn: "Type", type: "choix",
+        options: GAMMES.map((g) => g.fr), optionsEn: GAMMES.map((g) => g.en),
+        optionIds: GAMMES.map((g) => g.id), optionsHeritees: LIBELLES_HERITES_GAMMES,
+        defaut: GAMMES[0].fr, defautEn: GAMMES[0].en,
+        doc: "Gamme dont les notes sont listées, parmi les vingt-cinq gammes tempérées de la table commune, des sept modes à la chromatique.",
+        docEn: "Scale whose notes are listed, among the twenty-five tempered scales of the common table, from the seven modes to the chromatic." },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
       const tonic = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tonalité", "C");
-      const type = ctx.paramTexte("Type", "major");
-      const gamme = Scale.get(`${tonic} ${type}`);
-      if (!gamme.notes.length) return { valeurs: [null], message: traduire("msg.tonalit_invalide") };
-      const resultat = gamme.notes.join(" ");
+      const notes = notesDeGamme(tonic, ctx.paramTexte("Type", GAMMES[0].id));
+      if (!notes) return { valeurs: [null], message: traduire("msg.tonalit_invalide") };
+      const resultat = notes.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
  }),
@@ -191,17 +187,15 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
       { ...PARAMETRE_CLE, nom: "Tonalité",
-        doc: "Tonique de la progression. Le mode se choisit dans « Gamme » ; l'entrée Tonalité, si elle en nomme un (« A minor »), l'emporte sur le réglage.",
-        docEn: "Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »).", defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
-        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
-        doc: "Gamme dans laquelle les degrés sont lus. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la, et non Am F♯ C♯ G♯. La casse, elle, ne décide que de la qualité de l'accord.",
-        docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality." },
+        doc: "Tonique de la progression. La gamme se choisit dans « Gamme » ; l'entrée Tonalité, si elle nomme un mode (« A minor »), l'emporte sur le réglage.",
+        docEn: "Root note of the progression. The scale is set in « Scale »; the Key input wins over the setting when it names a mode (« A minor »).", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", ...CHOIX_GAMME_ROMAINE,
+        doc: "Gamme dans laquelle les degrés sont lus : chaque chiffre prend pour fondamentale la note de la gamme à son rang. En « Mineur naturel », III, VI et VII descendent d'un demi-ton, « i VI III VII » donnant Am F C G en la, sauf le vii diminué, bâti sur la sensible ; en « Dorien », « vi° » donne B° en ré. La casse, elle, ne décide que de la qualité de l'accord. Les gammes offertes sont celles dont chaque degré porte un accord majeur, mineur, diminué ou augmenté ; dans une gamme de six degrés, VII n'existe pas.",
+        docEn: "Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A, except the diminished vii, built on the leading tone; in « Dorian », « vi° » gives B° in D. Case only decides the chord quality. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        defautSelon: { reglage: "Gamme", valeurs: { mineur: PROGRESSION_MINEURE } },
-        doc: "Progression en chiffres romains (ex : I V vi IV, ii7 V7 Imaj7). Majuscules = majeur, minuscules = mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement (I6 = C/E) ; V/V est la dominante de la dominante ; une altération explicite (bIII, #IV) est respectée telle quelle. Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
-        docEn: "Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
+        defautSelon: { reglage: "Gamme", valeurs: PROGRESSIONS_PAR_GAMME },
+        doc: "Progression en chiffres romains (ex : I V vi IV, ii7 V7 Imaj7). Majuscules = majeur, minuscules = mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement (I6 = C/E) ; V/V est la dominante de la dominante ; une altération explicite (bIII, #IV) se prend sur la gamme majeure. Quand « Gamme » change, la progression par défaut suit la gamme : « i VI III VII » en « Mineur naturel », et ailleurs les degrés I, V, VI et IV écrits dans la casse de l'accord de la gamme, « i v vi° IV » en « Dorien » ; une progression choisie n'est pas réécrite.",
+        docEn: "Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is taken on the major scale. When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
@@ -231,10 +225,13 @@ export const fiches: FicheAudio[] = ([
       if (inconnus.length > 0) {
         return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", inconnus.slice(0, 4).join(" » « ")) };
       }
+      const gamme = gammeDemandee(ctx, entree);
+      const hors = refusHorsGamme(numerals, gamme, 1);
+      if (hors) return hors;
       // `accordsDepuisRomains` : sans lui, « vi » produisait un accord MAJEUR et
       // les degrés III, VI, VII d'un mode mineur gardaient la fondamentale du
       // mode majeur.
-      const accords = accordsDepuisRomains(tonique, numerals, gammeDemandee(ctx, entree));
+      const accords = accordsDepuisRomains(tonique, numerals, gamme);
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
@@ -248,17 +245,15 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Notation", type: "texte", sousType: "notation" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
       { ...PARAMETRE_CLE, nom: "Tonalité",
-        doc: "Tonique de la grille. Le mode se choisit dans « Gamme » ; l'entrée Progression, si elle nomme une tonalité, l'emporte sur le réglage.",
-        docEn: "Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key.", defautEn: "C" },
-      { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
-        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
-        doc: "Gamme dans laquelle les degrés sont lus. En mineur, III, VI et VII descendent d'un demi-ton : « i VI III VII » donne Am F C G en la, et non Am F♯ C♯ G♯.",
-        docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯." },
+        doc: "Tonique de la grille. La gamme se choisit dans « Gamme » ; l'entrée Progression, si elle nomme une tonalité, l'emporte sur le réglage.",
+        docEn: "Root note of the grid. The scale is set in « Scale »; the Progression input wins over the setting when it names a key.", defautEn: "C" },
+      { nom: "Gamme", nomEn: "Scale", ...CHOIX_GAMME_ROMAINE,
+        doc: "Gamme dans laquelle les degrés sont lus : chaque chiffre prend pour fondamentale la note de la gamme à son rang. En « Mineur naturel », III, VI et VII descendent d'un demi-ton, « i VI III VII » donnant Am F C G en la ; en « Dorien », « vi° » donne B° en ré. Les gammes offertes sont celles dont chaque degré porte un accord majeur, mineur, diminué ou augmenté ; dans une gamme de six degrés, VII n'existe pas. Sans effet sur une liste de symboles.",
+        docEn: "Scale the degrees are read in: each numeral takes as its root the scale note at its rank. In « Natural minor », III, VI and VII drop a semitone, « i VI III VII » giving Am F C G in A; in « Dorian », « vi° » gives B° in D. The scales offered are those whose every degree carries a major, minor, diminished or augmented chord; in a six-degree scale, VII does not exist. No effect on a list of symbols." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
-        defautSelon: { reglage: "Gamme", valeurs: { mineur: PROGRESSION_MINEURE } },
-        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement ; V/V est la dominante de la dominante). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G). Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
-        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
+        defautSelon: { reglage: "Gamme", valeurs: PROGRESSIONS_PAR_GAMME },
+        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement ; V/V est la dominante de la dominante). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G). Quand « Gamme » change, la progression par défaut suit la gamme : « i VI III VII » en « Mineur naturel », et ailleurs les degrés I, V, VI et IV écrits dans la casse de l'accord de la gamme, « i v vi° IV » en « Dorien » ; une progression choisie n'est pas réécrite.",
+        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » changes, the default progression follows the scale: « i VI III VII » in « Natural minor », and elsewhere degrees I, V, VI and IV written in the case of the scale's chord, « i v vi° IV » in « Dorian »; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t", uniteEn: "beats",
@@ -293,8 +288,11 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true,
           message: traduire("msg.tonal.romains_inconnus_var_0", romainsIllisibles.slice(0, 4).join(" » « ")) };
       }
+      const gamme = gammeDemandee(ctx, entree);
+      const hors = romains ? refusHorsGamme(tokens, gamme, 2) : null;
+      if (hors) return hors;
       const accords = romains
-        ? accordsDepuisRomains(tonic, tokens, gammeDemandee(ctx, entree))
+        ? accordsDepuisRomains(tonic, tokens, gamme)
         : tokens;
 
       if (accords.length === 0 || accords.some((a: string) => !a)) {

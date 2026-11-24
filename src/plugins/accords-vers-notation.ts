@@ -9,7 +9,10 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Note } from "tonal";
-import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import {
+  CHOIX_GAMME_ROMAINE, accordsDepuisRomains, estProgressionRomaine, gammeDesRomains, romainsInconnus, toniqueDepuisTonalite,
+} from "../audio/theorie-romains";
+import { refusHorsGamme } from "./romains-hors-gamme";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 
 // LE SYMBOLE SE LIT PAR LE SEUL LECTEUR DES SYMBOLES (`audio/symboles-accords.ts`), revue des
@@ -75,11 +78,9 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["accords", "progression"], defaut: "Accords détectés", defautEn: "Detected chords",
         doc: "« Accords détectés » transcrit l'harmonie réelle avec ses durées mesurées. « Progression » développe les chiffres romains suggérés, ce qui exige la Tonalité en entrée.",
         docEn: "« Detected chords » transcribes the actual harmony with its measured durations. « Progression » expands the suggested roman numerals, which requires the Key input." },
-      { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["majeur", "mineur"], optionsEn: ["major", "minor"],
-        optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
-        doc: "Gamme dans laquelle lire les degrés, quand l'entrée Tonalité ne nomme pas de mode. « Analyse harmonique » écrit « A minor (90%) » : ce mode-là l'emporte, et le réglage ne sert que pour une tonique saisie à la main. En mineur, III, VI et VII descendent d'un demi-ton. Sans effet quand « Source » vaut « Accords détectés », qui ne lit pas de degrés.",
-        docEn: "Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. No effect when « Source » is « Detected chords », which reads no degrees." },
+      { nom: "Gamme", nomEn: "Scale", ...CHOIX_GAMME_ROMAINE,
+        doc: "Gamme dans laquelle lire les degrés, quand l'entrée Tonalité ne nomme pas de mode : chaque chiffre prend pour fondamentale la note de la gamme à son rang, et la casse décide de la qualité. « Analyse harmonique » écrit « A minor (90%) » : ce mode-là l'emporte, et le réglage ne sert que pour une tonique saisie à la main. En « Mineur naturel », III, VI et VII descendent d'un demi-ton ; dans une gamme de six degrés, VII n'existe pas. Sans effet quand « Source » vaut « Accords détectés », qui ne lit pas de degrés.",
+        docEn: "Scale the degrees are read in, when the Key input names no mode: each numeral takes as its root the scale note at its rank, and case decides the quality. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In « Natural minor », III, VI and VII drop a semitone; in a six-degree scale, VII does not exist. No effect when « Source » is « Detected chords », which reads no degrees." },
       { nom: "Octave", nomEn: "Octave", plage: [1, 6], pas: 1, defaut: 3,
         doc: "Octave de la fondamentale des accords générés.",
         docEn: "Octave of the root note of the generated chords." },
@@ -128,8 +129,7 @@ export const fiches: FicheAudio[] = ([
         // Le mode nommé dans l'entrée l'emporte sur le réglage : il a été MESURÉ
         // par « Analyse harmonique », alors que le paramètre est un défaut que
         // personne ne pense à changer quand la tonalité arrive par un câble.
-        const mode = modeDepuisTonalite(String(tonaliteTexte))
-          ?? (ctx.paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur");
+        const mode = gammeDesRomains(String(tonaliteTexte), ctx.paramTexte("Gamme", "majeur"));
         const jetons = progression.trim().split(/\s+/);
         // Ce port attend des CHIFFRES ROMAINS. La sortie « Accords » du nœud
         // « Progression » est du texte elle aussi, et se branche donc sans
@@ -149,6 +149,8 @@ export const fiches: FicheAudio[] = ([
         if (illisibles.length > 0) {
           return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
         }
+        const hors = refusHorsGamme(jetons, mode, 1);
+        if (hors) return hors;
         const symboles = accordsDepuisRomains(tonique, jetons, mode);
         for (const symbole of symboles) {
           const notes = notesAscendantes(symbole, octave);

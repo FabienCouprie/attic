@@ -208,6 +208,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | gamme-banc-proprietes.ts | pur | — |
 | gamme-banc-releve.ts | pur | — |
 | gamme-banc-son.ts | recipient | AudioBuffer |
+| gamme-epelee.ts | pur | — |
 | gammes-monde.ts | pur | — |
 | gammes-reunies.ts | pur | — |
 | gammes.ts | pur | — |

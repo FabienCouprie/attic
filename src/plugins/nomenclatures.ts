@@ -15,7 +15,7 @@
 // IL N'EST CHARGÉ PAR AUCUN COMPOSANT : il lit le catalogue entier, et un composant qui l'importerait
 // ferait un cycle entre les morceaux du bundle.
 import { toutesLesFiches } from "./index";
-import { gammeDe } from "../audio/gammes";
+import { gammeDuNom } from "../audio/gammes";
 import { gammeParId as gammeMondeDe } from "../audio/gammes-monde";
 import { qualiteDe } from "../audio/qualites-accords";
 import { demiTonDeCle } from "../audio/cles";
@@ -162,12 +162,14 @@ export const DOMAINES: Domaine[] = [
   {
     nom: "gamme",
     table: () => GAMMES_REUNIES.map((g) => g.id),
-    membre: (x) => Boolean(gammeDe(x) || gammeMondeDe(x)),
+    // PAR TOUT NOM QU'UNE GAMME A PORTÉ, et non par ses seuls identifiants : sans cela, les sept
+    // noms anglais de Tonal (`major` à `locrian`) faisaient sortir une liste entière du relevé.
+    membre: (x) => Boolean(gammeDuNom(x) || gammeMondeDe(x)),
     seuil: 2,
     sentinelles: [
       { valeur: "roue", raison: "« Selon la roue » : la gamme vient du cercle dessiné, et non de la liste" },
     ],
-    canonique: (id) => (gammeMondeDe(id) ? id : gammeDe(id)?.id),
+    canonique: (id) => (gammeMondeDe(id) ? id : gammeDuNom(id)?.id),
     // LES SEPT ORTHOGRAPHES D'AVANT LA TABLE SONT PAYÉES, et la liste est vide pour cette raison.
     // Elles étaient des alias, donc les degrés étaient justes ; ce sont les identifiants qui ne
     // l'étaient pas, et un projet les enregistrait. Ce qui tenait la dette ouverte n'était pas le
@@ -182,8 +184,11 @@ export const DOMAINES: Domaine[] = [
     // d'un coup, et le plancher de longueur cachait les listes COURTES écrites à la main, qui sont
     // justement celles qu'on écrit à la main : les quatre de `serie-infinie·Gamme` et les cinq
     // réglages qui n'offrent que « majeur » et « mineur ».
-    formesAssumees: 11,
-    pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, deux gammes pour la notation tonale, dix gammes du monde, et les trente-cinq réunies",
+    // DE ONZE À DOUZE LE 2026-11-23, ET LA MONTÉE EST LÉGITIME : les quatre nœuds à chiffres romains
+    // quittent la paire « majeur, mineur » pour les dix-sept gammes où les chiffres se lisent, un
+    // sous-ensemble borné calculé sur la table ; la paire reste aux trois nœuds des chorals.
+    formesAssumees: 12,
+    pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, dix-sept gammes pour les chiffres romains, deux gammes pour les chorals, dix gammes du monde, et les trente-cinq réunies",
     remede: "offrir la liste de `audio/gammes.ts`, par `completer` pour garder l'ordre d'un composant ancien",
     // LES COUPES GARDÉES, décision de Fabien du 2026-11-14 sur le relevé du lot 2. Huit réglages qui
     // n'offraient que quatre à sept gammes ont été élargis aux vingt-cinq tempérées le même jour.
@@ -200,9 +205,13 @@ export const DOMAINES: Domaine[] = [
         "solveur-contraintes·Gamme",
       ),
       ...coupesPour(
-        "les chiffres romains d'une progression ne se lisent que dans une tonalité majeure ou mineure, et les autres gammes n'ont pas de degrés nommés",
+        // DÉCISION DE FABIEN DU 2026-11-23 : la casse d'un chiffre dit la qualité, la gamme place les
+        // fondamentales. Ces nœuds offraient le majeur et le mineur seuls, au motif, faux depuis le lot G
+        // du contrôle des gammes, que les autres gammes n'avaient pas de degrés nommés.
+        "la casse et les signes d'un chiffre romain n'écrivent qu'un accord majeur, mineur, diminué ou augmenté : huit gammes ont des degrés dont l'accord n'est aucun des quatre, do, mi, la sur le I de la pentatonique majeure, et les dix gammes en cents n'ont pas de nom de note (`GAMMES_DES_ROMAINS`)",
         "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme", "accords-vers-notation·Gamme",
       ),
+      { ou: "tonal-gamme·Type", raison: "le nœud écrit ses notes en lettres et altérations, et les dix gammes en cents n'ont pas de nom de note" },
       { ou: "gammes-monde·Gamme", raison: "le nœud des gammes en cents, qui pose chaque degré à sa hauteur exacte ; les gammes tempérées ont leurs propres nœuds" },
       { ou: "verifier-choral·Gamme", raison: "la sensible, la dominante et la cadence d'un choral ne se lisent que dans une tonalité majeure ou mineure" },
       { ou: "harmoniser-choral·Gamme", raison: "les accords, la sensible et la cadence d'un choral ne se bâtissent que dans une tonalité majeure ou mineure" },

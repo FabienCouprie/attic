@@ -10,6 +10,9 @@
 
 import type { CoincidenceInscrite, InertieConditionnee } from "./croisement-registre";
 
+/** Pourquoi des gammes coïncident sous la progression par défaut des nœuds à chiffres romains. */
+const ROMAINS_SOUS_LA_PROGRESSION_D_ESSAI = "sous la progression par défaut, « I V vi IV », que le banc garde sous chaque gamme, ces gammes ont les mêmes fondamentales sur I, IV, V et VI, et la casse décide de la qualité : elles ne se séparent que sur II, III ou VII. L'inspecteur pose avec la gamme la progression qui lui est liée, que le banc ne pose pas";
+
 /** Les inerties déclarées par leur vraie condition, sous un réglage à choix devenu gouverneur. */
 export const INERTIES_DES_CHOIX: InertieConditionnee[] = [
   { ou: "abc-vers-midi·Instrument accords", quand: { reglage: "Accords chiffrés", valeurs: ["ignorer"] }, raison: "les accords chiffrés ignorés, aucune piste d'accompagnement n'est écrite, et son preset n'a rien à habiller ; dit dans sa documentation" },
@@ -160,4 +163,12 @@ export const COINCIDENCES_DES_CHOIX: CoincidenceInscrite[] = [
   { ou: "sous-titres-incrustes·Fond", valeurs: ["contour", "bandeau", "aucun"], raison: "non mesurable au banc : le texte d'essai n'est pas un SRT, et le film ressort tel quel ; graver un sous-titre demande le décodage et l'encodage d'images, WebCodecs et OffscreenCanvas, que node n'a pas" },
   { ou: "sous-titres-incrustes·Position", valeurs: ["bas", "haut"], raison: "non mesurable au banc : le texte d'essai n'est pas un SRT, et le film ressort tel quel ; graver un sous-titre demande le décodage et l'encodage d'images, WebCodecs et OffscreenCanvas, que node n'a pas" },
   { ou: "spectrogramme·Échelle", valeurs: ["log", "lineaire"], raison: "non mesurable au banc : l'échelle ne règle que la vue, et le nœud rend son entrée telle quelle ; dit dans sa documentation" },
+  // LES CHIFFRES ROMAINS DANS LES DIX-SEPT GAMMES, décision de Fabien du 2026-11-23 : la casse dit la
+  // qualité, la gamme place les fondamentales. Relevé par la passe le même jour, sur les deux nœuds.
+  ...["tonal-progression·Gamme", "tonal-grille·Gamme"].flatMap((ou) => [
+    ["majeur", "dorien", "mixolydien", "mineur-melodique", "bebop-dominant"],
+    ["mineur", "phrygien", "mineur-harmonique", "phrygien-dominant"],
+    ["lydien", "lydien-dominant"],
+    ["locrien", "diminuee-ton-demi"],
+  ].map((valeurs) => ({ ou, valeurs, raison: ROMAINS_SOUS_LA_PROGRESSION_D_ESSAI }))),
 ];

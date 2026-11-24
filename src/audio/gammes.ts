@@ -223,6 +223,22 @@ export const LIBELLES_HERITES_GAMMES: Record<string, string> = {
 };
 
 /**
+ * La gamme de tout nom qu'une liste a pu offrir : identifiant, alias, libellé d'avant la table,
+ * libellé français ou anglais de la table, en majuscules ou en minuscules.
+ *
+ * C'EST LA RECONNAISSANCE DU GARDE DES NOMENCLATURES, ET NON UNE LECTURE DE RÉGLAGE. Le garde ne
+ * reconnaissait une liste de gammes qu'à ses identifiants français : les sept noms de Tonal que
+ * « Gamme » offrait, `major` à `locrian`, n'y étaient pas des gammes, et la liste échappait à la
+ * règle de la table entière comme à celle des coupes déclarées. Relevé par Fabien le 2026-11-23.
+ */
+export function gammeDuNom(nom: string): Gamme | undefined {
+  const direct = PAR_ID.get(nom) ?? PAR_ID.get(LIBELLES_HERITES_GAMMES[nom] ?? "");
+  if (direct) return direct;
+  const bas = nom.toLowerCase();
+  return GAMMES.find((g) => g.fr.toLowerCase() === bas || g.en.toLowerCase() === bas);
+}
+
+/**
  * L'ordre historique d'un composant, suivi de tout ce que la table porte en plus.
  *
  * L'ORDRE NE SE RÉARRANGE PAS, ET C'EST UNE CONTRAINTE DURE. La valeur d'un réglage enregistrée dans
