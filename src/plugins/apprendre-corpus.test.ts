@@ -27,6 +27,19 @@ describe("Apprendre sur un corpus", async () => {
     expect(rapport).toMatch(/\nvalidation : \d+ notes · /);
   });
 
+  it("apprend un mode ancien sur ses seules pièces, ramenées sur sa finale aux touches blanches", async () => {
+    // Six des douze pièces relues en sol dorien : le modèle les ramène en ré, et écarte les six autres.
+    const melange = { pieces: corpus.pieces.map((p, k) => (k < 6 ? { ...p, tonalite: { tonique: 7, mode: "dorien" as const, origine: "armure" as const } } : p)) };
+    const r = await lancer({ Gamme: "dorien", Passes: 5, "Part de validation": 0 }, melange);
+    const m = r.valeurs[0] as ModeleHarmonique;
+    expect([m.mode, m.tonique, m.pieces]).toEqual(["dorien", 2, 6]);
+    expect(String(r.valeurs[1])).toMatch(/^6 pièces apprises · 0 mises de côté · 6 écartées/);
+    expect(String(r.valeurs[1])).toContain("écartée : essai-7 · majeur");
+    // Les mêmes pièces lues en do majeur donnent les mêmes colonnes, décalées d'un ton : autant de colonnes.
+    const enDo = await lancer({ Gamme: "majeur", Passes: 5, "Part de validation": 0 }, { pieces: corpus.pieces.slice(0, 6) });
+    expect(m.colonnes).toBe((enDo.valeurs[0] as ModeleHarmonique).colonnes);
+  });
+
   it("lit ses voisinages : sans diagonales, le modèle n'en a aucune", async () => {
     const avec = (await lancer({ Passes: 5 })).valeurs[0] as ModeleHarmonique;
     const sans = (await lancer({ Passes: 5, Diagonaux: 0 })).valeurs[0] as ModeleHarmonique;

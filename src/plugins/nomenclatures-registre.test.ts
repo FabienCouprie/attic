@@ -313,8 +313,10 @@ describe("un concept, des formes déclarées", () => {
     // l'apprentissage gardent la paire jusqu'à leur tour, et le chiffre redescendra avec eux.
     // L'HARMONISEUR LES REJOINT LE MÊME JOUR, ET LE CHIFFRE NE BOUGE PAS : sa liste est celle du juge.
     // La paire ne tient plus qu'à l'apprentissage.
+    // PUIS DE CINQUANTE-DEUX À CINQUANTE ET UN, le 2026-11-24 : l'apprentissage rejoint les cinq modes
+    // (lot M3), et la paire « majeur, mineur » disparaît, comme annoncé.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(52);
+      .toBe(51);
   });
 });

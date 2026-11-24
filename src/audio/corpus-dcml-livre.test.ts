@@ -3,12 +3,15 @@
 // GARDÉ PAR `CORPUS_CHORALS`, comme le relevé dont il prend la liste des écarts :
 //   CORPUS_CHORALS=work/corpus npx vitest run src/audio/corpus-chorals-releve.test.ts
 //   CORPUS_CHORALS=work/corpus npx vitest run src/audio/corpus-dcml-livre.test.ts
-// Il écrit `public/oonx/corpus-chorals-bach-dcml-2.json`, qui entre ensuite au manifeste des modèles
+// Il écrit `public/oonx/corpus-chorals-bach-dcml-3.json`, qui entre ensuite au manifeste des modèles
 // (`npm run modeles:generer`) et se publie sur la release `assets` (`npm run modeles:publier`).
 //
-// LA SECONDE VERSION, ET LA PREMIÈRE RESTE PUBLIÉE. Celle du 2026-11-22 portait les tonalités de
-// Krumhansl seul, fausses pour un choral sur cinq ; celle-ci les lit avec la basse finale
-// (`corpus-tonalite.ts`). Un asset publié ne se remplace pas : il change de nom.
+// LA TROISIÈME VERSION, ET LES DEUX PREMIÈRES RESTENT PUBLIÉES. Celle du 2026-11-22 portait les
+// tonalités de Krumhansl seul, fausses pour un choral sur cinq ; la seconde les lisait avec la basse
+// finale (`corpus-tonalite.ts`), en majeur ou en mineur seulement. Celle-ci, du 2026-11-24, lit chaque
+// choral par son armure et sa finale (décision D8 de l'harmonisation modale, `corpus-mode.ts`), et
+// garde la lecture des notes pour le seul choral dont la finale n'est d'aucun des cinq modes. Un asset
+// publié ne se remplace pas : il change de nom.
 //
 // DÉCISIONS DE FABIEN DU 2026-11-22. Les écarts relevés hors des six chorals que Sapp n'apparie pas
 // sûrement prennent la hauteur de Sapp ; chacun est écrit dans le fichier, avant et après. Les six
@@ -21,12 +24,13 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from "path";
 import { lireTableDcml } from "./dcml-tsv";
 import { tonaliteDesNotes } from "./corpus-tonalite";
+import { tonaliteDeLArmure } from "./corpus-mode";
 import { corpusDepuisJson, corpusVersJson, type EnteteCorpus } from "./corpus-fichier";
 import type { PieceDuCorpus } from "./corpus";
 import { NOMS_SATB } from "./tessitures-satb";
 
 const RACINE = process.env.CORPUS_CHORALS;
-const SORTIE = join(process.cwd(), "public", "oonx", "corpus-chorals-bach-dcml-2.json");
+const SORTIE = join(process.cwd(), "public", "oonx", "corpus-chorals-bach-dcml-3.json");
 
 /**
  * Les six chorals que le relevé du 2026-11-22 n'apparie pas sûrement, sous 80 % de notes
@@ -54,10 +58,17 @@ describe.skipIf(!RACINE)("le corpus livré des chorals du DCML", () => {
     const metadonnees = readFileSync(join(dcml, "..", "metadata.tsv"), "utf8").replace(/\r/g, "").split("\n").filter(Boolean);
     const entete = metadonnees[0].split("\t");
     const metriques = new Map<string, string>();
+    // L'ARMURE DE LA PREMIÈRE MESURE, en quintes : `KeySig` s'écrit « 1: 1 », mesure puis dièses,
+    // les bémols en négatif. Aucun des 361 chorals n'en change en cours de route.
+    const armures = new Map<string, number>();
     for (const l of metadonnees.slice(1)) {
       const c = l.split("\t");
+      const piece = `DCML ${c[entete.indexOf("piece")]}`;
       const signatures = (c[entete.indexOf("TimeSig")] ?? "").split(",").map((s) => s.split(":")[1]?.trim()).filter(Boolean);
-      if (signatures.length) metriques.set(`DCML ${c[entete.indexOf("piece")]}`, [...new Set(signatures)].join(", "));
+      if (signatures.length) metriques.set(piece, [...new Set(signatures)].join(", "));
+      const armure = c[entete.indexOf("KeySig")] ?? "";
+      expect(armure, piece).toMatch(/^1: -?\d+$/);
+      armures.set(piece, Number(armure.slice(3)));
     }
 
     const fichiers = readdirSync(dcml).filter((f) => f.endsWith(".notes.tsv")).sort();
@@ -92,7 +103,13 @@ describe.skipIf(!RACINE)("le corpus livré des chorals du DCML", () => {
     expect(corrections).toHaveLength(489);
     expect(ecartees).toBe(710);
 
-    for (const p of pieces) p.tonalite = tonaliteDesNotes(p.sequence);
+    for (const p of pieces) p.tonalite = tonaliteDeLArmure(p.sequence, armures.get(p.source)!) ?? tonaliteDesNotes(p.sequence);
+    // CE QUE LA LECTURE DONNE, relevé le 2026-11-24 contre la seconde version : les 178 chorals majeurs
+    // y avaient la même tonalité, 112 des 115 mineurs aussi, les trois autres y étant lus majeurs.
+    const parMode = new Map<string, number>();
+    for (const p of pieces) { const k = p.tonalite!.origine === "notes" ? "notes" : p.tonalite!.mode; parMode.set(k, (parMode.get(k) ?? 0) + 1); }
+    expect(Object.fromEntries(parMode)).toEqual({ majeur: 178, mineur: 115, dorien: 32, phrygien: 26, mixolydien: 9, notes: 1 });
+    expect(pieces.find((p) => p.tonalite!.origine === "notes")!.source).toMatch(/^DCML 313 /);
     const description: EnteteCorpus = {
       nom: "Chorals de Bach (DCML corrigé)",
       source: "DCMLab/bach_chorales v2.0, d'après les fichiers Capella d'Ulrich Kaiser ; 489 hauteurs corrigées d'après craigsapp/bach-370-chorales",

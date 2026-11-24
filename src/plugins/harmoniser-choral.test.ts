@@ -83,6 +83,21 @@ describe("Harmoniser à quatre voix", () => {
     expect((await avec({ Gamme: "mineur", Tonique: "9" })).message).toMatch(/ · modèle appris en majeur$/);
   });
 
+  it("nomme le mode ancien d'un modèle, au rapport et au message quand il n'est pas celui de « Gamme »", async () => {
+    const { apprendreSurCorpus } = await import("../audio/champ-apprentissage");
+    const { corpusDEssaiParLesRegles } = await import("../audio/choral-corpus-essai");
+    const essai = await corpusDEssaiParLesRegles(6, 4);
+    const modele = apprendreSurCorpus({
+      corpus: { pieces: essai.pieces.map((p) => ({ ...p, tonalite: { tonique: 2, mode: "dorien" as const, origine: "armure" as const } })) },
+      mode: "dorien", pas: 1, voisinages: { vertical: true, horizontal: true, diagonal: true }, penalite: 0.0005, passes: 10, partValidation: 0, graine: 1,
+    }).modele!;
+    const avec = (reglages: Record<string, string | number>) => lancerFiche(fiche, reglages, { entrees: [choral175(), modele] });
+    const dorien = await avec({ Gamme: "dorien", Tonique: "2" });
+    expect(String(dorien.valeurs[1])).toContain(`modèle : corpus ${modele.empreinte} · dorien · 6 pièces`);
+    expect(dorien.message).not.toMatch(/modèle appris en/);
+    expect((await avec({ Gamme: "mineur", Tonique: "2" })).message).toMatch(/ · modèle appris en dorien$/);
+  });
+
   it("refuse sans mélodie, et nomme le soprano trop grave avec son instant", async () => {
     const vide = await lancer({}, null);
     expect(vide.erreurRendue).toBe(true);

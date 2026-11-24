@@ -91,24 +91,24 @@
       ]
     },
     {
-      "id": "corpus-chorals-bach-2",
+      "id": "corpus-chorals-bach-3",
       "nom": "Chorals de Bach (DCML corrigé)",
       "nomEn": "Bach chorales (corrected DCML)",
       "noeuds": [
         "lire-corpus"
       ],
-      "octets": 1178974,
+      "octets": 1179419,
       "source": {
         "type": "fichier",
-        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/corpus-chorals-bach-dcml-2.json",
-        "octets": 1178974,
-        "sha256": "4c07dff8dc8e7c10289bc7c3938989c2b901521b3111a7a3f9bd0ed45acc0179"
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/corpus-chorals-bach-dcml-3.json",
+        "octets": 1179419,
+        "sha256": "c6fe1d8fab4c407ce9deba93e4bf30ee8f488b78232b2ca1b66306e37d86d3ee"
       },
       "fichiers": [
         {
-          "chemin": "oonx/corpus-chorals-bach-dcml-2.json",
-          "octets": 1178974,
-          "sha256": "4c07dff8dc8e7c10289bc7c3938989c2b901521b3111a7a3f9bd0ed45acc0179"
+          "chemin": "oonx/corpus-chorals-bach-dcml-3.json",
+          "octets": 1179419,
+          "sha256": "c6fe1d8fab4c407ce9deba93e4bf30ee8f488b78232b2ca1b66306e37d86d3ee"
         }
       ]
     },
