@@ -63,8 +63,8 @@ export const PARAMETRE_INSTRUMENT_SF2 = reglagePartage({
 export const PARAMETRE_INSTRUMENT_SF2_SUIVI = reglagePartage({
   ...PARAMETRE_INSTRUMENT_SF2,
   defaut: -1,
-  doc: "Preset du SoundFont à utiliser, ou Suivre le MIDI pour respecter les changements de programme/banque présents dans le fichier MIDI.",
-  docEn: "SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file.",
+  doc: "Preset du SoundFont à utiliser, ou Suivre le MIDI pour respecter les changements de programme/banque présents dans le fichier MIDI. Le canal 10, celui des percussions, joue un kit de la banque 128 : celui que le fichier désigne, le kit 0 à défaut. Un kit choisi ici le remplace ; un preset d'une autre banque ne le touche pas. Sans kit dans le SoundFont, et en FM, ses frappes passent par le synthétiseur de percussions.",
+  docEn: "SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. Channel 10, the percussion channel, plays a bank 128 kit: the one the file names, kit 0 otherwise. A kit picked here replaces it; a preset from another bank leaves it alone. With no kit in the SoundFont, and in FM, its hits go through the drum synthesizer.",
 });
 
 /**

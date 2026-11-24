@@ -24,6 +24,9 @@ import { frequenceDeTravail } from "./frequence-de-travail";
  * Relevé sur trois cercles, deux de percussion et un de mélodie, quatre variations : **+2,5 dB de
  * crête**, c'est-à-dire de l'écrêtage à la lecture. Sans elle, la batterie était aussi huit
  * décibels au-dessus de la mélodie, ce qui n'est pas un mélange mais une batterie avec du fond.
+ *
+ * ELLE NE S'APPLIQUE QU'AU SYNTHÉTISEUR. Un kit du SoundFont, que la voie SoundFont joue depuis le
+ * 2026-11-24, est rendu par le même moteur que les hauteurs et à la même échelle qu'elles.
  */
 export const RESERVE_BATTERIE = 0.4;
 

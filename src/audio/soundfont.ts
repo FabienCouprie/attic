@@ -367,46 +367,50 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   return { programme, nom, presets, echantillons, instruments, smpl, bufferOriginal: buffer };
 }
 
-export function chercherZonesInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): {
+/** Une zone d'instrument retenue pour jouer une note, ses réglages de preset déjà ajoutés. */
+export interface ZoneJouee {
   echantillon: EchantillonSF2;
   zone: ZoneInstrument;
   donnees: Int16Array;
   debutSample: number;
   finSample: number;
   instrumentIdx: number;
-}[] {
+}
+
+export function chercherZonesInstrument(sf: StructureSF2, noteMidi: number, velocite: number, programme = 0, banque = 0): ZoneJouee[] {
   // Trouver le preset demandé, sinon le premier preset disponible
   let preset = sf.presets.find(p => p.programme === programme && p.banque === banque);
   if (!preset && sf.presets.length > 0) {
     preset = sf.presets[0];
   }
+  if (!preset) return sf.instruments.length > 0 ? zonesDeLInstrument(sf, 0, undefined, noteMidi, velocite) : [];
 
-  let presetZone: PresetZone | undefined;
-  let instrumentIdx = 0;
-  if (preset) {
-    presetZone = preset.zones.find(
-      z => noteMidi >= z.noteMin && noteMidi <= z.noteMax &&
-           velocite >= z.velMin && velocite <= z.velMax
-    );
-    if (!presetZone) return [];
-    instrumentIdx = presetZone.instrumentIdx;
-  } else if (sf.instruments.length > 0) {
-    instrumentIdx = 0;
-  } else {
-    return [];
+  // ═══ LA PREMIÈRE ZONE DE PRESET QUI SONNE, ET NON LA PREMIÈRE QUI COUVRE LA NOTE ═══
+  //
+  // Un kit de percussion range ses sons dans plusieurs instruments : dans FluidR3, les huit zones du
+  // kit « Standard » couvrent toutes les touches 0 à 127, et c'est l'instrument de chacune qui n'a
+  // que quelques touches. S'arrêter à la première zone qui couvrait la note rendait la grosse caisse
+  // muette, « Misc. Percussion » n'ayant pas la 36 : relevé le 2026-11-24, 33 presets de FluidR3 sur
+  // 189 avaient ainsi des notes muettes, dont ses 31 kits. La règle est de Fabien, le même jour. Elle
+  // ne change rien à un preset dont la première zone sonnait déjà, et n'additionne pas les couches :
+  // un preset à deux zones qui sonnent toutes deux n'en joue qu'une. Voir `soundfont-zones.test.ts`.
+  for (const presetZone of preset.zones) {
+    if (noteMidi < presetZone.noteMin || noteMidi > presetZone.noteMax ||
+        velocite < presetZone.velMin || velocite > presetZone.velMax) continue;
+    const matches = zonesDeLInstrument(sf, presetZone.instrumentIdx, presetZone, noteMidi, velocite);
+    if (matches.length > 0) return matches;
   }
+  return [];
+}
 
+/** Les zones d'un instrument qui jouent une note, avec les réglages de la zone de preset ajoutés. */
+function zonesDeLInstrument(
+  sf: StructureSF2, instrumentIdx: number, presetZone: PresetZone | undefined, noteMidi: number, velocite: number,
+): ZoneJouee[] {
   const inst = sf.instruments[instrumentIdx];
   if (!inst) return [];
 
-  const matches: {
-    echantillon: EchantillonSF2;
-    zone: ZoneInstrument;
-    donnees: Int16Array;
-    debutSample: number;
-    finSample: number;
-    instrumentIdx: number;
-  }[] = [];
+  const matches: ZoneJouee[] = [];
 
   for (const zone of inst.zones) {
     if (noteMidi < zone.noteMin || noteMidi > zone.noteMax ||

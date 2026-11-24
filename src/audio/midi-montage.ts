@@ -11,6 +11,8 @@ import { normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
 import { bpmInitial, evenementsAbsolus } from "./midi-ecriture";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { frequenceDeNoteMidi } from "./commun";
+import { ajouterBatterieSynthetisee, voieDuCanal } from "./midi-canal-percussion";
+import { separerPercussions } from "./sequence-percussion";
 
 export async function joindreMidi(
   fichier1: File,
@@ -134,12 +136,19 @@ export async function rendreMidiDepuisBytes(
     const duree = Math.max(dureeTotale, 0.5);
     const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
       const canaux = [...new Set(notes.map((n) => n.canal))].sort((a, b) => a - b);
+      // Les frappes du canal dix, quand le SoundFont n'a aucun kit : voir `midi-canal-percussion.ts`.
+      const auSynthetiseur: typeof notes = [];
       for (const canal of canaux) {
         const nc = notes.filter((n) => n.canal === canal);
         if (!nc.length) continue;
         const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
-        const prog = instrument !== undefined && instrument >= 0 ? instrument : instCanal.programme;
-        const bq = banque !== undefined && banque >= 0 ? banque : instCanal.banque;
+        const voie = voieDuCanal(sf2Global.presets, canal, instCanal, { programme: instrument, banque });
+        if (voie.voie === "synthetiseur") {
+          console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> aucun kit en banque 128 -> synthétiseur de percussions (${nc.length} notes)`);
+          auSynthetiseur.push(...nc);
+          continue;
+        }
+        const { programme: prog, banque: bq } = voie;
         const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
         const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
         console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
@@ -152,6 +161,7 @@ export async function rendreMidiDepuisBytes(
         const n = Math.min(master.length, layer.length);
         for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
       }
+      await ajouterBatterieSynthetisee(master, auSynthetiseur, volume);
       normaliserBuffer(master);
       return master;
     }
@@ -163,7 +173,10 @@ export async function rendreMidiDepuisBytes(
   const gauche = buffer.getChannelData(0);
   const droite = buffer.getChannelData(1);
 
-  for (const n of notes) {
+  // LE CANAL DIX N'EST PAS UNE HAUTEUR : ses frappes vont au synthétiseur de percussions, et les
+  // autres canaux à la FM. Voir `midi-canal-percussion.ts`.
+  const { frappes, hauteurs } = separerPercussions(notes);
+  for (const n of hauteurs) {
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
     const freq = frequenceDeNoteMidi(n.note);
@@ -192,6 +205,7 @@ export async function rendreMidiDepuisBytes(
     }
   }
 
+  await ajouterBatterieSynthetisee(buffer, frappes, volume);
   return buffer;
 }
 
