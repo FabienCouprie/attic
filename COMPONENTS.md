@@ -360,7 +360,7 @@ Records a performance played on a USB-connected MIDI keyboard or controller. The
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. |
+| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. Channel 10, the percussion channel, plays a bank 128 kit: the one the file names, kit 0 otherwise. A kit picked here replaces it; a preset from another bank leaves it alone. With no kit in the SoundFont, and in FM, its hits go through the drum synthesizer. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
 #### MIDI Player
@@ -379,7 +379,7 @@ Loads a MIDI file from the inspector and synthesizes it to audio (FM or SoundFon
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. |
+| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. Channel 10, the percussion channel, plays a bank 128 kit: the one the file names, kit 0 otherwise. A kit picked here replaces it; a preset from another bank leaves it alone. With no kit in the SoundFont, and in FM, its hits go through the drum synthesizer. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
 #### Music explorer
@@ -10125,7 +10125,7 @@ Intermediate listening point for MIDI: lets you audition the MIDI signal at a sp
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. |
+| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. Channel 10, the percussion channel, plays a bank 128 kit: the one the file names, kit 0 otherwise. A kit picked here replaces it; a preset from another bank leaves it alone. With no kit in the SoundFont, and in FM, its hits go through the drum synthesizer. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
 #### MIDI output
@@ -10146,7 +10146,7 @@ Receives a MIDI file, synthesizes it to audio (FM or SoundFont) and passes along
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
-| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. |
+| Instrument | SoundFont preset | follow MIDI |  | SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file. Channel 10, the percussion channel, plays a bank 128 kit: the one the file names, kit 0 otherwise. A kit picked here replaces it; a preset from another bank leaves it alone. With no kit in the SoundFont, and in FM, its hits go through the drum synthesizer. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
 #### Play Sequence on Bank
