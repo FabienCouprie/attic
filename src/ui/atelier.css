@@ -332,9 +332,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 }
 
 /* ── Onglets ── */
+/* LA CROIX QUI VIDE LE CANEVAS EST COLLÉE AU BORD GAUCHE DE L'INSPECTEUR, à la demande de Fabien le
+   2026-11-25 : l'onglet est poussé à droite de la bande, sans marge de ce côté. Tiré sur le canevas,
+   le panneau de l'inspecteur passe par-dessus la bande ; `--inspecteur-debord`, posé par
+   `PanneauInspecteur.tsx`, dit de combien, et la marge de droite le rend : la croix suit le bord du
+   panneau au lieu de passer dessous. */
 .attic-onglets {
-  display: flex; align-items: center; gap: 2px;
-  padding: 4px 8px; background: var(--bg-surface-alt);
+  display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+  padding: 4px var(--inspecteur-debord, 0px) 4px 8px; background: var(--bg-surface-alt);
   border-bottom: 1px solid var(--border);
 }
 .attic-onglet {

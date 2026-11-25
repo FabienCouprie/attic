@@ -9,7 +9,7 @@
 // La largeur est retenue d'une séance à l'autre — une commodité, sans plus : si le stockage manque,
 // le panneau reprend simplement sa largeur ordinaire.
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "../i18n";
 
 export const LARGEUR_ORDINAIRE = 280;
@@ -49,6 +49,16 @@ export function PanneauInspecteur({ children }: { children: ReactNode }) {
     window.addEventListener("resize", surRedim);
     return () => window.removeEventListener("resize", surRedim);
   }, []);
+
+  // LA CROIX DE L'ONGLET SUIT LE BORD GAUCHE DU PANNEAU. Elle est collée contre l'inspecteur
+  // (`.attic-onglets`, dans `atelier.css`), et le panneau tiré sur le canevas la couvrirait : ce
+  // qu'il recouvre du canevas est donc publié sur la racine du document, que la bande lit. Avant la
+  // peinture, pour que la croix ne passe pas une image sous le panneau pendant qu'on le tire.
+  useLayoutEffect(() => {
+    const racine = document.documentElement;
+    racine.style.setProperty("--inspecteur-debord", `${largeur - LARGEUR_ORDINAIRE}px`);
+    return () => { racine.style.removeProperty("--inspecteur-debord"); };
+  }, [largeur]);
 
   const deploye = largeur > LARGEUR_ORDINAIRE;
   return (
