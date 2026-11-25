@@ -4,6 +4,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.1.3] — 2026-11-25
+
+**L'HARMONISATION À QUATRE VOIX, LES PARTITIONS GRAVÉES, ET LA REVUE DES NOTATIONS EN TEXTE.** Attic harmonise une mélodie à quatre voix, par le réseau Coconet ou par les règles, juge un choral faute par faute et apprend sur un corpus, dont les chorals de Bach livrés. « Partition piano », « Partition guitare », « Lire une partition » et « SVG vers PDF » gravent et lisent MusicXML, MEI, Humdrum et ABC. Chaque notation écrite en texte se lit d'une seule façon, et ce qui ne se lit pas est refusé en le nommant. « DDSP Tone Transfer » fonctionne sans réseau. Un fichier de configuration est lu au démarrage, sous Windows et sous Linux. L'installeur Windows et l'AppImage Linux sortent ensemble, comme pour 5.1.2.
+
 ### Added
 
 - **« ÉCART À UNE RÉFÉRENCE » DIT, POUR UNE PAIRE DE SONS, DE COMBIEN CHAQUE AXE DE PRODUCTION S'ÉCARTE.** Demandé par Fabien le 2026-11-25, après le relevé du loup (`EXECUTION/le-loup/RAPPORT.md`) : savoir si une route rapprochait un morceau fait avec Attic de sa reprise par Suno avait demandé un instrument de mesure écrit hors du dépôt, faute d'un nœud qui compare deux sons axe par axe. Univers Visualisation, famille Analyse ; entrées « Audio » et « Référence », sortie « Rapport », aucun réglage, les tailles d'analyse étant fixes pour que deux rapports se comparent.
