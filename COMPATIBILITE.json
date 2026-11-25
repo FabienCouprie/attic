@@ -2732,6 +2732,17 @@
     {"nom":"Relâchement max","type":"curseur","defaut":1,"min":0.01,"max":2,"unite":"s"}
    ]
   },
+  "ecart-reference": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Audio","type":"audio"},
+    {"nom":"Référence","type":"audio"}
+   ],
+   "sorties": [
+    {"nom":"Rapport","type":"texte"}
+   ],
+   "reglages": []
+  },
   "echange-canaux": {
    "version": 1,
    "entrees": [

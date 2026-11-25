@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **523 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **524 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **523 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -9006,6 +9006,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Analysis Player](#analysis-player) | Displays an analysis result and allows listening. |
 | [Audio Analysis](#audio-analysis) | Analyse tempo, key, song/instrumental type. |
 | [Curve Viewer](#curve-viewer) | Draws a modulation curve and measures it, without altering it. |
+| [Distance to a Reference](#distance-to-a-reference) | States how far a sound lies from a reference on each production axis: loudness, peak, stereo, color, timbre, harmony and rhythm. |
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
 | [Grain (Schaeffer)](#grain-schaeffer) | Sorts a sound's grain into three species, harmonic, compact or discontinuous, and gives its rate and depth. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
@@ -9075,6 +9076,22 @@ Draws a modulation curve, and passes it through unchanged. Eight components prod
 |---|---|---|---|---|
 | Width | slider | 640 px | 240 – 1280 px, step 20 | Width of the plot. It also sets the number of columns: wider means more detail, up to one column per value, beyond which there is nothing more to gain. |
 | Height | slider | 200 px | 120 – 480 px, step 10 | Height of the plot. The scale stays from zero to one whatever happens: the height changes the room taken, not the reading. |
+
+#### Distance to a Reference
+
+`ecart-reference` · Visualization → Analysis
+
+*States how far a sound lies from a reference on each production axis: loudness, peak, stereo, color, timbre, harmony and rhythm.*
+
+The component measures how far a sound lies from a reference, one production axis at a time, and returns the report as text. It has no settings: the analysis sizes are fixed, so that two reports can be compared. The « Audio » input receives the sound being judged, the « Reference » input the target sound. Every difference is the audio minus the reference: a positive difference means the audio has more of what the axis measures. Beyond two channels, only the first two are read. The « Report » output gives one line per axis, with the value on each side and the difference: • Level: the integrated loudness and the loudness range under ITU-R BS.1770-4 and EBU Tech 3342, the true peak oversampled four times, the crest factor, and the floor, the 5th percentile of the RMS level over 50 ms frames. • Stereo: the correlation of the left and right channels, and the ratio of the side energy to the mid energy, in decibels. A mono sound shows « mono » there. • Color: the mean power spectrum, taken at 32,768 points, grouped into third-octave bands from 31.5 Hz to 16 kHz and expressed relative to the total energy. The report gives the RMS difference of the bands, the difference of each band, the energy share of nine registers, the median centroid, and the median flatness from 50 Hz to 16 kHz. The medians keep only the frames within 50 dB of the loudest. • Timbre: the distance between the means and between the standard deviations of MFCC 1 to 12, computed over forty mel bands from 30 Hz to 16 kHz and 2,048-point frames. • Harmony: the cosine of the two chroma profiles, and the cost of the DTW alignment of the chromas summed over half-second blocks, at the best of the twelve transpositions of the audio. The same cost, computed on the audio played backwards, gives a scale: it keeps the chords and loses their order. Beyond ten minutes, the DTW covers the first ten minutes of each side. • Rhythm: the tempo, read from the autocorrelation of the spectral flux between 50 and 220 BPM, and the number of onsets per second. The node's message repeats the color difference, the MFCC distance, the loudness difference and the DTW cost.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Reference | audio |  |
+| output | Report | text |  |
+
+*No parameters.*
 
 #### Goniometer
 
