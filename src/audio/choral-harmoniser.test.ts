@@ -55,6 +55,16 @@ describe("le juge ne relève aucune erreur, à température nulle", () => {
     expect(r.accords.some((a) => a.accord.nom.startsWith("V"))).toBe(true);
   });
 
+  it("sous « Toutes », sur le choral 175 et les trois sopranos modaux : aucune septième tenue ne reste sans résolution", async () => {
+    // Avant que la septième tenue coûte (décision D15 du 2026-11-25), le juge y relevait 2, 3, 3 et 1
+    // septièmes non résolues : la septième tenue dans l'accord suivant, qu'il lit sur la note d'après.
+    expect(erreurs(await harmoniser(soprano175(), { septiemes: "toutes" }), 0, "majeur")).toEqual([]);
+    for (const s of SOPRANOS_MODAUX) {
+      const r = await harmoniser(sopranoModal(s), { tonique: s.tonique, mode: s.mode, septiemes: "toutes" });
+      expect(erreurs(r, s.tonique, s.mode), `${s.numero}, ${s.mode}`).toEqual([]);
+    }
+  });
+
   it("finit sur la tonique à l'état fondamental", async () => {
     const r = await harmoniser(soprano175());
     expect(r.accords[r.accords.length - 1].accord.nom).toBe("I");
