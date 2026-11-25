@@ -85,6 +85,11 @@ composants surveillés (`tests-e2e/empreintes.json`).
     `src/core/rendu-du-visible.ts` (ce que montre le nœud visible), `src/core/instantane-de-graphe.ts`
     (le graphe copié au départ de la passe) et `src/core/protocole-moteur.ts` (commandes, événements,
     questions) ;
+  - la validation d'un graphe, dans le cœur : `src/core/validation.ts`, dont `validerGraphe`, que
+    `preparerLaPasse` appelle avant chaque exécution, et `validerAssemblage`, la sévérité des graphes
+    écrits, que `npm run valider` mène par `src/plugins/assemblage.ts` ; les poignées `out:N` et `in:N`
+    que lisent la validation et le moteur (`resoudreEntree` de `src/core/graphe.ts`) sont décrites au
+    §3 de `PORTING-A-DOMAIN.md` ;
   - dans le shell, sans React non plus : `src/ui/moteur/`, dont `src/ui/moteur/index.ts` est la seule
     porte ;
   - le pont et la pose dans les magasins : `src/ui/hooks/useExecutionGraphe.ts` (`useMoteur`,
@@ -98,6 +103,11 @@ composants surveillés (`tests-e2e/empreintes.json`).
     départ, et une écriture d'exécuteur sur `ctx.noeud.data` est relevée ;
   - `src/core/rendu-du-visible.test.ts`, `src/core/protocole-moteur.test.ts`,
     `src/ui/recepteur-moteur.test.ts` et les tests de `src/ui/moteur/` ;
+  - pour la validation : `src/core/preparation-passe.test.ts`, `src/core/validation-frontiere.test.ts`,
+    les cas de `valider` dans `src/plugins/verbes.test.ts` (contenus, entrées obligatoires, ports que la
+    fiche n'a pas, poignées illisibles), et `src/docs/contrat-graphe.test.ts`, qui tient le rang des
+    poignées de tous les graphes du dépôt. **Ce qui n'est pas tenu** : un câble sans poignée d'entrée
+    passe la validation comme l'entrée 0 et le moteur ne le donne à aucune entrée ;
   - `src/docs/frontiere-moteur.test.ts` : rien du dossier du moteur n'atteint React, React Flow ni les
     trois magasins, et l'interface n'importe de ce dossier que son index ;
   - `src/docs/indices-moteur.test.ts` : chaque indice d'`IndicesMoteur` (`src/core/types.ts`), ce que

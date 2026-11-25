@@ -13,6 +13,10 @@
 // une entrée « Notation ». Le câble est licite au transport, les couleurs de ports s'accordent, et
 // le résultat vaut zéro note. Ici il se dit avant qu'une seule note soit rendue.
 //
+// ET LE CÂBLE QUI VISE UN PORT ABSENT, depuis le 2026-11-25 : `in:7` sur un nœud de trois entrées,
+// ou une poignée illisible comme `in:x`. Une poignée d'entrée ABSENTE ne se voit pas encore ici,
+// alors que le moteur ne la donne à aucune entrée : voir `validerAssemblage` dans `core/validation.ts`.
+//
 // CE MODULE N'EXÉCUTE RIEN, ET C'EST VOULU. Proposer le graphe, savoir s'il tient debout, attendre
 // le Lancer : un pilote n'a pas besoin d'actionneur pour être utile.
 import { registre } from "../audio/adaptateur";

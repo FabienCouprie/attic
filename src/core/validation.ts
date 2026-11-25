@@ -136,9 +136,13 @@ export function validerAssemblage(
  * LA LECTURE SAUTE CE CÂBLE, et c'est voulu : un port n'a pas de type hors de la fiche, et un graphe
  * rouvert ne doit perdre aucun câble. Un graphe ÉCRIT, lui, doit l'entendre dire. Relevé le
  * 2026-11-25 : « in:7 » sur un nœud de trois entrées passait pour « rien à signaler », et « in:x »
- * se lisait comme l'entrée 0. Une poignée ABSENTE reste lue comme le port 0, ce que les graphes
- * écrits à la main font sur les nœuds à port unique. Le contrat de graphe tient déjà ce rang pour
- * les graphes du dépôt ; celle-ci le tient pour ceux qu'on relit avant de les lancer.
+ * se lisait comme l'entrée 0. Le contrat de graphe tient déjà ce rang pour les graphes du dépôt ;
+ * celle-ci le tient pour ceux qu'on relit avant de les lancer.
+ *
+ * CE QU'ELLE NE DIT PAS : une poignée ABSENTE. La validation la lit comme le port 0, et le moteur ne
+ * la donne à aucune entrée (`resoudreEntree` de `core/graphe.ts` la lit `in:-1`). Une sonde l'a
+ * montré le même jour : une entrée obligatoire branchée par un câble sans `targetHandle` passe la
+ * validation et reçoit `null`. Le trou est écrit au §3 de `PORTING-A-DOMAIN.md`.
  */
 function signalerPortsInexistants(
   noeuds: NoeudG[],
