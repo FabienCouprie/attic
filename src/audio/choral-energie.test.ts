@@ -45,6 +45,19 @@ describe("l'énergie suit le mode", () => {
     expect(depuis("V") - depuis("v")).toBeCloseTo(POIDS.retrogradation, 9);
   });
 
+  it("une septième tenue quand l'accord change coûte comme une septième qui ne descend pas, et non une septième résolue", () => {
+    // En do majeur : sol septième, le fa au ténor ; puis fa majeur, où le ténor tient le fa, ou do majeur,
+    // où il descend au mi. Le même accord sans septième fait l'étalon : l'écart est la règle seule.
+    const ctx = { tonique: 0, mode: "majeur" as const };
+    const v7 = accordsPossibles(74, 0, "majeur", "dominante").find((a) => a.nom === "V7");
+    if (!v7) throw new Error("V7 absent sous ré en do majeur");
+    const voix: [number, number, number, number] = [74, 71, 65, 55];
+    const ecart = (suite: ColonneChoisie) =>
+      energiePassage({ accord: v7, voix }, suite, ctx) - energiePassage({ accord: { ...v7, septieme: null }, voix }, suite, ctx);
+    expect(ecart({ accord: accord(72, 0, "majeur", "IV"), voix: [72, 69, 65, 53] })).toBeCloseTo(POIDS.septieme, 9);
+    expect(ecart({ accord: accord(72, 0, "majeur", "I"), voix: [72, 67, 64, 48] })).toBeCloseTo(0, 9);
+  });
+
   it("chaque mode a les fréquences de ses chorals : la tonique est le degré le moins coûteux, sauf le iv du phrygien", () => {
     const moinsCouteux = (m: ModeChoral) => [0, 1, 2, 3, 4, 5, 6].reduce((a, d) => (coutDuDegre(m, d) < coutDuDegre(m, a) ? d : a), 0);
     expect(Object.fromEntries(MODES_CHORAL.map((m) => [m, moinsCouteux(m)])))
