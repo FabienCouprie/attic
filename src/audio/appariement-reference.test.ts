@@ -50,6 +50,14 @@ function assombrir(b: AudioBuffer, coupureHz: number): AudioBuffer {
   return out;
 }
 
+/** Un stéréo bâti par son milieu et son côté, pour régler l'un sans toucher l'autre. */
+function parMilieuEtCote(milieu: Float32Array, cote: Float32Array): AudioBuffer {
+  const b = new AudioBuffer({ numberOfChannels: 2, length: N, sampleRate: SR });
+  b.copyToChannel(Float32Array.from(milieu, (m, i) => m + cote[i]), 0);
+  b.copyToChannel(Float32Array.from(milieu, (m, i) => m - cote[i]), 1);
+  return b;
+}
+
 const efficace = (b: AudioBuffer) => {
   const x = b.getChannelData(0);
   let s = 0;
@@ -119,6 +127,26 @@ describe("l'appariement sur une référence", () => {
       { spectre: false, niveau: false, crete: false });
     expect(releve.largeurApres / largeurStereo(large)).toBeCloseTo(1, 1);
     expect(largeurStereo(audio)).toBeGreaterThan(releve.largeurAvant);
+  });
+
+  it("ET LA LARGEUR TIENT QUAND LE SPECTRE AGIT AUSSI", () => {
+    // LE CAS QUI MANQUAIT, relevé le 2026-11-25 sur une reprise de chanson : le cas du dessus coupe
+    // l'égalisation, et la largeur y tombait juste ; avec l'égalisation, une largeur visée de 0,308
+    // ressortait à 0,456. Ici le milieu de la cible est terne et son côté clair : relever l'aigu pour
+    // rejoindre la référence élargit l'image AVANT l'étape de largeur, qui doit donc mesurer le
+    // signal égalisé et non l'entrée d'origine.
+    const reference = parMilieuEtCote(bruit(1, 0.2, 11).getChannelData(0),
+      bruit(1, 0.06, 23).getChannelData(0));
+    const cible = parMilieuEtCote(assombrir(bruit(1, 0.2, 31), 400).getChannelData(0),
+      bruit(1, 0.02, 43).getChannelData(0));
+    const { releve } = apparierSurReference(cible, reference, { crete: false });
+    expect(releve.correctionHauteDb, "l'égalisation doit relever l'aigu, sans quoi le cas n'éprouve rien")
+      .toBeGreaterThan(6);
+    expect(releve.largeurApres / largeurStereo(reference),
+      `largeur visée ${largeurStereo(reference).toFixed(3)}, obtenue ${releve.largeurApres.toFixed(3)}`)
+      .toBeCloseTo(1, 2);
+    // « Avant » reste la largeur de ce que le nœud a reçu : c'est ce que son message montre.
+    expect(releve.largeurAvant).toBeCloseTo(largeurStereo(cible), 6);
   });
 
   it("et une cible MONO ne s'élargit pas, ce qui est dit plutôt que feint", () => {

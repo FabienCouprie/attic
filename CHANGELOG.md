@@ -2722,6 +2722,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **« APPARIER SUR UNE RÉFÉRENCE » DONNE LA LARGEUR DE LA RÉFÉRENCE AUSSI QUAND IL ÉGALISE.** Relevé le 2026-11-25 en rapprochant « le loup » d'Attic de sa reprise par Suno : la largeur visée était 0,308 (rapport du côté au milieu), et le nœud rendait 0,456 sur une reprise d'ACE-Step, 0,346 sur le morceau d'Attic.
+  - **La cause** (`audio/appariement-reference.ts`) : l'étape de largeur calculait son facteur sur la largeur de l'entrée, puis l'appliquait au signal déjà égalisé. Le milieu et le côté d'un morceau n'ont pas la même couleur, donc l'égalisation déplace la largeur entre la mesure et l'application. L'expérience qui le prouvait : « Spectre » sur « Non », la même entrée tombait sur 0,308.
+  - **La correction** : le facteur se calcule sur les deux voies égalisées. « Avant », dans le message, reste la largeur de ce que le nœud a reçu.
+  - **Le garde** : `audio/appariement-reference.test.ts`, « ET LA LARGEUR TIENT QUAND LE SPECTRE AGIT AUSSI », une cible au milieu terne et au côté clair. **Vu rouge** sur l'ancien code : 0,300 visé, 1,142 rendu. Le cas de largeur qui existait coupait l'égalisation, et c'est par là que le défaut avait passé.
+  - **Dans l'application**, le Vite de l'arbre et les deux « loups » : 0,217 → 0,308 avec l'égalisation (0,456 avant), et 0,439 → 0,308 aux réglages par défaut (0,346 avant). Mesurée hors du nœud, la corrélation des quatre sorties vaut 0,827, celle de la référence, et leur couleur et leurs MFCC n'ont pas bougé d'un centième : seule la largeur change.
+  - **Aucune empreinte à refaire** : le nœud n'est dans aucune des deux bases, et aucun exemple livré ne l'emploie.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans erreur, aucun avertissement dans les fichiers touchés ; `audio/appariement-reference.test.ts` à 10 cas verts ; passe complète en 24 min 57 s, 885 fichiers et 13 324 cas, 13 301 verts et 23 sautés, aucun rouge.
+
 - **`npm run valider` SIGNALE UN CÂBLE BRANCHÉ SUR UN PORT QUI N'EXISTE PAS, ET UNE POIGNÉE QUI NE SE LIT PAS.** Relevé le 2026-11-25 sur un graphe écrit hors du dépôt : une copie où « Reprendre une chanson », qui a trois entrées, recevait un câble sur `in:7` sortait « rien à signaler ».
   - **La cause** (`core/validation.ts`) : un rang hors de la fiche n'a pas de type, et la validation sautait le câble au lieu de le dire. Une poignée illisible, `in:x`, se lisait comme le port 0, et le câble allait s'y poser sans un mot.
   - **La correction** : `validerAssemblage`, la sévérité des graphes écrits que mène `valider`, dit maintenant « poignée « in:7 » : aucune entrée de ce rang, la fiche en déclare 3 », de même pour une sortie, et « poignée « in:x » illisible ». `validerGraphe`, qui prépare chaque exécution, reste permissif, et un graphe rouvert ne perd aucun câble.
