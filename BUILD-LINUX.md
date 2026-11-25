@@ -82,6 +82,13 @@ et `onnxruntime-node`. Une seule est native.
   d'Attic ne demande jamais CUDA (§ 10.1) : c'est du poids mort, et un téléchargement de plus
   pendant `npm ci`. Le job Linux pose donc `ONNXRUNTIME_NODE_INSTALL=skip` (même fichier,
   ligne 46).
+- **Et la copie 1.21.0 que tire `kokoro-js`** (`node_modules/kokoro-js/node_modules/onnxruntime-node`)
+  a un installeur plus ancien, qui ne lit pas cette variable mais `ONNXRUNTIME_NODE_INSTALL_CUDA`
+  (`script/install.js:173`). Le 2026-11-25, Microsoft a retiré `onnxruntime-linux-x64-gpu-1.21.0.tgz`
+  de sa release : le téléchargement rend 404 et `npm ci` échoue, ce qui a fait tomber l'AppImage
+  5.1.3. Le job pose donc aussi `ONNXRUNTIME_NODE_INSTALL_CUDA=skip`. Mesuré sur cette copie,
+  sans son fournisseur CUDA : sans la variable, 404 et code 1 ; avec, code 0 et rien de téléchargé.
+  **Un `npm ci` sous Linux hors du job doit poser la même variable.**
 - **Les autres `.node` du dépôt** (`node-web-audio-api`, `sharp`, les liaisons de `rolldown`, de
   `oxlint`, de `lightningcss`, `jazz-midi`) sont des dépendances de développement : elles servent à
   construire et à tester, pas à l'application. `npm ci` sur Linux prend leur version Linux. C'est
