@@ -1974,10 +1974,15 @@
    "version": 1,
    "entrees": [],
    "sorties": [
-    {"nom":"Rang","type":"texte"}
+    {"nom":"Rang","type":"texte"},
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Nom","type":"texte"},
+    {"nom":"Audio","type":"audio"}
    ],
    "reglages": [
+    {"nom":"Source","type":"choix","defaut":"nombre","choix":["nombre","dossier"]},
     {"nom":"Pièces","type":"curseur","defaut":8,"min":1},
+    {"nom":"Dossier","type":"dossier","defaut":""},
     {"nom":"Graines","type":"choix","defaut":"Une par tour","choix":["Une par tour","Identiques"]}
    ]
   },

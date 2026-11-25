@@ -220,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Écrire un contrepoint | `contrepoint-solveur` | 240 × 162 |
 | Convertir une voix | `convertir-voix` | 240 × 140 |
 | Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
-| Fabriquer un corpus (début) | `corpus-fabriquer-debut` | 240 × 118 |
+| Fabriquer un corpus (début) | `corpus-fabriquer-debut` | 240 × 184 |
 | Fabriquer un corpus (fin) | `corpus-fabriquer-fin` | 240 × 140 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Correction du pleurage | `correction-pleurage` | 240 × 140 |
