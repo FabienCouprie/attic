@@ -290,6 +290,7 @@ decalage-bandes
 quiz
 parcours
 fiche-technique
+ecart-reference
 particules
 granulation-spectrale
 montage-grains

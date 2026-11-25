@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**523 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**524 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -261,6 +261,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Doser un effet | `doser-effet` | 240 × 184 |
 | Batterie synthétique | `drum-synth` | 240 × 140 |
 | Ducking | `ducking` | 240 × 228 |
+| Écart à une référence | `ecart-reference` | 240 × 140 |
 | Échange canaux | `echange-canaux` | 240 × 118 |
 | Echo | `echo` | 240 × 162 |
 | Écho flottant | `echo-flottant` | 240 × 162 |

@@ -16,6 +16,7 @@ import { fiches as f_spectrogramme_operations } from "../spectrogramme-operation
 import { fiches as f_quiz } from "../quiz";
 import { fiches as f_parcours } from "../parcours";
 import { fiches as f_ficheTechnique } from "../fiche-technique";
+import { fiches as f_ecart_reference } from "../ecart-reference";
 import { fiches as f_particules } from "../particules";
 import { fiches as f_montageGrains } from "../montage-grains";
 import { fiches as f_ecrans } from "../ecrans";
@@ -58,6 +59,7 @@ export const fiches = [
   ...f_quiz,
   ...f_parcours,
   ...f_ficheTechnique,
+  ...f_ecart_reference,
   ...f_particules,
   ...f_montageGrains,
   ...f_ecrans,
