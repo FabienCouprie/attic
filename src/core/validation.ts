@@ -11,7 +11,7 @@
 //
 //  Les types de flux sont injectés (pas importés depuis un global) — chaque registre
 //  a son propre jeu de types.
-import type { PluginDef } from "./types";
+import type { PluginDef, PortDef } from "./types";
 import type { TypeFlux } from "./typesFlux";
 import { empreinteParametres } from "./graphe";
 import { estFrontiere, indexPort, type NoeudG, type AreteG } from "./meta";
@@ -125,7 +125,52 @@ export function validerAssemblage(
   getDef: (ficheId: string) => DefPourValidation | undefined,
   fluxCompatibles: (sourceId: string, cibleId: string, sousTypeSource?: string, sousTypeCible?: string) => boolean,
 ): ResultatValidationGraphe {
-  return validerGraphe(noeuds, aretes, getDef, (s, c) => fluxCompatibles(s, c), fluxCompatibles);
+  const res = validerGraphe(noeuds, aretes, getDef, (s, c) => fluxCompatibles(s, c), fluxCompatibles);
+  signalerPortsInexistants(noeuds, aretes, getDef, res);
+  return res;
+}
+
+/**
+ * Le câble qui vise un port que la fiche n'a pas, ou une poignée qui ne se lit pas.
+ *
+ * LA LECTURE SAUTE CE CÂBLE, et c'est voulu : un port n'a pas de type hors de la fiche, et un graphe
+ * rouvert ne doit perdre aucun câble. Un graphe ÉCRIT, lui, doit l'entendre dire. Relevé le
+ * 2026-11-25 : « in:7 » sur un nœud de trois entrées passait pour « rien à signaler », et « in:x »
+ * se lisait comme l'entrée 0. Une poignée ABSENTE reste lue comme le port 0, ce que les graphes
+ * écrits à la main font sur les nœuds à port unique. Le contrat de graphe tient déjà ce rang pour
+ * les graphes du dépôt ; celle-ci le tient pour ceux qu'on relit avant de les lancer.
+ */
+function signalerPortsInexistants(
+  noeuds: NoeudG[],
+  aretes: AreteG[],
+  getDef: (ficheId: string) => DefPourValidation | undefined,
+  res: ResultatValidationGraphe,
+): void {
+  const ficheDe = (id: string) => noeuds.find((n) => n.id === id)?.data.ficheId as string | undefined;
+  const dire = (ou: string, msg: string, ar: AreteG) => {
+    const existant = res.noeudsAffectes.get(ou) ?? [];
+    existant.push(msg);
+    res.noeudsAffectes.set(ou, existant);
+    if (!res.aretesInvalides.includes(ar)) res.aretesInvalides.push(ar);
+  };
+  for (const ar of aretes) {
+    const ficheSource = ficheDe(ar.source), ficheCible = ficheDe(ar.target);
+    if (!ficheSource || !ficheCible || estFrontiere(ficheSource) || estFrontiere(ficheCible)) continue;
+    const bouts: [string, string | null | undefined, PortDef[] | undefined, string][] = [
+      [ar.source, ar.sourceHandle, getDef(ficheSource)?.sorties, "sortie"],
+      [ar.target, ar.targetHandle, getDef(ficheCible)?.entrees, "entrée"],
+    ];
+    for (const [ou, poignee, ports, quoi] of bouts) {
+      if (!ports || !poignee) continue;
+      const rang = indexPort(poignee, -1);
+      if (rang < 0) {
+        dire(ou, `poignée « ${poignee} » illisible (${ar.source} → ${ar.target})`, ar);
+      } else if (rang >= ports.length) {
+        dire(ou, `poignée « ${poignee} » : aucune ${quoi} de ce rang, la fiche en déclare ${ports.length} `
+          + `(${ar.source} → ${ar.target})`, ar);
+      }
+    }
+  }
 }
 
 export function validerGraphe(
