@@ -10,10 +10,23 @@ on:
         description: 'Tag to build and release (e.g. v2.2.0)'
         required: true
         type: string
+      # REPRENDRE L'APPIMAGE SEULE, SANS RETOUCHER L'INSTALLEUR WINDOWS. Né le 2026-11-25 : en
+      # 5.1.3, l'installeur était publié et le job Linux tombé. Relancer le job échoué rejoue le
+      # workflow DE L'ÉTIQUETTE, sans la correction ; tout relancer reconstruit et remplace un
+      # installeur déjà publié. Cette case lance le workflow de la branche choisie sur l'étiquette
+      # donnée, et ne construit que l'AppImage.
+      linux_seulement:
+        description: 'Construire et publier seulement l''AppImage Linux'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   release:
     name: Build and publish Electron installer
+    # Les entrées d'un lancement manuel sont des chaînes ; sur une étiquette poussée, elles sont
+    # absentes, et le job tourne.
+    if: ${{ github.event.inputs.linux_seulement != 'true' }}
     runs-on: windows-latest
     permissions:
       contents: write
@@ -200,12 +213,20 @@ jobs:
     name: Build and publish the Linux AppImage
     runs-on: ubuntu-24.04
     needs: release
+    # Après l'installeur, comme toujours ; ou seul, quand le lancement manuel l'a demandé et que le
+    # job Windows a donc été sauté. Sans `always()`, un job sauté ferait sauter celui-ci.
+    if: ${{ always() && (needs.release.result == 'success' || (needs.release.result == 'skipped' && github.event.inputs.linux_seulement == 'true')) }}
     permissions:
       contents: write
     env:
       # Sous linux/x64, le postinstall d'onnxruntime-node télécharge le fournisseur CUDA 12, que le
       # code d'Attic ne demande jamais (BUILD-LINUX.md, § 2.3) : du poids mort et un téléchargement.
       ONNXRUNTIME_NODE_INSTALL: skip
+      # ET LA COPIE 1.21 QUE TIRE `kokoro-js` NE LIT PAS LA VARIABLE CI-DESSUS, mais celle-ci. Le
+      # 2026-11-25, Microsoft ayant retiré `onnxruntime-linux-x64-gpu-1.21.0.tgz` de sa release
+      # (404), son `script/install.js` a fait tomber `npm ci` et l'AppImage 5.1.3. En 5.1.2, le
+      # fichier existait encore : le même téléchargement inutile passait.
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
     defaults:
       run:
         shell: bash
