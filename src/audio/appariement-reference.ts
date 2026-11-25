@@ -134,7 +134,11 @@ function appliquerCourbe(x: Float32Array, gainDb: Float64Array, fftSize: number)
 /** Le rapport du côté au milieu, qui est la largeur stéréo telle qu'on la mesure. */
 export function largeurStereo(b: AudioBuffer): number {
   if (b.numberOfChannels < 2) return 0;
-  const g = b.getChannelData(0), d = b.getChannelData(1);
+  return largeurDesVoies(b.getChannelData(0), b.getChannelData(1));
+}
+
+/** La même largeur, sur deux voies que l'on tient encore en tableaux. */
+function largeurDesVoies(g: Float32Array, d: Float32Array): number {
   const n = Math.min(g.length, d.length);
   let milieu = 0, cote = 0;
   for (let i = 0; i < n; i++) {
@@ -209,13 +213,19 @@ export function apparierSurReference(
   }
 
   // ── 3. La largeur ───────────────────────────────────────────────────────────────────────────
+  // LE FACTEUR SE CALCULE SUR LE SIGNAL DÉJÀ ÉGALISÉ, et non sur l'entrée. Le milieu et le côté
+  // d'un morceau n'ont pas la même couleur : l'étape 2 déplace donc la largeur. Mesurée sur l'entrée
+  // et appliquée après l'égalisation, elle manquait la référence (relevé le 2026-11-25 sur une
+  // reprise de chanson : 0,308 visé, 0,456 rendu, et 0,308 juste dès que « Spectre » valait « Non »).
+  // `largeurAvant` reste la largeur de ce que le nœud a reçu, que son message montre.
   const largeurAvant = largeurStereo(cible);
   if (o.largeur && canaux >= 2) {
     const voulue = largeurStereo(reference);
+    const largeurEgalisee = largeurDesVoies(voies[0], voies[1]);
     // UNE CIBLE MONO NE S'ÉLARGIT PAS ICI : son côté vaut zéro, et multiplier zéro donne zéro.
     // C'est un autre travail, celui des premières réflexions.
-    if (largeurAvant > EPS) {
-      const facteur = voulue / largeurAvant;
+    if (largeurEgalisee > EPS) {
+      const facteur = voulue / largeurEgalisee;
       const g = voies[0], d = voies[1];
       for (let i = 0; i < g.length; i++) {
         const m = (g[i] + d[i]) / 2, c = ((g[i] - d[i]) / 2) * facteur;

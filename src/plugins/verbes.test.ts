@@ -100,6 +100,28 @@ describe("valider", () => {
     expect(r.problemes.filter((p) => /connexion illégale/.test(p.quoi))).toEqual([]);
   });
 
+  it("SIGNALE UN CÂBLE BRANCHÉ SUR UNE ENTRÉE QUI N'EXISTE PAS", () => {
+    // Relevé le 2026-11-25 sur un graphe écrit hors du dépôt : « in:7 » sur « Reprendre une
+    // chanson », qui a trois entrées, sortait « rien à signaler ». Un rang hors de la fiche n'a pas
+    // de type, et la validation sautait le câble au lieu de le dire.
+    const r = validerGrapheEcrit({
+      nodes: [noeud("a", "composer-plan"), noeud("b", "reprendre-chanson")] as never,
+      edges: [arete("e1", "a", "b", "out:0", "in:0"), arete("e2", "a", "b", "out:0", "in:7")] as never,
+    });
+    expect(r.problemes.filter((p) => /in:7/.test(p.quoi)).map((p) => p.ou)).toEqual(["b"]);
+    expect(r.problemes.filter((p) => /in:0/.test(p.quoi)), "un rang qui existe ne se signale pas").toEqual([]);
+  });
+
+  it("et de même une sortie qui n'existe pas, ou une poignée qui ne se lit pas", () => {
+    // « in:x » se lisait comme l'entrée 0 : le câble allait s'y poser sans un mot.
+    const r = validerGrapheEcrit({
+      nodes: [noeud("a", "composer-plan"), noeud("b", "rendre-chanson")] as never,
+      edges: [arete("e1", "a", "b", "out:3", "in:0"), arete("e2", "a", "b", "out:0", "in:x")] as never,
+    });
+    expect(r.problemes.some((p) => p.ou === "a" && /out:3/.test(p.quoi))).toBe(true);
+    expect(r.problemes.some((p) => p.ou === "b" && /in:x/.test(p.quoi))).toBe(true);
+  });
+
   it("nomme les fiches qu'il ne connaît pas, au lieu de se taire", () => {
     const r = validerGrapheEcrit({
       nodes: [noeud("a", "composant-qui-n-existe-pas")] as never, edges: [],
