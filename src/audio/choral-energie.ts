@@ -143,11 +143,16 @@ export function energiePassage(c1: ColonneChoisie, c2: ColonneChoisie, ctx: Cont
     }
   }
   const changement = a1.degre !== a2.degre || a1.repli !== a2.repli || a1.racine !== a2.racine;
+  // UNE SEPTIÈME TENUE QUAND L'ACCORD CHANGE N'EST PAS RÉSOLUE (décision D15 du 2026-11-25). La note
+  // répétée est tenue à l'écriture, et le juge lit la septième sur la note qui suit la tenue, que cette
+  // chaîne d'une colonne à la suivante ne voit pas. Comptée résolue, elle laissait 839 septièmes non
+  // résolues au juge sur les 360 sopranos du corpus livré sous « Toutes », 23 sous « Dominante » ; elle
+  // en laisse 28 et 10 depuis qu'elle coûte.
   if (a1.septieme !== null && changement) {
     for (let v = 0; v < 4; v++) {
       if (pc(p[v]) !== a1.septieme) continue;
       const d = q[v] - p[v];
-      if (d !== 0 && d !== -1 && d !== -2) e += POIDS.septieme;
+      if (d !== -1 && d !== -2) e += POIDS.septieme;
     }
   }
   if (!changement) e += POIDS.repetition;
