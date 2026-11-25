@@ -518,7 +518,7 @@ jamais vu rouge ne garde rien.
 | Savoir quel composant une table partagée touche | `INTERFACE.md` (généré) |
 | Taille des fichiers, norme de 200 à 400 lignes de code, **contraignante** | `src/docs/generer-compte-lignes.test.ts` ; `npm run docs:lignes` pour la table, engendrée à la demande et hors du dépôt |
 | Lire le catalogue en **données** plutôt qu'en prose | `npm run decrire` écrit `DESCRIPTION.json` : ports, contenus, réglages et leurs bornes, sans les notices, engendré à la demande et hors du dépôt |
-| Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air |
+| Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air, câbles vers un port que la fiche n'a pas, poignées illisibles ; une poignée d'entrée **absente** ne s'y voit pas (`PORTING-A-DOMAIN.md` §3) |
 | Mesurer **un composant** sans improviser de script | `COMPOSANT=id npm run mesurer` : durée, gel du fil, message, empreinte de chaque sortie, par le banc et ses cinq précautions |
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |

@@ -265,7 +265,9 @@ ctx.signal             // AbortSignal du run, à consulter dans une boucle longu
 ```
 
 Le cœur **garantit** que `ctx.entree(i)` est non-null pour les ports
-obligatoires : `validerGraphe` refuse d'exécuter avant. Un port optionnel se
+obligatoires dont le câble porte sa poignée `in:i` : `validerGraphe` refuse
+d'exécuter avant. Un câble sans poignée d'entrée échappe à cette garantie (voir
+« Les poignées d'une arête » plus bas). Un port optionnel se
 déclare `requis: false` — c'est alors à votre plugin de gérer le `null` que
 `ctx.entree(i)` rend quand il n'est pas branché. `ctx.entrees()` ne suit pas les
 rangs des ports : il rend une valeur par câble entrant, `null` pour une source qui
@@ -289,6 +291,47 @@ graphe prise à son départ, et une écriture sur `data` s'y relève
 un câble neuf remplace sinon le précédent ; le plugin les lit par `ctx.entrees()`.
 Un nœud dont les ports s'allongent à la demande déclare `entreesExtensibles` ou
 `sortiesExtensibles` sur sa fiche.
+
+### Les poignées d'une arête : `out:N` et `in:N`
+
+Une arête nomme ses deux ports par leur **rang**, dans deux chaînes :
+`sourceHandle: "out:N"` pour la sortie N de la source, `targetHandle: "in:N"` pour
+l'entrée N de la cible, en comptant à partir de 0 dans les `sorties` et les
+`entrees` de la fiche. **C'est un contrat du cœur, et non une habitude de
+l'interface** : le cœur écrit lui-même ces chaînes quand il replie un méta
+(`core/meta.ts`) ou une bulle (`core/bulles.ts`), `sortieBranchee` les compare à la
+lettre (`core/contexte-de-passe.ts`), et le moteur lit le rang après les deux-points
+(`resoudreEntree` de `core/graphe.ts`). Votre interface, et tout ce qui écrit un
+graphe pour vous, script ou agent, les écrit sous cette forme.
+
+**Un rang est une place, pas un nom.** Déplacer un port dans la liste d'une fiche
+rebranche sur un autre port les câbles des graphes déjà enregistrés ; ajouter un
+port en fin de liste ne déplace rien.
+
+**Ce que chaque lecture fait d'une poignée d'entrée qui ne va pas**, relevé le
+2026-11-25 sur le code et par une sonde :
+
+| la poignée d'entrée | `validerGraphe`, avant chaque exécution | `validerAssemblage`, que mène `valider` | le moteur, `resoudreEntree` |
+|---|---|---|---|
+| `in:N`, N dans la fiche | l'entrée N | l'entrée N | l'entrée N reçoit le câble |
+| `in:N`, N au-delà de la fiche | câble sauté, sans un mot | « aucune entrée de ce rang, la fiche en déclare … » | aucune entrée ne le reçoit |
+| illisible, `in:x` | lue comme l'entrée 0 | « poignée « in:x » illisible » | aucune entrée ne le reçoit |
+| absente | lue comme l'entrée 0 | lue comme l'entrée 0 | aucune entrée ne le reçoit |
+
+Côté sortie, une poignée absente vaut `out:0` pour la validation comme pour le moteur ;
+une poignée illisible, que `valider` signale, ne rend aucune valeur au moteur.
+
+**LE TROU QUI RESTE, MESURÉ.** Un câble sans poignée d'entrée, ou à poignée illisible,
+compte pour l'entrée 0 aux yeux de `validerGraphe`, et le moteur ne le donne à aucune
+entrée. Sur une entrée obligatoire, la garantie du « contexte reçu » plus haut ne
+tient donc pas : la validation laisse partir l'exécution, et `ctx.entree(0)` rend
+`null`. Une sonde l'a montré : une fiche à une entrée obligatoire, branchée par un
+câble sans `targetHandle`, passe la validation sans un mot, et son entrée reçoit
+`null` ; branchée par `in:0`, elle reçoit la valeur. `valider` signale la poignée
+illisible, pas la poignée absente. **Écrivez toujours les deux poignées.** Les 530
+poignées des graphes du dépôt ont toutes la forme `in:N` ou `out:N`, et
+`src/docs/contrat-graphe.test.ts` tient leur rang ; un graphe écrit ailleurs se
+relit par `valider` avant d'être lancé.
 
 ---
 
@@ -352,9 +395,13 @@ et un nœud qui a tourné entraîne sa descendance. Les branches parallèles
 indépendantes ne se réinvalident pas mutuellement.
 
 **Validation** — `valider(def, deps)` refuse une fiche mal formée à
-l'enregistrement (résumé manquant, type de flux inconnu…). `validerGraphe`
-vérifie avant exécution que les ports obligatoires sont connectés et que les
-types reliés sont compatibles.
+l'enregistrement (résumé manquant, type de flux inconnu…). Un graphe se valide à
+trois sévérités, écrites en tête de `validerAssemblage`. `validerGraphe` vérifie
+avant chaque exécution que les ports obligatoires sont connectés et que les types
+reliés sont compatibles, et il ne retire aucun câble d'un graphe rouvert. La pose
+d'une arête à la souris y ajoute le contenu des ports (§2), par `ui/validerGraphe.ts`.
+`validerAssemblage`, que mène `valider` sur un graphe écrit, y ajoute le contenu, le
+rang des ports et la lecture des poignées (§3, « Les poignées d'une arête »).
 
 **Métanodes** — `creerMeta` replie une sélection en composant réutilisable,
 `aplatirGraphe` le déplie récursivement à l'exécution (imbrication comprise,
@@ -397,6 +444,9 @@ descripteurs sont des descripteurs sonores. Vous en écrirez d'autres.
 Ce qui se reprend est leur **forme**, et elle vaut d'être copiée :
 
 - `validerAssemblage` est dans le cœur : la moitié dure de `valider` est gratuite.
+  Contenus mal branchés, entrées obligatoires en l'air, ports que la fiche n'a pas et
+  poignées illisibles s'y disent pour tout domaine ; une poignée d'entrée absente, non
+  (§3).
 - Un guichet **se tait** quand on ne lui désigne rien, et traverse donc une passe
   complète sans la déranger.
 - Son **code de sortie porte le verdict**, sans quoi aucun script ne peut s'en
@@ -700,7 +750,8 @@ Pour une vraie cohabitation, il faudrait namespacer ces deux-là. Les clés
 1. `src/<domaine>/types-domaine.ts` — `TValeur`, `TRuntime` et les alias.
 2. `src/<domaine>/adaptateur.ts` — `creerRegistre` (avec ses alias, s'il en a), types de flux, fiches, `figerLesNatifs`, injection.
 3. Un premier plugin source (sans entrée) + un plugin de sortie. Vérifiez que la
-   palette les affiche et qu'une arête se connecte.
+   palette les affiche et qu'une arête se connecte, avec ses deux poignées `out:N`
+   et `in:N` (§3).
 4. Posez le contrat d'échec (§4) **dès le premier plugin**, pas après.
 5. `src/composition.ts` — déposez votre registre sur `ui/registre-actif.ts`, et le
    reste si vous en avez. **Faites-en le premier import de `main.tsx`** : sans
