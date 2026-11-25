@@ -807,6 +807,39 @@
       },
       "erreurs": []
     },
+    "un-choral-dans-son-mode.json": {
+      "lecteurs": {
+        "harmonise-mixolydien": {
+          "rms": 0.27051510253276545,
+          "crete": 0.8025529384613037,
+          "trames": 979020,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 271.5182043078478,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.27051510253276545,
+          "crete": 0.8025529384613037,
+          "trames": 979020,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 271.5182043078478,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-choral-harmonise.json": {
       "lecteurs": {
         "harmoniser": {
