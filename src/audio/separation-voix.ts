@@ -19,6 +19,15 @@
 // calculé par programmation dynamique, où sauter une voix coûte un forfait. Il préserve l'ordre
 // parce qu'à une frontière deux voix qui se croiseraient ne s'entendraient pas comme deux voix.
 //
+// UNE VOIX QUI COMMENCE NE PREND PAS DE NUMÉRO NEUF. Jusqu'au 2026-11-25, chaque note que
+// l'alignement ne reliait à rien en ouvrait un, si bien qu'une ligne qui se tait puis reprend en
+// faisait deux ; le classement par hauteur moyenne mettait alors en tête les morceaux courts et
+// aigus, et versait tout ce qui dépassait la plus grande polyphonie dans la dernière voix. Sur la
+// Gnossienne 1 de Satie, 521 morceaux pour 5 voix, et 804 notes sur 832 dans la plus grave. Les
+// voix sont désormais celles de la tranche d'ancrage, ni plus ni moins : chaque tranche y place ses
+// notes dans l'ordre des hauteurs, une ligne qui se prolonge garde la sienne tant que l'ordre le
+// permet, et une note qui commence prend la voix libre dont la dernière hauteur est la plus proche.
+//
 // LA FAIBLESSE EST CONNUE, ET ELLE TIENT AUX DONNÉES PLUS QU'À LA MÉTHODE. L'ordre par hauteur
 // suppose que les voix ne se croisent pas ; quand elles le font, elles sont interverties, et leurs
 // auteurs le signalent. Mais deux lignes qui se traversent laissent EXACTEMENT les mêmes hauteurs
@@ -173,6 +182,58 @@ export function alignerVoix(
 }
 
 /**
+ * Place les notes d'une tranche dans les voix de l'ancre, sans jamais les croiser.
+ *
+ * `hauteurs` vont du grave à l'aigu. `liees` dit, pour chaque note, la voix de la note qui la
+ * prolonge dans la tranche voisine, ou -1 quand elle commence là ; `tenues` dit si c'est la même note
+ * qui sonne encore. `dernieres` donne la dernière hauteur entendue dans chaque voix, et leur nombre
+ * est celui des voix. Le résultat donne à chaque note sa voix, en ordre strictement croissant.
+ *
+ * LES TROIS EXIGENCES SONT RANGÉES, ET NON PESÉES. D'abord qu'une note tenue ne change pas de voix,
+ * puis qu'une ligne qui se prolonge garde la sienne, enfin qu'une note qui commence aille au plus près
+ * de ce que sa voix a chanté en dernier. Chaque rang coûte plus que tout ce que le suivant peut
+ * réunir, si bien qu'aucune somme d'écarts de hauteur ne rachète une ligne coupée. Une ligne ne
+ * change donc de voix que lorsque l'ordre l'y oblige : une note entre en dessous d'elle alors
+ * qu'aucune voix n'est libre de ce côté.
+ *
+ * C'est une programmation dynamique sur les voix, en temps proportionnel aux notes par les voix.
+ */
+export function placerDansLesVoix(
+  hauteurs: readonly number[], liees: readonly number[], tenues: readonly boolean[],
+  dernieres: readonly number[],
+): number[] {
+  const k = hauteurs.length, v = dernieres.length;
+  if (k === 0) return [];
+  // Une ligne coupée coûte plus que la somme des écarts de hauteur de toute la tranche, et une note
+  // tenue déplacée plus que toutes les lignes coupées réunies.
+  const toutes = [...hauteurs, ...dernieres];
+  const coupee = (k + 1) * (Math.max(...toutes) - Math.min(...toutes) + 1);
+  const deplacee = coupee * (k + 1);
+  const cout = (r: number, s: number): number => {
+    if (liees[r] >= 0) return liees[r] === s ? 0 : (tenues[r] ? deplacee : coupee);
+    return Math.abs(hauteurs[r] - dernieres[s]);
+  };
+
+  // `meilleur[r][s]` : le moindre coût des notes 0 à r, la note r étant dans la voix s.
+  const meilleur = Array.from({ length: k }, () => new Array<number>(v).fill(Infinity));
+  const precedente = Array.from({ length: k }, () => new Array<number>(v).fill(-1));
+  for (let s = 0; s < v; s++) meilleur[0][s] = cout(0, s);
+  for (let r = 1; r < k; r++) {
+    let plusBas = Infinity, ou = -1;
+    for (let s = 1; s < v; s++) {
+      if (meilleur[r - 1][s - 1] < plusBas) { plusBas = meilleur[r - 1][s - 1]; ou = s - 1; }
+      if (ou >= 0) { meilleur[r][s] = plusBas + cout(r, s); precedente[r][s] = ou; }
+    }
+  }
+
+  const voix = new Array<number>(k).fill(0);
+  let s = 0;
+  for (let q = 1; q < v; q++) if (meilleur[k - 1][q] < meilleur[k - 1][s]) s = q;
+  for (let r = k - 1; r >= 0; r--) { voix[r] = s; s = precedente[r][s]; }
+  return voix;
+}
+
+/**
  * Les instants où deux notes d'une même tranche sont à la même hauteur.
  *
  * DEUX DIAGNOSTICS MORTS ONT PRÉCÉDÉ CELUI-CI, et c'est pourquoi le choix est expliqué. Le premier
@@ -190,6 +251,37 @@ function unissonsDans(tranches: readonly Tranche[], tolerance: number): number {
     }
   }
   return combien;
+}
+
+/**
+ * Le numéro rendu de chaque voix trouvée, du plus aigu au plus grave, au plus `plafond` voix.
+ *
+ * `employes` va de la voix la plus aiguë à la plus grave. Sous le plafond, chacune garde son rang.
+ * AU-DELÀ, LA PLUS AIGUË ET LA PLUS GRAVE RESTENT DES LIGNES : ce sont la mélodie et la basse, celles
+ * qu'une réduction ne doit pas mêler. Les voix gardées sont également espacées entre elles, et chaque
+ * autre voix rejoint la voix gardée dont la hauteur moyenne est la plus proche ; ce sont donc les
+ * voix intérieures qui portent les accords. Jusqu'au 2026-11-25, tout ce qui dépassait tombait dans
+ * la dernière : à quatre voix, l'Ogive 1 de Satie donnait 46/52/61/381 notes, la basse en accords.
+ */
+function replier(employes: readonly number[], voixDe: ReadonlyMap<Note, number>, plafond: number): Map<number, number> {
+  const K = employes.length;
+  if (K <= plafond) return new Map(employes.map((v, i) => [v, i]));
+  if (plafond <= 1) return new Map(employes.map((v) => [v, 0]));
+  const somme = new Map<number, [number, number]>();
+  for (const [note, v] of voixDe) {
+    const s = somme.get(v) ?? [0, 0];
+    somme.set(v, [s[0] + note.note, s[1] + 1]);
+  }
+  const moyenne = (v: number) => { const [t, c] = somme.get(v) as [number, number]; return t / c; };
+  const gardees = Array.from({ length: plafond }, (_, k) => employes[Math.round((k * (K - 1)) / (plafond - 1))]);
+  return new Map(employes.map((v) => {
+    if (gardees.includes(v)) return [v, gardees.indexOf(v)];
+    let meilleure = 0;
+    for (let k = 1; k < plafond; k++) {
+      if (Math.abs(moyenne(gardees[k]) - moyenne(v)) < Math.abs(moyenne(gardees[meilleure]) - moyenne(v))) meilleure = k;
+    }
+    return [v, meilleure];
+  }));
 }
 
 /**
@@ -214,13 +306,19 @@ export function separerVoix(notes: readonly Note[], o: OptionsSeparation = {}): 
   // Le numéro de voix de chaque note d'une tranche, dans l'ordre grave vers aigu.
   const attribue: number[][] = tranches.map(() => []);
   const fait = new Array(tranches.length).fill(false);
-  let prochaineLibre = 0;
+  // La dernière hauteur entendue dans chaque voix, du côté où la vague avance.
+  let dernieres: number[] = [];
 
-  /** Numérote une tranche d'ancrage : les voix y sont prises dans l'ordre des hauteurs. */
+  /**
+   * Numérote une tranche d'ancrage : les voix y sont prises dans l'ordre des hauteurs.
+   *
+   * ELLE EST DES PLUS FOURNIES, donc elle tient toutes les voix de la pièce : ce sont elles, et
+   * elles seules, que les autres tranches se partagent.
+   */
   const ancrer = (i: number) => {
     attribue[i] = tranches[i].notes.map((_, r) => r);
     fait[i] = true;
-    prochaineLibre = Math.max(prochaineLibre, tranches[i].notes.length);
+    dernieres = tranches[i].notes.map((x) => x.note);
   };
 
   /** Étend la numérotation d'une tranche déjà faite à sa voisine. */
@@ -234,21 +332,27 @@ export function separerVoix(notes: readonly Note[], o: OptionsSeparation = {}): 
       ? alignerVoix(source, cible, forfait)
       : alignerVoix(cible, source, forfait);
 
-    const numeros: number[] = new Array(cible.length).fill(-1);
+    const liees: number[] = new Array(cible.length).fill(-1);
     if (versLaDroite) {
       lien.forEach((deGauche, r) => {
-        if (deGauche !== null) numeros[r] = attribue[depuis][deGauche];
+        if (deGauche !== null) liees[r] = attribue[depuis][deGauche];
       });
     } else {
       // Le lien dit, pour chaque voix de la tranche de droite (celle qui est déjà faite), d'où elle
       // vient dans celle de gauche, qui est celle qu'on numérote.
       lien.forEach((deGauche, r) => {
-        if (deGauche !== null) numeros[deGauche] = attribue[depuis][r];
+        if (deGauche !== null) liees[deGauche] = attribue[depuis][r];
       });
     }
-    // Une voix qui n'est reliée à rien commence ici : elle prend un numéro neuf.
-    for (let r = 0; r < numeros.length; r++) if (numeros[r] < 0) numeros[r] = prochaineLibre++;
-    attribue[vers] = numeros;
+    // UNE NOTE QUI SONNE ENCORE RESTE DANS SA VOIX, quoi que l'alignement en ait fait : c'est la même
+    // note, et c'est sa voix qu'elle porte à la sortie.
+    const tenues = tranches[vers].notes.map((note, r) => {
+      const q = tranches[depuis].notes.indexOf(note);
+      if (q >= 0) liees[r] = attribue[depuis][q];
+      return q >= 0;
+    });
+    attribue[vers] = placerDansLesVoix(cible, liees, tenues, dernieres);
+    attribue[vers].forEach((v, r) => { dernieres[v] = cible[r]; });
     fait[vers] = true;
   };
 
@@ -262,7 +366,9 @@ export function separerVoix(notes: readonly Note[], o: OptionsSeparation = {}): 
       }
     }
     ancrer(meilleure);
+    const depuisLAncre = [...dernieres];
     for (let i = meilleure + 1; i < tranches.length && !fait[i]; i++) etendre(i - 1, i);
+    dernieres = depuisLAncre;
     for (let i = meilleure - 1; i >= 0 && !fait[i]; i--) etendre(i + 1, i);
   }
 
@@ -275,16 +381,13 @@ export function separerVoix(notes: readonly Note[], o: OptionsSeparation = {}): 
     });
   });
 
-  // Les numéros sont resserrés sur zéro et suivants, dans l'ordre du grave à l'aigu : un trou dans
-  // la numérotation donnerait des portées vides à la gravure.
-  const employes = [...new Set([...voixDe.values()])];
-  const hauteurMoyenne = new Map<number, number>();
-  for (const v of employes) {
-    const siennes = [...voixDe.entries()].filter(([, x]) => x === v).map(([n]) => n.note);
-    hauteurMoyenne.set(v, siennes.reduce((s, h) => s + h, 0) / siennes.length);
-  }
-  employes.sort((a, b) => (hauteurMoyenne.get(b) as number) - (hauteurMoyenne.get(a) as number));
-  const rang = new Map(employes.map((v, i) => [v, Math.min(i, Math.max(0, plafond - 1))]));
+  // Les numéros sont resserrés sur zéro et suivants, du plus aigu au plus grave : un trou dans la
+  // numérotation donnerait des portées vides à la gravure. L'ORDRE EST CELUI DES VOIX DE L'ANCRE, et
+  // non celui des hauteurs moyennes : chaque tranche y a placé ses notes du grave à l'aigu, donc la
+  // voix la plus aiguë qui sonne porte le plus petit numéro. L'exception est la note tenue qu'une
+  // entrée en dessous d'elle a forcée à changer de voix : elle garde à la sortie celle de son début.
+  const employes = [...new Set([...voixDe.values()])].sort((a, b) => b - a);
+  const rang = replier(employes, voixDe, plafond);
 
   return {
     notes: notes.map((n) => ({ ...n, voix: rang.get(voixDe.get(n) ?? 0) ?? 0 })),
