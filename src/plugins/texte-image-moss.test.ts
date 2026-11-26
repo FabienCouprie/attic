@@ -14,8 +14,8 @@ vi.mock("./ollama", () => ollama);
 
 const fiche = fiches.find((f) => f.id === "texte-image-moss")!;
 
-function contexte(params: Record<string, string | number> = {}, entree: unknown = null) {
-  return ctxDEssai([entree], params, { signal: new AbortController().signal });
+function contexte(params: Record<string, string | number> = {}, entree: unknown = null, image: unknown = null) {
+  return ctxDEssai([entree, image], params, { signal: new AbortController().signal });
 }
 
 /** Un faux pont qui garde ce qu'on lui demande et répond un échec, pour s'arrêter avant l'image. */
@@ -38,12 +38,18 @@ function poserPontReussi() {
   return demandes;
 }
 
+/** Les octets d'une image d'essai : le composant les remet au pont sans les décoder. */
+const OCTETS_PNG = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4]);
+const imageDEssai = (nom = "depart.png", type = "image/png", octets: Uint8Array = OCTETS_PNG) =>
+  new File([octets as unknown as BlobPart], nom, { type });
+
 afterEach(() => { vi.unstubAllGlobals(); ollama.ollamaGenerer.mockReset(); });
 
 describe("le composant Texte → image (MOSS)", () => {
-  it("rend une image et sa mise en page, et son prompt d'entrée est facultatif", () => {
+  it("rend une image et sa mise en page, et son prompt et son image d'entrée sont facultatifs", () => {
     expect(fiche.sorties.map((s) => s.type)).toEqual(["image", "texte"]);
-    expect(fiche.entrees[0].requis).toBe(false);
+    // L'IMAGE VIENT APRÈS LE PROMPT : un câble enregistré sur le rang 0 garde son port.
+    expect(fiche.entrees.map((e) => [e.nom, e.type, e.requis])).toEqual([["Prompt", "texte", false], ["Image", "image", false]]);
   });
 
   it("hors de l'application de bureau, il le dit au lieu de rendre rien", async () => {
@@ -56,10 +62,10 @@ describe("le composant Texte → image (MOSS)", () => {
     const demandes = poserPont();
     await fiche.executer(contexte({
       "Prompt": "a poster", "Prompt négatif": "blur", "Largeur": 768, "Hauteur": 512,
-      "Étapes": 12, "Guidage": 4.5, "Graine": 77, "Calcul": "Vulkan1",
-    }) as any);
+      "Étapes": 12, "Guidage": 4.5, "Force": 40, "Graine": 77, "Calcul": "Vulkan1",
+    }, null, imageDEssai()) as any);
     expect(demandes[0]).toEqual({
-      prompt: "a poster", negatif: "blur", graine: 77, etapes: 12, guidage: 4.5,
+      prompt: "a poster", negatif: "blur", depart: OCTETS_PNG, force: 0.4, graine: 77, etapes: 12, guidage: 4.5,
       largeur: 768, hauteur: 512, calcul: "Vulkan1",
     });
   });
@@ -105,6 +111,50 @@ describe("le composant Texte → image (MOSS)", () => {
     const r = await fiche.executer(contexte() as any);
     expect(r.erreur).toBe(true);
     expect(r.message).toContain("arrêt du cas");
+  });
+});
+
+describe("l'image de départ", () => {
+  it("« FORCE » VA DE 0 À 100 % ET S'OUVRE À 75 %, décision de Fabien, et c'est ce qui part quand rien n'est réglé", async () => {
+    const force = fiche.parametres.find((p) => p.nom === "Force")!;
+    expect([force.plage, force.pas, force.defaut, force.unite]).toEqual([[0, 100], 1, 75, "%"]);
+    const demandes = poserPont();
+    await fiche.executer(contexte({}, null, imageDEssai()) as any);
+    expect(demandes[0].force).toBe(0.75);
+  });
+
+  it("L'IMAGE BRANCHÉE PART AU PONT, octet pour octet, avec la force réglée", async () => {
+    // LA FAUTE QUE CE CAS ATTRAPE : une image reçue puis ignorée, qui rendrait un tirage sans départ.
+    const demandes = poserPont();
+    await fiche.executer(contexte({ "Force": 60 }, null, imageDEssai()) as any);
+    await fiche.executer(contexte({ "Force": 90 }, null, imageDEssai("d.jpg", "image/jpeg", new Uint8Array([255, 216, 255]))) as any);
+    expect(demandes.map((d) => [Array.from(d.depart as Uint8Array), d.force])).toEqual([
+      [Array.from(OCTETS_PNG), 0.6], [[255, 216, 255], 0.9],
+    ]);
+  });
+
+  it("SANS IMAGE, RIEN DE PLUS NE PART : « Force » n'a pas d'effet, la demande est celle d'avant", async () => {
+    const demandes = poserPont();
+    await fiche.executer(contexte({ "Force": 20 }) as any);
+    await fiche.executer(contexte({ "Force": 20 }, null, new File([], "vide.png", { type: "image/png" })) as any);
+    expect(demandes.map((d) => ["depart" in d, "force" in d])).toEqual([[false, false], [false, false]]);
+  });
+
+  it("UN SVG EST REFUSÉ AVANT LE MOTEUR, qui ne sait pas le lire, et le message dit ce qu'il lit", async () => {
+    const demandes = poserPont();
+    const svg = new TextEncoder().encode("<svg xmlns='http://www.w3.org/2000/svg'/>");
+    const r1 = await fiche.executer(contexte({}, null, imageDEssai("partition.svg", "image/svg+xml", svg)) as any);
+    const r2 = await fiche.executer(contexte({}, null, imageDEssai("partition.svg", "", svg)) as any);
+    expect([r1.erreur, r2.erreur, demandes.length]).toEqual([true, true, 0]);
+    expect(r1.message).toMatch(/PNG.*JPEG.*WebP/);
+  });
+
+  it("LE MESSAGE DIT LA FORCE quand une image de départ a servi, et seulement alors", async () => {
+    poserPontReussi();
+    const avec = await fiche.executer(contexte({ "Graine": 5, "Force": 60 }, null, imageDEssai()) as any);
+    const sans = await fiche.executer(contexte({ "Graine": 5, "Force": 60 }) as any);
+    expect(avec.message).toMatch(/5 · 320 × 320 · .*60 %$/);
+    expect(sans.message).not.toMatch(/60/);
   });
 });
 
