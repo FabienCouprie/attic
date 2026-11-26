@@ -18,9 +18,10 @@ import { degresDeGamme } from "./gammes";
 import { GAMMES_MELODIE_IDS } from "./generation-melodie";
 
 // Court, et à profondeur deux : le dépliage est exponentiel, et ce qui est mesuré ici est la forme
-// d'onde d'une note, non la structure du motif.
+// d'onde d'une note, non la structure du motif. Neuf doubles croches à 120 BPM, sous une durée
+// maximale qui les laisse toutes.
 const rendre = (timbre: string) =>
-  genererMusiqueFractale("Triade M", "0,3,7,10", 2, 2, 120, "Do", "Majeur", timbre);
+  genererMusiqueFractale("Triade M", "0,3,7,10", 2, 60, 120, 0.25, "Do", "Majeur", timbre);
 
 const crete = (x: Float32Array) => {
   let m = 0;
@@ -92,7 +93,7 @@ describe("le motif, écrit en demi-tons, est posé sur la gamme", () => {
   // dépliée du motif, écrite en demi-tons, était lue comme un RANG de degré. « Triade M » jouait do,
   // sol, do, et à la profondeur 3 seuls quatre degrés sonnaient : vingt-cinq gammes, quatre musiques.
   const notes = async (motif: string, gamme: string, profondeur = 3) =>
-    (await genererMusiqueFractale(motif, "0,3,7,10", profondeur, 2, 120, "C", gamme, "pur")).notes.map((n) => n.note);
+    (await genererMusiqueFractale(motif, "0,3,7,10", profondeur, 60, 120, 0.25, "C", gamme, "pur")).notes.map((n) => n.note);
 
   it("« Triade M » en do majeur joue do, mi, sol ; « Triade m » en do mineur, do, mi♭, sol", async () => {
     expect((await notes("Triade M", "majeur", 1)).map((n) => n % 12)).toEqual([0, 4, 7]);
@@ -113,4 +114,25 @@ describe("le motif, écrit en demi-tons, est posé sur la gamme", () => {
       expect(classes.filter((c) => !permises.has(c)), id).toEqual([]);
     });
   }
+});
+
+describe("la durée borne la mélodie, sans la recaler", () => {
+  // LE DÉFAUT, relevé le 2026-11-26 : la mélodie entière était recalée pour remplir la durée, ce qui
+  // annulait le tempo. La durée est désormais une longueur maximale, et les notes gardent la valeur
+  // que le tempo leur donne. Le tempo lui-même est tenu par `plugins/tempo-deplace-les-notes.test.ts`.
+  it("« DURÉE » NE JOUE QUE LES NOTES QUI Y TIENNENT ENTIÈRES, et dit combien le motif en donnait", async () => {
+    // « Triade M » à la profondeur 2 donne neuf notes ; à 120 BPM une croche dure 0,25 s, et deux
+    // secondes en tiennent huit.
+    const r = await genererMusiqueFractale("Triade M", "", 2, 2, 120, 0.5, "C", "majeur", "pur");
+    expect(r.depliees, "le motif déplié ne donne pas neuf notes").toBe(9);
+    expect(r.notes.length, "la durée ne coupe pas la mélodie").toBe(8);
+    expect(r.notes.map((n) => n.fin - n.debut), "les notes sont recalées sur la durée").toEqual(Array(8).fill(0.25));
+    expect(r.audio.duration).toBeCloseTo(2, 3);
+  });
+
+  it("ET UNE MÉLODIE QUI TIENT EST JOUÉE ENTIÈRE, à la valeur demandée", async () => {
+    const r = await genererMusiqueFractale("Triade M", "", 2, 60, 120, 0.5, "C", "majeur", "pur");
+    expect(r.notes.length).toBe(9);
+    expect(r.audio.duration, "la mélodie est étirée sur la durée maximale").toBeCloseTo(2.25, 3);
+  });
 });

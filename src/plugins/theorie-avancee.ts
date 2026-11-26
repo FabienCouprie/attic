@@ -66,9 +66,15 @@ async function rendre<N extends string>(ctx: ContexteQuiDeclare<N, NomDuRenduMid
   ];
 }
 
+// LES DURÉES SE COMPTENT EN TEMPS, ET LE TEMPO LES CONVERTIT, depuis le 2026-11-26, décision de
+// Fabien après son relevé « le paramètre tempo n'opère pas ». Les trois fiches qui rendent par cette
+// aide comptaient leurs durées en secondes, et « Tempo » ne faisait que convertir ces secondes en
+// ticks du fichier MIDI, si bien qu'aucun instant ne bougeait, ni dans le son ni dans le MIDI. Les
+// anciens réglages en secondes ne sont pas relus : ce sont des ruptures déclarées.
 const PARAMETRES_RENDU = [
   reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
-    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." }),
+    doc: "Nombre de temps par minute. Il fixe la durée d'un temps, donc la vitesse du son comme celle du MIDI, et le fichier MIDI produit le porte.",
+    docEn: "Beats per minute. It sets the length of a beat, hence the speed of the sound as well as of the MIDI, and the produced MIDI file carries it." }),
   { ...PARAMETRE_SYNTHESE,
     doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.",
     docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
@@ -134,8 +140,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Accord d'arrivée", nomEn: "Destination chord", type: "texte", defaut: "G#m", defautEn: "G#m",
         doc: "En mode « Chemin », l'accord à atteindre, une triade majeure ou mineure écrite comme l'accord de départ ; un autre accord est refusé, et le message le nomme. Do majeur et sol dièse mineur n'ont aucune note commune et sont pourtant à trois opérations l'un de l'autre : c'est le pôle hexatonique.",
         docEn: "In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole." },
-      { nom: "Durée d'un accord", nomEn: "Chord length", type: "nombre", plage: [0.1, 4], pas: 0.1, defaut: 1, unite: "s",
-        doc: "Durée de chaque accord.", docEn: "Length of each chord." },
+      { nom: "Valeur d'un accord", nomEn: "Chord value", type: "nombre", plage: [0.25, 8], pas: 0.25, defaut: 2,
+        unite: "temps", uniteEn: "beats",
+        doc: "Durée de chaque accord, en temps : 1 vaut une noire, 2 une blanche, 4 une ronde. « Tempo » fixe la durée d'un temps.",
+        docEn: "Length of each chord, in beats: 1 is a quarter note, 2 a half note, 4 a whole note. « Tempo » sets the length of a beat." },
       { nom: "Note de base", nomEn: "Base note", type: "nombre", plage: [36, 84], pas: 1, defaut: 60,
         doc: "Hauteur autour de laquelle les accords sont placés. Les voix suivent ensuite le chemin le plus court, ce qui fait entendre la parcimonie.",
         docEn: "Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible." },
@@ -185,7 +193,7 @@ export const fiches: FicheAudio[] = ([
 
       const suite = parcourir(depart, operations);
       const accords = voixParcimonieuses(suite, Math.round(ctx.paramNombre("Note de base", 60)));
-      const duree = ctx.paramNombre("Durée d'un accord", 1);
+      const duree = ctx.paramNombre("Valeur d'un accord", 2) * 60 / ctx.paramNombre("Tempo", 120);
       const notes: NoteSimple[] = [];
       accords.forEach((accord, i) => {
         for (const note of accord) {
@@ -297,8 +305,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Taille cherchée", nomEn: "Searched size", type: "nombre", plage: [2, 12], pas: 1, defaut: 3,
         doc: "Nombre de frappes par voix, quand le motif est laissé vide. Il doit diviser le nombre de pulsations.",
         docEn: "Number of onsets per voice, when the motif is left empty. It must divide the number of pulses." },
-      { nom: "Durée d'un pas", nomEn: "Step length", type: "nombre", plage: [0.05, 1], pas: 0.05, defaut: 0.2, unite: "s",
-        doc: "Durée d'une pulsation.", docEn: "Length of one pulse." },
+      { nom: "Valeur d'un pas", nomEn: "Step value", type: "nombre", plage: [0.1, 2], pas: 0.05, defaut: 0.4,
+        unite: "temps", uniteEn: "beats",
+        doc: "Durée d'une pulsation, en temps : 1 vaut une noire, 0,5 une croche, 0,25 une double croche. « Tempo » fixe la durée d'un temps.",
+        docEn: "Length of one pulse, in beats: 1 is a quarter note, 0.5 an eighth, 0.25 a sixteenth. « Tempo » sets the length of a beat." },
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 4,
         doc: "Nombre de tours joués.", docEn: "Number of cycles played." },
       { nom: "Hauteurs", nomEn: "Pitches", type: "texte", defaut: "60 64 67 72", defautEn: "60 64 67 72",
@@ -342,7 +352,8 @@ export const fiches: FicheAudio[] = ([
       const lue = lireListe(ctx.paramTexte("Hauteurs", "60 64 67 72"), "hauteurs", en ? "Pitches" : "Hauteurs");
       if ("refus" in lue) return { valeurs: [null, null, null], erreur: true, message: lue.refus };
       const hauteurs = lue.valeurs;
-      const notes = canonEnNotes(canon, ctx.paramNombre("Durée d'un pas", 0.2), hauteurs, Math.round(ctx.paramNombre("Répétitions", 4)));
+      const pas = ctx.paramNombre("Valeur d'un pas", 0.4) * 60 / ctx.paramNombre("Tempo", 120);
+      const notes = canonEnNotes(canon, pas, hauteurs, Math.round(ctx.paramNombre("Répétitions", 4)));
       const arrondies = [...new Set(hauteurs.filter((h) => !Number.isInteger(h)))].map((h) => `${h} → ${Math.round(h)}`);
       const grille = [
         `${en ? "Motif" : "Motif"} : ${canon.rythme.join(" ")}`,
@@ -399,8 +410,10 @@ export const fiches: FicheAudio[] = ([
         optionsHeritees: { majeure: "majeur", mineure: "mineur", pentatonique: "pentatonique-majeure" },
         defaut: "Majeure", defautEn: "Major",
         doc: "La gamme employée en lecture par degrés. Sans effet quand « Lecture » vaut « Demi-tons ».", docEn: "The scale used when reading by degrees. Without effect when « Reading » is « Semitones »." },
-      { nom: "Durée d'une note", nomEn: "Note length", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.25, unite: "s",
-        doc: "Durée de chaque note de la voix rapide.", docEn: "Length of each note of the fast voice." },
+      { nom: "Valeur d'une note", nomEn: "Note value", type: "nombre", plage: [0.1, 4], pas: 0.05, defaut: 0.5,
+        unite: "temps", uniteEn: "beats",
+        doc: "Durée de chaque note de la voix rapide, en temps : 1 vaut une noire, 0,5 une croche, 0,25 une double croche. « Tempo » fixe la durée d'un temps.",
+        docEn: "Length of each note of the fast voice, in beats: 1 is a quarter note, 0.5 an eighth, 0.25 a sixteenth. « Tempo » sets the length of a beat." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
@@ -410,7 +423,7 @@ export const fiches: FicheAudio[] = ([
         + (Math.round(ctx.paramNombre("Octave", 4)) + 1) * 12;
       const mode = ctx.paramTexte("Lecture", "demi-tons") as ModeHauteur;
       const gamme = degresDeGamme(ctx.paramTexte("Gamme", "majeur"), "majeur");
-      const duree = ctx.paramNombre("Durée d'une note", 0.25);
+      const duree = ctx.paramNombre("Valeur d'une note", 0.5) * 60 / ctx.paramNombre("Tempo", 120);
 
       const notes: NoteSimple[] = [];
       for (let v = 0; v < nombreVoix; v++) {

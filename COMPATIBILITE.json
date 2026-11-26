@@ -1032,7 +1032,7 @@
    ]
   },
   "canon-pavage": {
-   "version": 1,
+   "version": 2,
    "entrees": [],
    "sorties": [
     {"nom":"Audio","type":"audio"},
@@ -1043,7 +1043,7 @@
     {"nom":"Pulsations","type":"nombre","defaut":12,"min":2,"max":48},
     {"nom":"Motif","type":"texte","defaut":"0 1 2"},
     {"nom":"Taille cherchée","type":"nombre","defaut":3,"min":2,"max":12},
-    {"nom":"Durée d'un pas","type":"nombre","defaut":0.2,"min":0.05,"max":1,"unite":"s"},
+    {"nom":"Valeur d'un pas","type":"nombre","defaut":0.4,"min":0.1,"max":2,"unite":"temps"},
     {"nom":"Répétitions","type":"nombre","defaut":4,"min":1,"max":16},
     {"nom":"Hauteurs","type":"texte","defaut":"60 64 67 72"},
     {"nom":"Tempo","type":"nombre","defaut":120,"min":40,"max":300,"unite":"BPM"},
@@ -3743,7 +3743,7 @@
    ]
   },
   "generateur-fractal": {
-   "version": 1,
+   "version": 2,
    "entrees": [],
    "sorties": [
     {"nom":"Audio","type":"audio"},
@@ -3753,7 +3753,8 @@
     {"nom":"Motif","type":"choix","defaut":"Triade M","choix":["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"]},
     {"nom":"Intervalles","type":"texte","defaut":"0,3,7,10"},
     {"nom":"Profondeur","type":"curseur","defaut":3,"min":1,"max":6},
-    {"nom":"Durée","type":"curseur","defaut":8,"min":2,"max":60,"unite":"s"},
+    {"nom":"Durée","type":"curseur","defaut":12,"min":2,"max":60,"unite":"s"},
+    {"nom":"Valeur d'une note","type":"nombre","defaut":0.5,"min":0.1,"max":4,"unite":"temps"},
     {"nom":"Tempo","type":"curseur","defaut":80,"min":40,"max":240,"unite":"BPM"},
     {"nom":"Clé","type":"choix","defaut":"C","choix":["C","C#","D","Eb","E","F","F#","G","G#","A","Bb","B"],"optionsHeritees":{"A":"A","A#":"Bb","B":"B","Bb":"Bb","C":"C","C#":"C#","D":"D","D#":"Eb","Do":"C","Do#":"C#","Do♯":"C#","E":"E","Eb":"Eb","F":"F","F#":"F#","Fa":"F","Fa#":"F#","Fa♯":"F#","G":"G","G#":"G#","La":"A","La#":"Bb","La♯":"Bb","Mi":"E","Mib":"Eb","Mi♭":"Eb","Ré":"D","Ré#":"Eb","Ré♯":"Eb","Si":"B","Sib":"Bb","Si♭":"Bb","Sol":"G","Sol#":"G#","Sol♯":"G#","a":"A","a#":"Bb","b":"B","bb":"Bb","b♭":"Bb","c":"C","c#":"C#","d":"D","d#":"Eb","do":"C","do#":"C#","do♯":"C#","e":"E","eb":"Eb","e♭":"Eb","f":"F","f#":"F#","fa":"F","fa#":"F#","fa♯":"F#","g":"G","g#":"G#","la":"A","la#":"Bb","la♯":"Bb","mi":"E","mib":"Eb","mi♭":"Eb","ré":"D","ré#":"Eb","ré♯":"Eb","si":"B","sib":"Bb","si♭":"Bb","sol":"G","sol#":"G#","sol♯":"G#"}},
     {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur","mineur-harmonique","dorien","phrygien","lydien","mixolydien","locrien","pentatonique-majeure","pentatonique-mineure","chromatique","mineur-melodique","blues","alteree","lydien-dominant","phrygien-dominant","bebop-dominant","ton-entier","diminuee-ton-demi","diminuee-demi-ton","augmentee","double-seconde-augmentee","hongroise-mineure","hirajoshi","in-sen"]},
@@ -7598,7 +7599,7 @@
    ]
   },
   "serie-dodecaphonique": {
-   "version": 1,
+   "version": 2,
    "entrees": [
     {"nom":"MIDI","type":"midi","requis":false}
    ],
@@ -7613,7 +7614,7 @@
     {"nom":"Transposition","type":"nombre","defaut":0,"min":0,"max":11},
     {"nom":"Registre","type":"choix","defaut":"serre","choix":["serre","octave"]},
     {"nom":"Note de départ","type":"nombre","defaut":60,"min":24,"max":96},
-    {"nom":"Durée d'une note","type":"nombre","defaut":0.3,"min":0.05,"max":2,"unite":"s"},
+    {"nom":"Valeur d'une note","type":"nombre","defaut":0.6,"min":0.1,"max":4,"unite":"temps"},
     {"nom":"Vélocité","type":"nombre","defaut":90,"min":1,"max":127},
     {"nom":"Tempo","type":"nombre","defaut":120,"min":40,"max":300,"unite":"BPM"},
     {"nom":"Synthèse","type":"choix","defaut":"auto","choix":["auto","fm","soundfont"]},
@@ -7622,7 +7623,7 @@
    ]
   },
   "serie-infinie": {
-   "version": 1,
+   "version": 2,
    "entrees": [],
    "sorties": [
     {"nom":"Audio","type":"audio"},
@@ -7636,7 +7637,7 @@
     {"nom":"Octave","type":"nombre","defaut":4,"min":2,"max":6},
     {"nom":"Lecture","type":"choix","defaut":"demi-tons","choix":["demi-tons","degres"]},
     {"nom":"Gamme","type":"choix","defaut":"majeur","choix":["majeur","mineur","pentatonique-majeure","chromatique","dorien","phrygien","lydien","mixolydien","locrien","mineur-harmonique","mineur-melodique","pentatonique-mineure","blues","alteree","lydien-dominant","phrygien-dominant","bebop-dominant","ton-entier","diminuee-ton-demi","diminuee-demi-ton","augmentee","double-seconde-augmentee","hongroise-mineure","hirajoshi","in-sen"],"optionsHeritees":{"majeure":"majeur","mineure":"mineur","pentatonique":"pentatonique-majeure"}},
-    {"nom":"Durée d'une note","type":"nombre","defaut":0.25,"min":0.05,"max":2,"unite":"s"},
+    {"nom":"Valeur d'une note","type":"nombre","defaut":0.5,"min":0.1,"max":4,"unite":"temps"},
     {"nom":"Tempo","type":"nombre","defaut":120,"min":40,"max":300,"unite":"BPM"},
     {"nom":"Synthèse","type":"choix","defaut":"auto","choix":["auto","fm","soundfont"]},
     {"nom":"Instrument","type":"sf2instrument","defaut":0},
@@ -8467,7 +8468,7 @@
    ]
   },
   "tonnetz": {
-   "version": 1,
+   "version": 2,
    "entrees": [
     {"nom":"MIDI","type":"midi","requis":false}
    ],
@@ -8481,7 +8482,7 @@
     {"nom":"Mode","type":"choix","defaut":"suite","choix":["suite","chemin"]},
     {"nom":"Opérations","type":"texte","defaut":"PLRLPR"},
     {"nom":"Accord d'arrivée","type":"texte","defaut":"G#m"},
-    {"nom":"Durée d'un accord","type":"nombre","defaut":1,"min":0.1,"max":4,"unite":"s"},
+    {"nom":"Valeur d'un accord","type":"nombre","defaut":2,"min":0.25,"max":8,"unite":"temps"},
     {"nom":"Note de base","type":"nombre","defaut":60,"min":36,"max":84},
     {"nom":"Tempo","type":"nombre","defaut":120,"min":40,"max":300,"unite":"BPM"},
     {"nom":"Synthèse","type":"choix","defaut":"auto","choix":["auto","fm","soundfont"]},

@@ -167,8 +167,11 @@ describe("UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON", () => {
     expect(r.r.erreurRendue, r.r.message).toBe(false);
   }, 60_000);
 
+  // LA DURÉE EST UNE LONGUEUR MAXIMALE depuis le 2026-11-26 : à son défaut, 12 s, les 64 croches du
+  // motif de quatre intervalles déplié trois fois n'en tiennent que 32. Soixante secondes les laissent
+  // toutes, et ce qui est éprouvé ici est la lecture de la liste, non la coupe.
   const FRACTALE = async (reglages: Record<string, string | number>) => {
-    const r = await lancerFiche(F("generateur-fractal"), { Motif: "Personnalisé", ...reglages }, { entrees: [] });
+    const r = await lancerFiche(F("generateur-fractal"), { Motif: "Personnalisé", "Durée": 60, ...reglages }, { entrees: [] });
     return { r, notes: await hauteurs(r.valeurs[1]) };
   };
   it.each([["0 3 7 10"], ["0;3;7;10"], [" 0, 3, 7, 10 "]])("la Musique fractale : « %s » comme « 0,3,7,10 »", async (texte) => {

@@ -36,8 +36,20 @@ export const fiches: FicheAudio[] = ([
         doc: "Pour le motif « Personnalisé » : les intervalles, en demi-tons de -96 à 96 depuis la tonique, séparés par des espaces, des virgules ou des points-virgules, « 0 3 7 10 ». Une liste vide, ou dont un jeton ne se lit pas, est refusée, et le message le nomme. Un motif dont le dépliage sort de la plage MIDI, 0 à 127, est refusé.",
         docEn: "For the « Custom » motif: the intervals, in semitones from -96 to 96 above the tonic, separated by spaces, commas or semicolons, « 0 3 7 10 ». An empty list, or one with an unreadable token, is refused, and the message names it. A motif whose unfolding leaves the MIDI range, 0 to 127, is refused." },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
-      { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
-      { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
+      // LA DURÉE EST UNE LONGUEUR MAXIMALE, ET LE TEMPO RÈGLE LA VITESSE, depuis le 2026-11-26,
+      // décision de Fabien : la mélodie était recalée pour remplir la durée, ce qui annulait le tempo.
+      // Son défaut passe de 8 à 12 s, pour que la mélodie par défaut, 27 notes d'une croche à 80 BPM,
+      // tienne entière.
+      { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:12, unite:"s",
+        doc: "Longueur maximale de la mélodie. Les notes qui n'y tiennent pas entières ne sont pas jouées, et le message dit combien en restent.",
+        docEn: "Maximum length of the melody. Notes that do not fit whole within it are not played, and the message says how many remain." },
+      { nom: "Valeur d'une note", nomEn: "Note value", type: "nombre", plage: [0.1, 4], pas: 0.05, defaut: 0.5,
+        unite: "temps", uniteEn: "beats",
+        doc: "Durée de chaque note, en temps : 1 vaut une noire, 0,5 une croche, 0,25 une double croche. « Tempo » fixe la durée d'un temps.",
+        docEn: "Length of each note, in beats: 1 is a quarter note, 0.5 an eighth, 0.25 a sixteenth. « Tempo » sets the length of a beat." },
+      { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM",
+        doc: "Nombre de temps par minute. Il fixe la durée de « Valeur d'une note », donc la vitesse du son comme celle du MIDI, et le fichier MIDI produit le porte.",
+        docEn: "Beats per minute. It sets the length of « Note value », hence the speed of the sound as well as of the MIDI, and the produced MIDI file carries it." },
       { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
       { nom:"Timbre", nomEn:"Timbre", type:"choix", options: CARACTERES_CHOIX.fr, optionIds: CARACTERES_CHOIX.ids, optionsEn: CARACTERES_CHOIX.en, defaut:"Douce", defautEn: "Soft",
@@ -61,7 +73,9 @@ export const fiches: FicheAudio[] = ([
         if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
         intervalles = lue.valeurs.join(",");
       }
-      const { audio, notes } = await genererMusiqueFractale(motif,intervalles,ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
+      const dureeMax = ctx.paramNombre("Durée", 12);
+      const { audio, notes, depliees } = await genererMusiqueFractale(motif, intervalles, ctx.paramNombre("Profondeur", 3), dureeMax,
+        tempo, ctx.paramNombre("Valeur d'une note", 0.5), ctx.paramTexte("Clé", "Do"), ctx.paramTexte("Gamme", "Majeur"), ctx.paramTexte("Timbre", "Douce"));
       // UN MOTIF DÉPLIÉ HORS DE LA PLAGE MIDI EST REFUSÉ : son fichier porterait des hauteurs qu'aucun
       // lecteur ne joue.
       const extremes = notes.map((n) => n.note);
@@ -88,7 +102,10 @@ export const fiches: FicheAudio[] = ([
       }
       const midiFinal = await appliquerInstrumentMidi(midiFile, ctx.paramNombre("Instrument", 0));
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
-      return { valeurs: [audioFinal, midiFinal] };
+      return {
+        valeurs: [audioFinal, midiFinal],
+        ...(notes.length < depliees ? { message: traduire("msg.fractale.coupee_var_0_var_1_var_2", notes.length, depliees, dureeMax) } : {}),
+      };
     },
   }),
   fiche({
