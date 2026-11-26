@@ -21,6 +21,14 @@
 // de langue servi par Ollama la rédige avant le dessin, et la sortie « Mise en page » rend le JSON
 // remis au modèle. La méthode et ses mesures sont dans `moss-mise-en-page.ts`. Le réglage s'ouvre sur
 // « Aucune », ce qui garde le composant tel qu'il était pour qui n'a pas Ollama.
+//
+// UNE IMAGE DE DÉPART PEUT ÊTRE DONNÉE, demandé par Fabien le 2026-11-26 : l'entrée « Image » et le
+// réglage « Force », de 0 à 100 %, 75 % par défaut, décisions de Fabien. Le moteur part de l'image
+// bruitée et la redessine selon le prompt. Relevé ce jour-là en 320 × 320 et 30 étapes, sur un
+// paysage de montagnes avec « la même scène en aquarelle de conte » : à 60 % la même image ; à 75 %
+// la même scène en aquarelle, les crêtes à leur place ; à 90 % une autre scène, la palette seule
+// gardée. « Largeur » et « Hauteur » gardent la main, le moteur recadrant l'image au centre, et sans
+// image rien de plus ne part au moteur. Un SVG est refusé avant lui, qui ne sait pas le lire.
 import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { resoudreGraine } from "../core/hasard";
@@ -40,9 +48,13 @@ const PROMPT_DEFAUT = "an old brass gramophone in a dusty attic, morning light, 
 
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
-/** Le côté de l'image et le nombre d'étapes à l'ouverture, lus par la fiche comme par l'exécution. */
+/** Le côté de l'image, le nombre d'étapes et la force à l'ouverture, lus par la fiche comme par l'exécution. */
 const COTE_DEFAUT = 320;
 const ETAPES_DEFAUT = 30;
+const FORCE_DEFAUT = 75;
+
+/** Une image que le moteur ne sait pas lire : il refuse le SVG avant même de charger ses poids. */
+const estSvg = (f: File) => f.type === "image/svg+xml" || /\.svgz?$/i.test(f.name);
 
 /** Un côté de l'image : le modèle veut un multiple de seize, la glissière avance par soixante-quatre. */
 const cote = <N extends string>(nom: N, nomEn: string, doc: string, docEn: string) => reglagePartage({
@@ -53,10 +65,10 @@ export const fiches = ([
   fiche({
     id: "texte-image-moss", nom: "Texte → image (MOSS)", nomEn: "Text to image (MOSS)",
     univers: "Entrées", famille: "Image",
-    resume: "Tire une image d'une description ou d'une mise en page en JSON, avec MOSS-Image.",
-    resumeEn: "Draws an image from a description or a JSON layout, with MOSS-Image.",
-    notice: "Ce composant tire une image d'une description en mots, avec MOSS-Image, publié par OpenMOSS en 2026 "
-      + "sous licence Apache-2.0.\n\n"
+    resume: "Tire une image d'une description ou d'une mise en page en JSON, avec MOSS-Image, depuis le bruit ou depuis une image de départ.",
+    resumeEn: "Draws an image from a description or a JSON layout, with MOSS-Image, from noise or from a starting image.",
+    notice: "Ce composant tire une image d'une description en mots, depuis le bruit ou depuis une image de départ, "
+      + "avec MOSS-Image, publié par OpenMOSS en 2026 sous licence Apache-2.0.\n\n"
       + "« Prompt » décrit l'image. Il peut être une phrase, ou une mise en page en JSON qui place chaque élément : "
       + "un objet « summary » dont « caption » décrit l'ensemble, une liste « items » dont chaque élément porte un "
       + "« label » valant « text » ou « object », une « caption » qui le décrit, un « text » pour les mots à écrire, et "
@@ -66,6 +78,15 @@ export const fiches = ([
       + "160 à 160. Les mots à écrire sont "
       + "rendus tels qu'ils sont donnés. Le modèle a appris en anglais et en chinois. L'entrée du même nom remplace "
       + "le réglage quand elle reçoit un texte.\n\n"
+      + "L'entrée « Image » donne une image de départ. Le modèle part alors de cette image, à laquelle du bruit est "
+      + "ajouté, et la redessine selon le prompt. L'image est recadrée au centre au rapport de « Largeur » et "
+      + "« Hauteur », puis mise à cette taille. Le PNG, le JPEG et le WebP sont lus ; une image SVG est refusée. Sans "
+      + "image, le modèle part du seul bruit.\n\n"
+      + "« Force » est la part de l'image de départ qui est redessinée. Faible, sa composition, son cadrage et ses "
+      + "couleurs restent ; forte, la composition se perd et l'image suit le prompt. Le nombre d'étapes calculées "
+      + "est la part « Force » des « Étapes », arrondie à l'entier inférieur, plus une ; quand il atteint « Étapes », "
+      + "le modèle part du seul bruit et l'image de départ n'a plus d'effet. Quand l'entrée « Image » ne reçoit rien, "
+      + "« Force » est sans effet.\n\n"
       + "« Prompt négatif » décrit ce qu'on veut écarter. Vide, rien ne l'est.\n\n"
       + "« Réécriture » dit ce qui arrive au prompt avant le dessin. « Aucune » le remet tel quel. « Mise en page par "
       + "un modèle » fait d'abord rédiger, à partir d'une description en mots, une mise en page en JSON par un modèle "
@@ -88,9 +109,9 @@ export const fiches = ([
       + "À la première exécution, les quatre fichiers du modèle sont téléchargés, et le message en annonce le poids. "
       + "La sortie « Image » rend un PNG. La sortie « Mise en page » rend le prompt remis au modèle : la mise en page "
       + "en JSON quand elle a été rédigée ou donnée, la description en mots sinon. Le message donne la graine retenue "
-      + "et la taille, et le nombre d'éléments d'une mise en page rédigée.",
-    noticeEn: "This component draws an image from a description in words, with MOSS-Image, published by OpenMOSS in "
-      + "2026 under the Apache-2.0 licence.\n\n"
+      + "et la taille, la force quand une image de départ a servi, et le nombre d'éléments d'une mise en page rédigée.",
+    noticeEn: "This component draws an image from a description in words, from noise or from a starting image, "
+      + "with MOSS-Image, published by OpenMOSS in 2026 under the Apache-2.0 licence.\n\n"
       + "« Prompt » describes the image. It can be a sentence, or a JSON layout that places each element: a "
       + "« summary » object whose « caption » describes the whole, an « items » list in which each element carries a "
       + "« label » worth « text » or « object », a « caption » describing it, a « text » for the words to write, and a "
@@ -99,6 +120,15 @@ export const fiches = ([
       + "320-pixel-square image the component renders when opened, each coordinate therefore runs from minus 160 to "
       + "160. The words to write are rendered as given. The model learned in English and Chinese. The input of the same name replaces the setting when it "
       + "receives a text.\n\n"
+      + "The « Image » input gives a starting image. The model then starts from this image, with noise added to it, "
+      + "and redraws it according to the prompt. The image is cropped at the centre to the ratio of « Width » and "
+      + "« Height », then brought to that size. PNG, JPEG and WebP are read; an SVG image is refused. Without an image, "
+      + "the model starts from noise alone.\n\n"
+      + "« Strength » is the share of the starting image that is redrawn. Low, its composition, framing and colours "
+      + "stay; high, the composition is lost and the image follows the prompt. The number of steps computed is the "
+      + "« Strength » share of the « Steps », rounded down, plus one; when it reaches « Steps », the model starts "
+      + "from noise alone and the starting image has no effect. When the « Image » input receives nothing, "
+      + "« Strength » has no effect.\n\n"
       + "« Negative prompt » describes what is to be kept out. Empty, nothing is.\n\n"
       + "« Rewriting » says what happens to the prompt before drawing. « None » passes it as it stands. « Layout by a "
       + "model » first has a local language model served by Ollama draft a JSON layout from a description in words: an "
@@ -120,8 +150,11 @@ export const fiches = ([
       + "On the first run, the four model files are downloaded, and the message announces their weight. The "
       + "« Image » output returns a PNG. The « Layout » output returns the prompt handed to the model: the JSON layout "
       + "when it was drafted or given, the description in words otherwise. The message gives the seed used and the "
-      + "size, and the number of items of a drafted layout.",
-    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt", requis: false }],
+      + "size, the strength when a starting image was used, and the number of items of a drafted layout.",
+    entrees: [
+      { nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt", requis: false },
+      { nom: "Image", nomEn: "Image", type: "image", requis: false },
+    ],
     sorties: [{ nom: "Image", nomEn: "Image", type: "image" }, { nom: "Mise en page", nomEn: "Layout", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: PROMPT_DEFAUT, defautEn: PROMPT_DEFAUT,
@@ -149,6 +182,9 @@ export const fiches = ([
       { nom: "Guidage", nomEn: "Guidance", type: "curseur", plage: [1, 10], pas: 0.5, defaut: 3, unite: "",
         doc: "À quel point l'image suit le texte. Faible, le modèle compose plus librement ; fort, il colle aux mots.",
         docEn: "How closely the image follows the text. Low, the model composes more freely; high, it sticks to the words." },
+      { nom: "Force", nomEn: "Strength", type: "curseur", plage: [0, 100], pas: 1, defaut: FORCE_DEFAUT, unite: "%",
+        doc: "La part de l'image de départ qui est redessinée. Faible, sa composition et ses couleurs restent ; forte, elles se perdent. Sans effet quand l'entrée « Image » ne reçoit rien.",
+        docEn: "The share of the starting image that is redrawn. Low, its composition and colours stay; high, they are lost. No effect when the « Image » input receives nothing." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [-1, 999999], pas: 1, defaut: -1,
         doc: "Le tirage de départ. À moins un, il est tiré au sort et le message dit lequel a servi.",
         docEn: "The starting draw. At minus one, it is drawn at random and the message says which one was used." },
@@ -163,6 +199,14 @@ export const fiches = ([
       const prompt = typeof entree === "string" && entree.trim() ? entree.trim()
         : ctx.paramTexte("Prompt", PROMPT_DEFAUT).trim();
       if (!prompt) return { valeurs: [null, null], erreur: true, message: traduire("msg.moss.sans_prompt") };
+      // L'IMAGE DE DÉPART ET SA FORCE NE PARTENT QU'ENSEMBLE : sans image, la demande reste celle d'avant.
+      const image = ctx.entree(1);
+      const fichierDepart = image instanceof Blob && image.size > 0 ? image : null;
+      if (fichierDepart instanceof File && estSvg(fichierDepart)) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.moss.depart_svg") };
+      }
+      const force = Math.min(100, Math.max(0, ctx.paramNombre("Force", FORCE_DEFAUT)));
+      const depart = fichierDepart ? { depart: new Uint8Array(await fichierDepart.arrayBuffer()), force: force / 100 } : {};
       const graine = resoudreGraine(ctx.paramNombre("Graine", -1));
       const largeur = Math.round(ctx.paramNombre("Largeur", COTE_DEFAUT) / 16) * 16;
       const hauteur = Math.round(ctx.paramNombre("Hauteur", COTE_DEFAUT) / 16) * 16;
@@ -189,6 +233,7 @@ export const fiches = ([
         r = await pont.sdcppMoss({
           prompt: envoye,
           negatif: ctx.paramTexte("Prompt négatif", "").trim(),
+          ...depart,
           graine,
           etapes: Math.round(ctx.paramNombre("Étapes", ETAPES_DEFAUT)),
           guidage: ctx.paramNombre("Guidage", 3),
@@ -203,10 +248,11 @@ export const fiches = ([
       if (!r.ok || !r.png) {
         return { valeurs: [null, null], erreur: true, message: (r.journal ?? "").slice(-240) };
       }
-      const image = new File([new Uint8Array(r.png) as unknown as BlobPart], `moss-${graine}.png`, { type: "image/png" });
-      const message = elements === null ? traduire("msg.moss.fait", graine, largeur, hauteur)
-        : traduire("msg.moss.fait_mise_en_page", graine, largeur, hauteur, elements);
-      return { valeurs: [image, envoye], message };
+      const rendu = new File([new Uint8Array(r.png) as unknown as BlobPart], `moss-${graine}.png`, { type: "image/png" });
+      const message = (elements === null ? traduire("msg.moss.fait", graine, largeur, hauteur)
+        : traduire("msg.moss.fait_mise_en_page", graine, largeur, hauteur, elements))
+        + (fichierDepart ? traduire("msg.moss.depart", Math.round(force)) : "");
+      return { valeurs: [rendu, envoye], message };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1617,6 +1617,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.moss.sans_prompt": { fr: "Aucun prompt : rien à dessiner.", en: "No prompt: nothing to draw." },
   "msg.moss.fait_mise_en_page": { fr: "Graine {__VAR_0__} · {__VAR_1__} × {__VAR_2__} · mise en page de {__VAR_3__} éléments", en: "Seed {__VAR_0__} · {__VAR_1__} × {__VAR_2__} · layout of {__VAR_3__} items" },
   "msg.moss.mise_en_page_refusee": { fr: "Mise en page refusée après deux essais : {__VAR_0__}", en: "Layout rejected after two attempts: {__VAR_0__}" },
+  "msg.moss.depart": { fr: " · image de départ, force {__VAR_0__} %", en: " · starting image, strength {__VAR_0__} %" },
+  "msg.moss.depart_svg": { fr: "L'image de départ est un SVG : le moteur lit le PNG, le JPEG et le WebP.", en: "The starting image is an SVG: the engine reads PNG, JPEG and WebP." },
   "msg.egaliseur_parametrique.fait": { fr: "{__VAR_0__} étage(s) posé(s) sur sept", en: "{__VAR_0__} stage(s) applied out of seven" },
   "msg.limiteur_crete_vraie.fait": { fr: "Réduction maximale {__VAR_0__} dB · crête vraie {__VAR_1__} dBTP", en: "Maximum reduction {__VAR_0__} dB · true peak {__VAR_1__} dBTP" },
   "msg.limiteur_crete_vraie.correction": { fr: " · correction finale {__VAR_0__} dB", en: " · final correction {__VAR_0__} dB" },

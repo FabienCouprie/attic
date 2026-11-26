@@ -18,6 +18,13 @@
 //
 // L'AVANCEMENT REMONTE ÉTAPE PAR ÉTAPE. La barre de sd.cpp avance par retour chariot seul, d'où le
 // séparateur donné à `lancerTravail`, et seules les étapes de l'échantillonnage sont relayées.
+//
+// UNE IMAGE DE DÉPART PASSE PAR `-i` ET `--strength`, demandé par Fabien le 2026-11-26. Elle est
+// écrite dans le dossier de travail, retiré avec lui. Relevé ce jour-là sur la version épinglée :
+// le moteur recadre l'image au centre au rapport de `-W` × `-H` puis la met à cette taille ; il fait
+// ⌊étapes × force⌋ + 1 étapes, et part du bruit pur quand ce compte atteint `--steps` (0,95 sur 20
+// étapes rend l'image d'un tirage sans image de départ, au pixel près) ; il lit le PNG et le JPEG à
+// leur contenu, mais le WebP SEULEMENT SOUS L'EXTENSION `.webp`, d'où `extensionDepart`.
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -56,18 +63,37 @@ function fichiersManquants(contexte) {
   return Object.entries(chemins).filter(([, c]) => !fs.existsSync(c)).map(([role]) => FICHIERS[role]);
 }
 
-/** Les arguments de `sd-cli`. Purs, pour être éprouvés sans lancer le moteur. */
-function argumentsMoss({ modele, prompt, negatif, sortie, graine, etapes, guidage, largeur, hauteur, calcul }) {
+/**
+ * Les arguments de `sd-cli`. Purs, pour être éprouvés sans lancer le moteur. `depart` est le chemin
+ * de l'image de départ, ou `null` ; `force` est alors la part redessinée, entre 0 et 1.
+ */
+function argumentsMoss({ modele, prompt, negatif, depart, force, sortie, graine, etapes, guidage, largeur, hauteur, calcul }) {
   return [
     "--diffusion-model", modele.diffusion, "--llm", modele.llm,
     "--vae", modele.vae, "--tokenizer", modele.tokenizer,
     "--prompt-file", prompt,
     ...(negatif ? ["--negative-prompt-file", negatif] : []),
+    ...(depart ? ["-i", depart, "--strength", String(Math.min(1, Math.max(0, Number(force) || 0)))] : []),
     "--steps", String(etapes), "--cfg-scale", String(guidage), "-s", String(graine),
     "-W", String(largeur), "-H", String(hauteur),
     ...(calcul ? ["--backend", calcul] : []),
     "-o", sortie,
   ];
+}
+
+/** L'extension sous laquelle écrire l'image de départ : le moteur ne reconnaît le WebP qu'à elle. */
+function extensionDepart(octets) {
+  const ascii = (debut, fin) => String.fromCharCode(...octets.subarray(debut, fin));
+  return octets.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP" ? "webp" : "png";
+}
+
+/** Écrit l'image de départ dans le dossier de travail, et rend son chemin ; `null` sans image. */
+async function ecrireDepart(travail, depart) {
+  if (!depart || depart.length === 0) return null;
+  const octets = Buffer.from(depart);
+  const chemin = path.join(travail, `depart.${extensionDepart(octets)}`);
+  await fs.promises.writeFile(chemin, octets);
+  return chemin;
 }
 
 /** L'étape d'échantillonnage qu'une ligne de la barre annonce, ou `null` pour toute autre ligne. */
@@ -81,7 +107,8 @@ function nettoyer(chemin) {
 }
 
 /**
- * Tire une image d'un texte, en PNG.
+ * Tire une image d'un texte, en PNG, depuis le bruit ou depuis l'image de départ dont `options.depart`
+ * porte les octets, redessinée à la part `options.force`.
  *
  * `surAvancement` reçoit « 12/20 » à chaque étape. Rend `{ ok, png, journal }`.
  */
@@ -97,10 +124,11 @@ async function genererMoss(options = {}, surAvancement, contexte) {
       negatif = path.join(travail, "negatif.txt");
       fs.writeFileSync(negatif, String(options.negatif), "utf8");
     }
+    const depart = await ecrireDepart(travail, options.depart);
     const sortie = path.join(travail, "image.png");
     // « AUTOMATIQUE » PREND LE SENS DE `config.json` (pièce C5) : voir `calcul-automatique.cjs`.
     const calcul = calculDuPont(options.calcul);
-    const args = argumentsMoss({ ...options, calcul, modele: cheminsModele(contexte), prompt, negatif, sortie });
+    const args = argumentsMoss({ ...options, calcul, modele: cheminsModele(contexte), prompt, negatif, depart, sortie });
     const relayer = (ligne) => {
       const e = etapeDeLigne(ligne);
       if (e && surAvancement) surAvancement(`${e.faite}/${e.total}`);
@@ -113,4 +141,6 @@ async function genererMoss(options = {}, surAvancement, contexte) {
   }
 }
 
-module.exports = { genererMoss, argumentsMoss, etapeDeLigne, cheminBinaire, cheminsModele, fichiersManquants, FICHIERS };
+module.exports = {
+  genererMoss, argumentsMoss, extensionDepart, ecrireDepart, etapeDeLigne, cheminBinaire, cheminsModele, fichiersManquants, FICHIERS,
+};

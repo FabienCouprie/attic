@@ -8335,7 +8335,8 @@
   "texte-image-moss": {
    "version": 1,
    "entrees": [
-    {"nom":"Prompt","type":"texte","sousType":"prompt","requis":false}
+    {"nom":"Prompt","type":"texte","sousType":"prompt","requis":false},
+    {"nom":"Image","type":"image","requis":false}
    ],
    "sorties": [
     {"nom":"Image","type":"image"},
@@ -8350,6 +8351,7 @@
     {"nom":"Hauteur","type":"curseur","defaut":320,"min":256,"max":1536,"unite":"px"},
     {"nom":"Étapes","type":"curseur","defaut":30,"min":4,"max":60},
     {"nom":"Guidage","type":"curseur","defaut":3,"min":1,"max":10},
+    {"nom":"Force","type":"curseur","defaut":75,"min":0,"max":100,"unite":"%"},
     {"nom":"Graine","type":"curseur","defaut":-1,"min":-1,"max":999999,"graine":true},
     {"nom":"Calcul","type":"choix","defaut":"","choix":["","CPU","Vulkan0","Vulkan1"],"optionsHeritees":{"CUDA 0":"","CUDA0":""}}
    ]

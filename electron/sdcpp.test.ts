@@ -5,9 +5,12 @@
 // expression lit ce que j'imagine.
 import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const require = createRequire(import.meta.url);
-const { argumentsMoss, etapeDeLigne, FICHIERS } = require("./sdcpp.cjs");
+const { argumentsMoss, ecrireDepart, etapeDeLigne, extensionDepart, FICHIERS } = require("./sdcpp.cjs");
 
 const ECHAP = String.fromCharCode(27);
 const BASE = {
@@ -44,6 +47,34 @@ describe("le pont de stable-diffusion.cpp", () => {
   it("« AUTOMATIQUE » NE PASSE AUCUN PÉRIPHÉRIQUE, et un choix passe tel quel", () => {
     expect(argumentsMoss(BASE)).not.toContain("--backend");
     expect(valeur(argumentsMoss({ ...BASE, calcul: "Vulkan1" }), "--backend")).toBe("Vulkan1");
+  });
+
+  it("L'IMAGE DE DÉPART PASSE PAR `-i` AVEC SA FORCE, et rien des deux sans elle", () => {
+    // LA FAUTE QUE CE CAS ATTRAPE : une image écrite puis jamais nommée au moteur, qui tirerait du bruit seul.
+    expect(argumentsMoss({ ...BASE, force: 0.6 })).not.toContain("-i");
+    expect(argumentsMoss({ ...BASE, force: 0.6 })).not.toContain("--strength");
+    const a = argumentsMoss({ ...BASE, depart: "depart.png", force: 0.6 });
+    expect([valeur(a, "-i"), valeur(a, "--strength")]).toEqual(["depart.png", "0.6"]);
+    // UNE FORCE HORS DE [0, 1] EST RAMENÉE dans la plage que le moteur attend.
+    expect(valeur(argumentsMoss({ ...BASE, depart: "d.png", force: 1.4 }), "--strength")).toBe("1");
+  });
+
+  it("L'IMAGE DE DÉPART EST ÉCRITE DANS LE DOSSIER DE TRAVAIL, sous l'extension que le moteur sait lire", async () => {
+    // RELEVÉ LE 2026-11-26 sur la version épinglée : le moteur lit le PNG et le JPEG à leur contenu,
+    // mais refuse un WebP écrit sous une autre extension que `.webp`.
+    const travail = mkdtempSync(join(tmpdir(), "attic-moss-essai-"));
+    try {
+      const webp = new Uint8Array([...Buffer.from("RIFF"), 0, 0, 0, 0, ...Buffer.from("WEBPVP8 ")]);
+      const jpeg = new Uint8Array([255, 216, 255, 224]);
+      expect([extensionDepart(webp), extensionDepart(jpeg)]).toEqual(["webp", "png"]);
+      const chemin = await ecrireDepart(travail, webp);
+      expect(chemin).toBe(join(travail, "depart.webp"));
+      expect(Array.from(readFileSync(chemin))).toEqual(Array.from(webp));
+      expect(await ecrireDepart(travail, null)).toBeNull();
+      expect(await ecrireDepart(travail, new Uint8Array(0))).toBeNull();
+    } finally {
+      rmSync(travail, { recursive: true, force: true });
+    }
   });
 
   it("un prompt négatif absent n'est pas passé, un prompt négatif l'est par son fichier", () => {
