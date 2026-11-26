@@ -95,6 +95,9 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "harmoniser-choral·Graine", quand: { reglage: "Température", valeurs: ["0"] }, raison: "à température nulle, le choral est celui de moindre coût, trouvé sans tirage ; dit dans sa documentation" },
   { ou: "harmoniser-choral·Pas", quand: { banc: true }, raison: "au banc, un modèle est branché sur « Modèle », et sa grille remplace celle de « Pas », ce que la notice dit ; sans modèle, « Pas » est tenu par audio/choral-harmoniser.test.ts" },
   { ou: "corpus-fabriquer-fin·Si le fichier existe", quand: { banc: true }, raison: "non mesurable au banc : le réglage n'agit que sur un fichier écrit, et le banc de node n'a ni dossier ni application de bureau ; tenu par plugins/fabriquer-corpus.test.ts" },
+  // VUE DEPUIS QUE « SOURCE » GOUVERNE (2026-11-25) : la même inertie que la coïncidence des deux
+  // valeurs de « Graines », relevée sous le nouveau gouverneur.
+  { ou: "corpus-fabriquer-debut·Graines", quand: { banc: true }, raison: "non mesurable au banc : les graines du corps sont réglées par le pilote, pour les nœuds rejoués à chaque passe, et non par ce nœud, que le banc lance seul ; tenu par core/graines-de-passe.test.ts et l'exemple un-corpus-fabrique.json" },
   ...ENTREES_DU_MELANGEUR.map((n) => ({
     ou: `melangeur-midi·Transposition ${n}`, quand: { reglage: `Canal ${n}`, valeurs: ["10"] },
     raison: "le canal 10 est celui des percussions, dont le numéro de note désigne un instrument et non une hauteur : ses notes ne se transposent pas ; dit dans sa documentation",

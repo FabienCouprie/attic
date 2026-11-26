@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Note } from "./note";
-import { alignerVoix, separerVoix } from "./separation-voix";
+import { alignerVoix, placerDansLesVoix, separerVoix } from "./separation-voix";
 
 const n = (hauteur: number, debut: number, duree = 1): Note =>
   ({ note: hauteur, velocite: 90, debut, fin: debut + duree });
@@ -77,6 +77,25 @@ describe("l'alignement de deux tranches", () => {
     expect(alignerVoix([], [], 12)).toEqual([]);
     expect(alignerVoix([60], [], 12)).toEqual([]);
     expect(alignerVoix([], [60], 12)).toEqual([null]);
+  });
+});
+
+describe("le placement d'une tranche dans les voix de l'ancre", () => {
+  it("UNE NOTE QUI COMMENCE PREND LA VOIX LIBRE LA PLUS PROCHE, sans croiser celle qui continue", () => {
+    // 77 prolonge la voix 3 ; 55 est le plus près de 60, la voix 1, et reste sous la voix 3.
+    expect(placerDansLesVoix([55, 77], [-1, 3], [false, false], [48, 60, 67, 76])).toEqual([1, 3]);
+  });
+
+  it("UNE LIGNE NE CHANGE DE VOIX QUE SI L'ORDRE L'Y OBLIGE", () => {
+    // 60 prolonge la voix 0, mais 40 entre en dessous et il n'y a pas de voix plus grave.
+    expect(placerDansLesVoix([40, 60], [-1, 0], [false, false], [48, 60])).toEqual([0, 1]);
+  });
+
+  it("UNE NOTE TENUE GARDE SA VOIX, même au prix de deux lignes déplacées", () => {
+    // 60 sonne encore dans la voix 1, et l'alignement promet aussi la voix 1 à 61. La garder coûte
+    // deux lignes déplacées, 61 et 62 montant d'une voix ; la déplacer n'en coûterait qu'une. La
+    // note tenue reste, parce qu'elle porte déjà sa voix à la sortie.
+    expect(placerDansLesVoix([60, 61, 62], [1, 1, 2], [true, false, false], [50, 60, 62, 79])).toEqual([1, 2, 3]);
   });
 });
 
@@ -168,6 +187,22 @@ describe("ce dont il faut se méfier, et qui est dit", () => {
     expect(separerVoix(notes, { voixMax: 2 }).voix).toBe(2);
   });
 
+  it("SOUS LE PLAFOND, LA PLUS AIGUË ET LA PLUS GRAVE RESTENT DES LIGNES, le surplus rejoint la plus proche", () => {
+    // Quatre lignes, trois voix au plus : sont gardées la première, la troisième et la quatrième, et
+    // la deuxième, de moyenne 72,25, rejoint la première (80) plutôt que la troisième (63,75). Avant
+    // le 2026-11-25, tout ce qui dépassait tombait dans la dernière voix, et la basse y sonnait avec
+    // le ténor.
+    const lignes = [[79, 81, 79, 77], [72, 74, 72, 71], [64, 65, 64, 62], [48, 50, 48, 47]]
+      .map((s) => s.map((h, i) => n(h, i)));
+    const { notes } = meler(lignes);
+    const res = separerVoix(notes, { voixMax: 3 });
+    const hauteursDe = (v: number) => res.notes.filter((x) => x.voix === v).map((x) => x.note).sort((a, b) => a - b);
+    expect(res.voix).toBe(3);
+    expect(hauteursDe(2)).toEqual([47, 48, 48, 50]);
+    expect(hauteursDe(1)).toEqual([62, 64, 64, 65]);
+    expect(hauteursDe(0)).toEqual([71, 72, 72, 74, 77, 79, 79, 81]);
+  });
+
   it("LES VOIX SONT NUMÉROTÉES DU PLUS AIGU AU PLUS GRAVE, sans trou", () => {
     const lignes = [[55, 57], [79, 81], [67, 69]].map((s) => s.map((h, i) => n(h, i)));
     const { notes } = meler(lignes);
@@ -179,6 +214,34 @@ describe("ce dont il faut se méfier, et qui est dit", () => {
     };
     expect(moyenne(0)).toBeGreaterThan(moyenne(1));
     expect(moyenne(1)).toBeGreaterThan(moyenne(2));
+  });
+});
+
+describe("une ligne qui se tait puis reprend, comme une main gauche de piano", () => {
+  // UNE MESURE À TROIS TEMPS, une basse au premier, un accord de deux notes au second, et la mélodie
+  // au-dessus. La ligne du milieu se tait un temps sur deux. Avant le 2026-11-25, chaque reprise
+  // ouvrait une chaîne neuve, et le classement versait toutes les chaînes au-delà des deux plus
+  // aiguës dans la dernière voix : basse et accords y sonnaient ensemble. Sur la Gnossienne 1 de
+  // Satie, 804 des 832 notes y tombaient.
+  const melodie = [76, 77, 79, 77, 76, 74, 72, 72].map((h, i) => n(h, i));
+  const basse = [48, 55, 43, 55, 45, 57, 41, 57].map((h, i) => n(h, i));
+  const milieu = [60, 59, 60, 60].map((h, i) => n(h, 2 * i + 1));
+  const { notes, attendu } = meler([melodie, milieu, basse]);
+
+  it("RETROUVE LES TROIS LIGNES, sans rien verser dans la plus grave", () => {
+    const res = separerVoix(notes);
+    expect(res.voix).toBe(3);
+    expect(malRangees(res, notes, attendu)).toBe(0);
+    expect([0, 1, 2].map((v) => res.notes.filter((x) => x.voix === v).length)).toEqual([8, 4, 8]);
+  });
+
+  it("DEUX NOTES D'UNE MÊME VOIX NE SONNENT JAMAIS ENSEMBLE", () => {
+    const res = separerVoix(notes);
+    for (const a of res.notes) {
+      for (const b of res.notes) {
+        if (a !== b && a.voix === b.voix) expect(a.debut >= b.fin || b.debut >= a.fin).toBe(true);
+      }
+    }
   });
 });
 
