@@ -67,7 +67,7 @@ const lancer = (id: string, entrees: unknown[], reglages: Record<string, number 
   fiche(id).executer(contexte(entrees, reglages));
 
 /** Les réglages qui rendent le son le plus court possible : le rendu est ce qui coûte. */
-const BREF = { "Durée d'un accord": 0.1, "Durée d'un pas": 0.05, "Répétitions": 1, "Durée d'une note": 0.05 };
+const BREF = { "Valeur d'un accord": 0.25, "Valeur d'un pas": 0.1, "Répétitions": 1, "Valeur d'une note": 0.1 };
 
 const chiffres = (m: string) =>
   (m.match(/-?\d+(?:[.,]\d+)?/g) ?? []).map((x) => Number(x.replace(",", ".")));
@@ -314,9 +314,9 @@ describe("canon par pavage : le théorème se lit dans la grille du nœud", () =
     expect(compte.every((c) => c === 1), `colonnes : ${compte.join("")}`).toBe(true);
   });
 
-  it("« Durée d'un pas » et « Répétitions » décident de la durée entendue", async () => {
-    const court = (await lancer("canon-pavage", [], { ...BREF, "Durée d'un pas": 0.05, "Répétitions": 1 })).valeurs[0] as AudioBuffer;
-    const long = (await lancer("canon-pavage", [], { ...BREF, "Durée d'un pas": 0.05, "Répétitions": 3 })).valeurs[0] as AudioBuffer;
+  it("« Valeur d'un pas » et « Répétitions » décident de la durée entendue", async () => {
+    const court = (await lancer("canon-pavage", [], { ...BREF, "Valeur d'un pas": 0.1, "Répétitions": 1 })).valeurs[0] as AudioBuffer;
+    const long = (await lancer("canon-pavage", [], { ...BREF, "Valeur d'un pas": 0.1, "Répétitions": 3 })).valeurs[0] as AudioBuffer;
     expect(long.duration, "trois tours ne durent pas plus qu'un").toBeGreaterThan(court.duration * 2);
   });
 });
@@ -388,7 +388,7 @@ describe("série de l'infini : une suite publiée, et deux auto-similarités", (
       "la gamme n'agit pas en lecture par degrés").toBeGreaterThan(0.01);
   });
 
-  it("« Tonique » et « Octave » déplacent le son, « Durée d'une note » sa longueur", async () => {
+  it("« Tonique » et « Octave » déplacent le son, « Valeur d'une note » sa longueur", async () => {
     const son = async (r: Record<string, number | string>) =>
       (await lancer("serie-infinie", [], { ...BREF, "Notes": 16, ...r })).valeurs[0] as AudioBuffer;
     const base = await son({});
@@ -401,9 +401,10 @@ describe("série de l'infini : une suite publiée, et deux auto-similarités", (
     };
     expect(ecart(base, await son({ "Tonique": "7" })), "« Tonique » est inerte").toBeGreaterThan(0.01);
     expect(ecart(base, await son({ "Octave": 2 })), "« Octave » est inerte").toBeGreaterThan(0.01);
-    expect((await son({ "Durée d'une note": 0.2 })).duration,
-      "« Durée d'une note » est inerte").toBeGreaterThan(base.duration * 2);
+    expect((await son({ "Valeur d'une note": 0.4 })).duration,
+      "« Valeur d'une note » est inerte").toBeGreaterThan(base.duration * 2);
   });
+
 });
 
 describe("matrice d'auto-similarité : la méthode de Foote", () => {

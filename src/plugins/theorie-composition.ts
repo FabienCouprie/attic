@@ -90,10 +90,12 @@ async function rendreEtEcrire<N extends string>(ctx: ContexteQuiDeclare<N, NomDu
   ];
 }
 
+const TEMPO_RENDU = reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
+  doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." });
+
 /** Les réglages de rendu communs : écouter d'abord, exporter ensuite. */
 const PARAMETRES_RENDU = [
-  reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
-    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." }),
+  TEMPO_RENDU,
   { ...PARAMETRE_SYNTHESE,
     doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.",
     docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
@@ -163,11 +165,20 @@ export const fiches: FicheAudio[] = ([
         docEn: "« Closest » picks, for each note, the octave nearest the previous one, which makes a line audible; « One octave » stacks everything above the starting note, which makes the order of the classes audible." },
       { nom: "Note de départ", nomEn: "Starting note", type: "nombre", plage: [24, 96], pas: 1, defaut: 60,
         doc: "Hauteur MIDI autour de laquelle la série est placée.", docEn: "MIDI pitch the row is placed around." },
-      { nom: "Durée d'une note", nomEn: "Note length", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.3, unite: "s",
-        doc: "Durée de chaque note de la série.", docEn: "Length of each note of the row." },
+      // LA DURÉE D'UNE NOTE SE COMPTE EN TEMPS depuis le 2026-11-26, décision de Fabien : elle se
+      // comptait en secondes, et « Tempo » ne faisait que convertir ces secondes en ticks du fichier
+      // MIDI, si bien qu'aucun instant ne bougeait. L'ancien réglage « Durée d'une note » n'est pas
+      // relu : c'est une rupture déclarée.
+      { nom: "Valeur d'une note", nomEn: "Note value", type: "nombre", plage: [0.1, 4], pas: 0.05, defaut: 0.6,
+        unite: "temps", uniteEn: "beats",
+        doc: "Durée de chaque note de la série, en temps : 1 vaut une noire, 0,5 une croche, 0,25 une double croche. « Tempo » fixe la durée d'un temps.",
+        docEn: "Length of each note of the row, in beats: 1 is a quarter note, 0.5 an eighth, 0.25 a sixteenth. « Tempo » sets the length of a beat." },
       { nom: "Vélocité", nomEn: "Velocity", type: "nombre", plage: [1, 127], pas: 1, defaut: 90,
         doc: "Force des notes.", docEn: "Note strength." },
-      ...PARAMETRES_RENDU,
+      { ...TEMPO_RENDU,
+        doc: "Nombre de temps par minute. Il fixe la durée de « Valeur d'une note », donc la vitesse du son comme celle du MIDI, et le fichier MIDI produit le porte.",
+        docEn: "Beats per minute. It sets the length of « Note value », hence the speed of the sound as well as of the MIDI, and the produced MIDI file carries it." },
+      ...PARAMETRES_RENDU.filter((p) => p !== TEMPO_RENDU),
     ],
     async executer(ctx) {
       const entree = await notesDuMidi(ctx.entree(0));
@@ -191,7 +202,7 @@ export const fiches: FicheAudio[] = ([
 
       const serre = ctx.paramTexte("Registre", "serre") === "serre";
       const hauteurs = placerDansRegistre(classes, Math.round(ctx.paramNombre("Note de départ", 60)), serre);
-      const duree = ctx.paramNombre("Durée d'une note", 0.3);
+      const duree = ctx.paramNombre("Valeur d'une note", 0.6) * 60 / ctx.paramNombre("Tempo", 120);
       const velocite = Math.round(ctx.paramNombre("Vélocité", 90));
       const notes = hauteurs.map((note, i) => ({
         note, velocite, debut: i * duree, fin: i * duree + duree * 0.9,

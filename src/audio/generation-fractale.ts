@@ -1,7 +1,8 @@
 // audio/generation-fractale.ts — La musique tiree d'un motif deplie sur lui-meme.
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
-// de calcul n'a ete retouchee au passage.
+// de calcul n'a ete retouchee au passage ; la duree des notes l'a ete depuis, le 2026-11-26, et
+// `genererMusiqueFractale` dit pourquoi.
 
 import { type NoteEvenement } from "./midi-sequence";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
@@ -58,12 +59,13 @@ export async function genererMusiqueFractale(
   typeMotif: string,
   intervallesPerso: string,
   profondeur: number,
-  dureeSec: number,
+  dureeMaxSec: number,
   tempo: number,
+  valeurTemps: number,
   cle: string,
   gamme: string,
   timbre: string
-): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
+): Promise<{ audio: AudioBuffer; notes: NoteEvenement[]; depliees: number }> {
   const sampleRate = frequenceDeTravail();
   const pMax = Math.min(profondeur, 6);
   const motif = typeMotif === "Personnalisé"
@@ -75,12 +77,13 @@ export async function genererMusiqueFractale(
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
 
   const notesMidi = deplierMotif(motif, pMax);
-  const dureeParNote = (60 / Math.max(1, tempo)) / (motif.length ** (pMax - 1) || 1);
-  const dureeCalculee = notesMidi.length * dureeParNote;
-  const facteur = dureeCalculee > 0 ? dureeSec / dureeCalculee : 1;
-  const dureeNote = dureeParNote * facteur;
-
-  const totalNotes = notesMidi.length;
+  // LA DURÉE D'UNE NOTE EST UNE VALEUR EN TEMPS, QUE LE TEMPO CONVERTIT, depuis le 2026-11-26,
+  // décision de Fabien. La mélodie entière était recalée pour remplir la durée demandée, ce qui
+  // annulait le tempo : à 60, 120 ou 180 BPM, la même note de 8 s divisées par le nombre de notes.
+  // La durée est désormais une longueur maximale : les notes qui n'y tiennent pas entières ne sont
+  // pas jouées, et `depliees` dit combien le motif en donnait, pour que le nœud le dise.
+  const dureeNote = Math.max(0.001, valeurTemps) * 60 / Math.max(1, tempo);
+  const totalNotes = Math.max(1, Math.min(notesMidi.length, Math.floor(dureeMaxSec / dureeNote + 1e-9)));
   const dureeTotale = totalNotes * dureeNote;
   const offline = new OfflineAudioContext(2, Math.max(1, Math.ceil(dureeTotale * sampleRate)), sampleRate);
   const notes: NoteEvenement[] = [];
@@ -128,7 +131,7 @@ export async function genererMusiqueFractale(
   }
 
   const audio = await offline.startRendering();
-  return { audio, notes };
+  return { audio, notes, depliees: notesMidi.length };
 }
 
 // --- Génération mélodique aléatoire ---------------------------------------

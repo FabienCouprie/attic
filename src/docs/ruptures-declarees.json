@@ -18,6 +18,51 @@
     "composant retiré, sans alias"
    ],
    "raison": "Retiré à la demande de Fabien le 2026-11-23, qui n'en a plus l'usage. Un graphe enregistré qui porte la Partition VexFlow s'ouvre avec, à sa place, un nœud nommé par son identifiant, sans port, et ses câbles sont ignorés à la restauration : relevé le 2026-11-23 dans l'application construite, deux câbles sur deux. Aucun alias : la Grille d'accords VexFlow lit la même progression, mais sous un réglage nommé Accords et non Progression, et sans réglage de clé, si bien qu'un alias perdrait les réglages en silence."
+  },
+  {
+   "composant": "serie-infinie",
+   "version": 2,
+   "date": "2026-11-26",
+   "ruptures": [
+    "réglage « Durée d'une note » retiré, plus rien ne le relit"
+   ],
+   "raison": "Décision de Fabien du 2026-11-26, après son relevé « le paramètre tempo n'opère pas ». La durée d'une note se comptait en secondes et le Tempo ne faisait que convertir ces secondes en ticks : à 60, 120 et 180 BPM, trois WAV identiques à l'octet et des notes MIDI aux mêmes instants. Elle se compte désormais en temps, sous « Valeur d'une note », que le Tempo convertit en secondes. L'ancienne valeur n'est pas relue, aucun mécanisme du chargement ne sachant la convertir avec le tempo enregistré, et la recopier telle quelle ferait lire des secondes comme des temps. Un graphe resté aux deux défauts, 0,25 s et 120 BPM, s'ouvre sur 0,5 temps, soit 0,25 s : le même son. Resté au défaut de durée sous un autre tempo, il joue désormais à ce tempo. Une valeur réglée à la main est perdue, et le rapport de chargement nomme la clé. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant, relevé le 2026-11-26."
+  },
+  {
+   "composant": "tonnetz",
+   "version": 2,
+   "date": "2026-11-26",
+   "ruptures": [
+    "réglage « Durée d'un accord » retiré, plus rien ne le relit"
+   ],
+   "raison": "Même défaut que la série de l'infini, relevé le même jour par une sonde sur le catalogue entier, et réparé à la demande de Fabien : la durée d'un accord se comptait en secondes, et le Tempo ne faisait que convertir ces secondes en ticks, si bien qu'aucun instant ne bougeait. Elle se compte désormais en temps, sous « Valeur d'un accord », que le Tempo convertit en secondes. L'ancienne valeur n'est pas relue, pour la même raison que la série : aucun mécanisme du chargement ne sait la convertir avec le tempo enregistré. Un graphe resté aux deux défauts, 1 s et 120 BPM, s'ouvre sur 2 temps, soit 1 s : le même son. Une valeur réglée à la main est perdue, et le rapport de chargement nomme la clé. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant, relevé le 2026-11-26."
+  },
+  {
+   "composant": "canon-pavage",
+   "version": 2,
+   "date": "2026-11-26",
+   "ruptures": [
+    "réglage « Durée d'un pas » retiré, plus rien ne le relit"
+   ],
+   "raison": "Même défaut que la série de l'infini, relevé le même jour par une sonde sur le catalogue entier, et réparé à la demande de Fabien : la durée d'une pulsation se comptait en secondes, et le Tempo ne faisait que convertir ces secondes en ticks. Elle se compte désormais en temps, sous « Valeur d'un pas », que le Tempo convertit en secondes. L'ancienne valeur n'est pas relue, pour la même raison que la série. Un graphe resté aux deux défauts, 0,2 s et 120 BPM, s'ouvre sur 0,4 temps, soit 0,2 s : le même son. Une valeur réglée à la main est perdue, et le rapport de chargement nomme la clé. Le seul graphe livré qui l'emploie, exemples/patch-openmusic.json, est converti : 0,3 s au tempo par défaut deviennent 0,6 temps."
+  },
+  {
+   "composant": "serie-dodecaphonique",
+   "version": 2,
+   "date": "2026-11-26",
+   "ruptures": [
+    "réglage « Durée d'une note » retiré, plus rien ne le relit"
+   ],
+   "raison": "Même défaut que la série de l'infini, relevé le même jour par une sonde sur le catalogue entier, et réparé à la demande de Fabien : la durée d'une note se comptait en secondes, et le Tempo ne faisait que convertir ces secondes en ticks. Elle se compte désormais en temps, sous « Valeur d'une note », que le Tempo convertit en secondes. L'ancienne valeur n'est pas relue, pour la même raison que la série. Un graphe resté aux deux défauts, 0,3 s et 120 BPM, s'ouvre sur 0,6 temps, soit 0,3 s : le même son. Une valeur réglée à la main est perdue, et le rapport de chargement nomme la clé. Le seul graphe livré qui l'emploie, exemples/patch-openmusic.json, est converti : 0,35 s au tempo par défaut deviennent 0,7 temps."
+  },
+  {
+   "composant": "generateur-fractal",
+   "version": 2,
+   "date": "2026-11-26",
+   "ruptures": [
+    "réglage « Durée » : défaut 8 → 12"
+   ],
+   "raison": "Décision de Fabien du 2026-11-26, après la sonde du tempo sur le catalogue : la Musique fractale lisait son Tempo puis l'annulait, en recalant toute sa mélodie pour remplir sa « Durée ». Chaque note dure désormais sa « Valeur d'une note », réglage neuf en temps que le Tempo convertit, et la « Durée » est une longueur maximale : les notes qui n'y tiennent pas entières ne sont pas jouées, et le message le dit. Le garde ne voit que le défaut de la durée, qui passe de 8 à 12 s pour que la mélodie par défaut, 27 croches à 80 BPM, soit 10,125 s, tienne entière. LE SON CHANGE AUSSI SOUS LA MÊME DURÉE, ce que le manifeste ne lit pas : un graphe enregistré à 8 s rendait 27 notes de 0,296 s ; il en rend 21 de 0,375 s, coupées à 8 s, et le message le dit. Aucun graphe de exemples/ ni de presets/ n'emploie ce composant ; tests-e2e/montage-pistes.spec.ts l'emploie à ses défauts et ne mesure que la crête de ses deux premières secondes."
   }
  ]
 }
