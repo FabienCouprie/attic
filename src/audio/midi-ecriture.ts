@@ -33,10 +33,14 @@ export function notesVersFichierMidi(
   canal = 0,
   banque?: number,
   programme?: number,
-  tempos?: readonly { debut: number; bpm: number }[],
+  tempos?: readonly { debut: number; bpm: number; usParNoire?: number }[],
 ): File {
   const tpm = 480;
-  const carte = [...(tempos ?? [])].filter((t) => t.bpm > 0 && t.debut >= 0).sort((a, b) => a.debut - b.debut);
+  // `usParNoire`, QUAND UN TEMPO RELU LE PORTE, S'ÉCRIT TEL QUEL. L'écriture tronque les microsecondes
+  // d'un tempo, et un tempo relu puis recalculé depuis ses BPM pouvait en perdre une : la noire exacte
+  // du fichier reçu est donc gardée, pour qu'une transformation rende le tempo qu'on lui a donné.
+  const carte: { debut: number; bpm: number; usParNoire?: number }[] = [...(tempos ?? [])]
+    .filter((t) => t.bpm > 0 && t.debut >= 0).sort((a, b) => a.debut - b.debut);
   if (!carte.length || carte[0].debut > 0) carte.unshift({ debut: 0, bpm: tempoBpm });
 
   // Segment par segment : chaque tempo vaut de son instant jusqu'au suivant. Un instant négatif se
@@ -52,7 +56,7 @@ export function notesVersFichierMidi(
   }
 
   const lignes: { tick: number; type: string; [key: string]: any }[] = [
-    ...carte.map((t) => ({ tick: secEnTicks(t.debut), type: "setTempo", microsecondsPerBeat: (60 / t.bpm) * 1_000_000 })),
+    ...carte.map((t) => ({ tick: secEnTicks(t.debut), type: "setTempo", microsecondsPerBeat: t.usParNoire ?? (60 / t.bpm) * 1_000_000 })),
     { tick: 0, type: "timeSignature", numerator: 4, denominator: 4, channel: canal },
   ];
 

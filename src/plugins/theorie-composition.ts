@@ -12,6 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesDuMidi } from "../audio/midi";
+import { temposDuFichier, type ChangementDeTempo } from "../audio/midi-lecture-sequence";
 import { refusDeSuite } from "../audio/noms-de-notes";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 import {
@@ -48,21 +49,31 @@ type NoteSimple = Note;
  * LA PROVENANCE EST RENDUE AVEC LES NOTES, pour que le message la dise. Deux sources qui se
  * recouvrent sans que rien à l'écran n'annonce laquelle a servi, c'est la confusion qui a déjà
  * coûté deux écoutes ailleurs.
+ *
+ * ET LES TEMPOS DE L'ENTRÉE AUSSI, changements compris, depuis le 2026-11-26, décision de Fabien :
+ * les notes lues en secondes perdaient le tempo, et le fichier produit était réécrit au Tempo du
+ * nœud, 120 par défaut. Un morceau reçu à 90 en sortait hors de sa grille.
  */
 async function notesEntrantes(sequence: unknown, midi: unknown): Promise<
-  { notes: NoteSimple[]; tempo?: number; duree?: number; arbre?: string; provenance: string } | null
+  { notes: NoteSimple[]; tempo?: number; tempos?: ChangementDeTempo[]; duree?: number; arbre?: string; provenance: string } | null
 > {
   const en = () => langueCourante() === "en";
   if (estSequence(sequence) && sequence.notes.length > 0) {
+    const tempo = sequence.tempo && sequence.tempo > 0 ? sequence.tempo : undefined;
     return {
       notes: sequence.notes.map((n) => ({ ...n })),
-      tempo: sequence.tempo, duree: sequence.duree, arbre: sequence.arbre,
+      tempo, tempos: tempo ? [{ debut: 0, bpm: tempo, usParNoire: (60 / tempo) * 1_000_000 }] : undefined,
+      duree: sequence.duree, arbre: sequence.arbre,
       provenance: en() ? "sequence input" : "entrée Séquence",
     };
   }
   const duMidi = await notesDuMidi(midi);
   if (!duMidi) return null;
-  return { notes: duMidi, provenance: en() ? "MIDI input" : "entrée MIDI" };
+  const tempos = (await temposDuFichier(midi)) ?? undefined;
+  return {
+    notes: duMidi, tempo: tempos ? Math.round(tempos[0].bpm) : undefined, tempos,
+    provenance: en() ? "MIDI input" : "entrée MIDI",
+  };
 }
 
 /**
@@ -74,8 +85,13 @@ async function notesEntrantes(sequence: unknown, midi: unknown): Promise<
  * et son rétrograde, un accord et son image négative.
  *
  * LA FICHE QUI L'APPELLE DÉCLARE LES QUATRE RÉGLAGES DU RENDU, et le compilateur l'exige.
+ *
+ * `tempos`, CEUX DE L'ENTRÉE QUAND ELLE EN PORTE, l'emportent sur le réglage « Tempo », qui ne sert
+ * qu'à défaut : une transformation réécrit le fichier sur la grille de celui qu'elle a reçu.
  */
-async function rendreEtEcrire<N extends string>(ctx: ContexteQuiDeclare<N, NomDuRenduMidi>, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
+async function rendreEtEcrire<N extends string>(
+  ctx: ContexteQuiDeclare<N, NomDuRenduMidi>, notes: NoteSimple[], tempos?: ChangementDeTempo[],
+): Promise<[AudioBuffer, File]> {
   const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
   const lu = lecteurDe<NomDuRenduMidi>(ctx);
   const instrument = lu.paramNombre("Instrument", 0);
@@ -83,7 +99,9 @@ async function rendreEtEcrire<N extends string>(ctx: ContexteQuiDeclare<N, NomDu
   const modeRendu: "FM/Oscillateurs" | "SoundFont" =
     mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
   const { programme, banque } = decoderInstrumentSF2(instrument);
-  const midi = notesVersFichierMidi(notes, lu.paramNombre("Tempo", 120), 0);
+  const midi = tempos?.length
+    ? notesVersFichierMidi(notes, tempos[0].bpm, 0, undefined, undefined, tempos)
+    : notesVersFichierMidi(notes, lu.paramNombre("Tempo", 120), 0);
   return [
     await rendreSequence(notes, modeRendu, lu.paramNombre("Volume", 80), programme, banque),
     await appliquerInstrumentMidi(midi, instrument),
@@ -91,7 +109,8 @@ async function rendreEtEcrire<N extends string>(ctx: ContexteQuiDeclare<N, NomDu
 }
 
 const TEMPO_RENDU = reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
-  doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." });
+  doc: "Tempo écrit dans le fichier MIDI produit quand l'entrée n'en porte pas : le tempo du MIDI ou de la séquence reçus l'emporte, ses changements compris. Il ne déplace aucune note ; il décide de la grille des temps sur laquelle le fichier les écrit.",
+  docEn: "Tempo written into the produced MIDI file when the input carries none: the tempo of the received MIDI or sequence prevails, its changes included. It moves no note; it decides the beat grid on which the file writes them." });
 
 /** Les réglages de rendu communs : écouter d'abord, exporter ensuite. */
 const PARAMETRES_RENDU = [
@@ -329,7 +348,7 @@ export const fiches: FicheAudio[] = ([
         `${en ? "Axis in" : "Axe en"} ${nomClasse(tonique)} : ${nomClasse(tonique + 3)} / ${nomClasse(tonique + 4)}`,
         tableReflets(tonique),
       ].join("\n");
-      const [audio, midi] = await rendreEtEcrire(ctx, reflete);
+      const [audio, midi] = await rendreEtEcrire(ctx, reflete, (await temposDuFichier(ctx.entree(0))) ?? undefined);
       return {
         valeurs: [audio, midi, table],
         message: traduire("msg.negative.resultat", nomClasse(tonique), reflete.length),
@@ -387,7 +406,7 @@ export const fiches: FicheAudio[] = ([
         : formes;
       const sortie = groupes.flatMap((g, i) => remplacerHauteurs(g, places[i]));
       const accordsMultiples = groupes.filter((g) => g.length > 1).length;
-      const [audio, midi] = await rendreEtEcrire(ctx, sortie);
+      const [audio, midi] = await rendreEtEcrire(ctx, sortie, recu.tempos);
       // LES DÉPARTS ET LES DURÉES NE BOUGENT PAS, seules les hauteurs : la durée voulue de la
       // séquence reçue est donc encore la bonne, silence final compris.
       const sequence: Sequence = poserArbre({

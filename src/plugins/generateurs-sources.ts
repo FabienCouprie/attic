@@ -41,7 +41,9 @@ export const fiches: FicheAudio[] = ([
       { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
-      { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
+      { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM",
+        doc: "Tempo écrit dans le fichier MIDI produit. Les notes gardent les instants où elles ont été jouées : il ne les déplace pas, il décide de la grille des temps sur laquelle le fichier les écrit. Sans effet sur le son.",
+        docEn: "Tempo written into the produced MIDI file. The notes keep the instants at which they were played: it does not move them, it decides the beat grid on which the file writes them. No effect on the sound." },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
     // UN CLAVIER OÙ RIEN N'A ENCORE ÉTÉ JOUÉ N'EST PAS EN ERREUR, et il le disait : posé sur le
