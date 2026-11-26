@@ -237,6 +237,15 @@ const INERTIE_NORMALE: Record<string, Record<string, string>> = {
     // Sa propre documentation le dit : « En mode « Tempo » : le tempo auquel jouer le fichier ».
     "Tempo cible": "lu seulement en mode Tempo, et le mode par defaut est Facteur",
   },
+  // LE TEMPO DU MIDI REÇU L'EMPORTE depuis le 2026-11-26, décision de Fabien : le fichier produit
+  // garde la grille de celui qu'on a reçu, et le réglage ne sert qu'à une entrée sans tempo. L'entrée
+  // de ce banc en porte un. Le cas où il agit est tenu par `plugins/tempo-de-l-entree.test.ts`.
+  "harmonie-negative": {
+    "Tempo": "le tempo du MIDI recu l'emporte ; le reglage ne sert qu'a une entree sans tempo",
+  },
+  "voicings-accords": {
+    "Tempo": "le tempo du MIDI recu l'emporte ; le reglage ne sert qu'a une entree sans tempo",
+  },
 };
 
 /**

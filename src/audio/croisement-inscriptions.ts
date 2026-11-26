@@ -72,6 +72,7 @@ const SANS_DOM = "non mesurable au banc : sans DOM, aucune image n'est dessinée
 const HORS_BOUCLE = "non mesurable au banc : hors d'une boucle ouverte, la fin rend son entrée telle quelle ; `plugins/boucle-creneau.test.ts` éprouve ce réglage dans une boucle";
 const TONIQUES_VOISINES = "la suite trouvée à la graine d'essai évite le seul degré où ces deux toniques, à une quinte l'une de l'autre, diffèrent ; une autre graine les sépare";
 const DOUZE_TIRAGES = "les douze hauteurs de l'arbre n° 339 tirées à la graine d'essai évitent le seul degré où ces deux gammes, ou ces deux toniques, diffèrent ; les graines 2 et 3 les séparent, sondé le 2026-11-15";
+const TEMPO_RECU = "non mesurable au banc : l'entrée MIDI d'essai porte son tempo, qui l'emporte sur le réglage depuis le 2026-11-26 ; le réglage ne sert qu'à une entrée sans tempo, ce que tient `plugins/tempo-de-l-entree.test.ts` ; dit dans sa documentation";
 const GAMMES_EN_CENTS = ["rast", "bayati", "hijaz", "saba", "bhairav", "yaman", "todi", "slendro", "pelog", "shruti22"];
 
 /** Les inerties d'un réglage de cercle pulsant hors des modes où il sonne. */
@@ -126,6 +127,8 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "motif-eclaircir·Durée d'un temps", quand: { reglage: "Garder les temps", valeurs: ["non"] }, raison: "la durée d'un temps ne sert qu'à reconnaître les événements posés sur un temps, pour les garder ; dit dans sa documentation" },
   { ou: "serie-infinie·Lecture", quand: { reglage: "Gamme", valeurs: ["chromatique"] }, raison: "dans la gamme chromatique, chaque degré vaut un demi-ton, et les deux lectures rendent les mêmes notes ; dit dans sa documentation" },
   { ou: "serie-infinie·Gamme", quand: { reglage: "Lecture", valeurs: ["demi-tons"] }, raison: "en lecture par demi-tons, la suite se lit sans gamme ; dit dans sa documentation" },
+  { ou: "harmonie-negative·Tempo", quand: { banc: true }, raison: TEMPO_RECU },
+  { ou: "voicings-accords·Tempo", quand: { banc: true }, raison: TEMPO_RECU },
   { ou: "partition-csound·Constante", quand: { tous: ["p4", "p5", "p6", "p7"].map((reglage) => ({ reglage, sauf: ["constante"] })) }, raison: "la valeur n'est écrite que dans un champ qui vaut « Constante », et aucun ne le vaut ; dit dans sa documentation" },
   { ou: "gammes-monde·Tolérance", quand: { reglage: "Gamme", valeurs: ["hijaz"] }, raison: "chaque degré du maqam Hijaz tombe sur un demi-ton tempéré : aucun écart n'est à juger ; dit dans sa documentation" },
   { ou: "analyseur-spectre·Échelle", quand: { banc: true }, raison: VUE_SEULE_ECHELLE },

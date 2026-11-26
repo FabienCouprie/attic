@@ -64,3 +64,45 @@ export async function lireMidiEnSequence(
     duree,
   };
 }
+
+/** Un changement de tempo à son instant en secondes, avec sa noire exacte : ce que `notesVersFichierMidi` écrit. */
+export interface ChangementDeTempo { debut: number; bpm: number; usParNoire: number }
+
+/**
+ * La carte des tempos d'un fichier MIDI, chaque changement à son instant en secondes ; rien quand la
+ * valeur n'est pas un fichier ou que le fichier ne porte aucun tempo.
+ *
+ * POURQUOI ENTIÈRE, ET POURQUOI ICI. Une transformation de notes lit son entrée en secondes, ce qui
+ * laisse tomber le tempo ; pour réécrire un fichier sur la grille de celui qu'elle a reçu, elle doit en
+ * rendre les tempos tels quels, changements compris. Relevé le 2026-11-26 : « Harmonie négative »
+ * réécrivait à 120 un morceau reçu à 90, ses accords aux ticks 0, 320, 640 et 1120 au lieu de 0, 480,
+ * 960 et 1440. Trois modules tiennent chacun une carte privée de même forme, `melange-midi.ts`,
+ * `midi-arpege.ts` et `corpus-midi.ts` ; ils ne sont pas repris ici.
+ */
+export async function temposDuFichier(fichier: unknown): Promise<ChangementDeTempo[] | null> {
+  if (!(fichier instanceof File)) return null;
+  const { midiDuFichier } = await import("./midi");
+  const lu = await midiDuFichier(fichier);
+  const tpq = lu.header.ticksPerBeat ?? 480;
+  const lus: { tick: number; us: number }[] = [];
+  for (const piste of lu.tracks) {
+    let tick = 0;
+    for (const e of piste as { deltaTime: number; type: string; microsecondsPerBeat?: number }[]) {
+      tick += e.deltaTime;
+      if (e.type === "setTempo" && (e.microsecondsPerBeat ?? 0) > 0) lus.push({ tick, us: e.microsecondsPerBeat! });
+    }
+  }
+  if (lus.length === 0) return null;
+  // À tick égal, le dernier lu l'emporte ; avant le premier tempo écrit, la noire vaut 500 000 µs,
+  // comme le format le veut.
+  lus.sort((a, b) => a.tick - b.tick);
+  for (let k = lus.length - 1; k > 0; k--) if (lus[k - 1].tick === lus[k].tick) lus.splice(k - 1, 1);
+  if (lus[0].tick > 0) lus.unshift({ tick: 0, us: 500_000 });
+  const carte: ChangementDeTempo[] = [];
+  let debut = 0;
+  for (let k = 0; k < lus.length; k++) {
+    if (k > 0) debut += ((lus[k].tick - lus[k - 1].tick) / tpq) * (lus[k - 1].us / 1e6);
+    carte.push({ debut, bpm: 6e7 / lus[k].us, usParNoire: lus[k].us });
+  }
+  return carte;
+}
