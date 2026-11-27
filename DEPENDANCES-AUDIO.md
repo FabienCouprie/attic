@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 100 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 307 · transposable tel quel
+- **pur** : 308 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -404,6 +404,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | spirale-logarithmique.ts | pur | — |
 | spirale-quintes.ts | pur | — |
 | spirale-spatiale.ts | pur | — |
+| ssp-rapport.ts | pur | — |
 | ssp.ts | pur | — |
 | stereo-correlation.ts | pur | — |
 | stft.ts | pur | — |
