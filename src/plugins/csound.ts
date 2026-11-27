@@ -408,16 +408,23 @@ endin`,
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A3", defautEn: "A3",
         doc: "Note jouée quand aucun MIDI n'est branché. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.", docEn: "Note played when no MIDI is connected. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Pression", nomEn: "Pressure", type: "nombre", plage: [0, 100], pas: 1, defaut: 40, unite: "%",
-        doc: "Pression d'archet, raideur d'anche, souffle ou tension des lèvres selon l'instrument.",
-        docEn: "Bow pressure, reed stiffness, breath or lip tension depending on the instrument." },
+        doc: "Pression d'archet, raideur d'anche, souffle ou tension des lèvres selon l'instrument ; sur la corde pincée, le point de pincement, de 11 à 95 % de la corde.",
+        docEn: "Bow pressure, reed stiffness, breath or lip tension depending on the instrument; on the plucked string, the pluck point, from 11 to 95 % of the string." },
       { nom: "Position", nomEn: "Position", type: "nombre", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
-        doc: "Position d'archet, rapport du jet d'air, temps d'attaque ou fréquence de formant selon l'instrument. C'est le réglage le plus sensible de la plupart d'entre eux.",
-        docEn: "Bow position, air jet ratio, attack time or formant frequency depending on the instrument. It is the most sensitive control of most of them." },
+        doc: "Position d'archet, rapport du jet d'air, temps d'attaque ou fréquence de formant selon l'instrument ; sur la corde pincée, le point de captation, de 5 à 45 % de la corde. C'est le réglage le plus sensible de la plupart d'entre eux.",
+        docEn: "Bow position, air jet ratio, attack time or formant frequency depending on the instrument; on the plucked string, the pickup point, from 5 to 45 % of the string. It is the most sensitive control of most of them." },
       { nom: "Vibrato", nomEn: "Vibrato", type: "nombre", plage: [0, 100], pas: 1, defaut: 20, unite: "%",
         doc: "Profondeur du vibrato. Sans effet sur la corde pincée et les formants.",
         docEn: "Vibrato depth. No effect on the plucked string and the formants." },
       { nom: "Fréquence vibrato", nomEn: "Vibrato rate", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 6, unite: "Hz",
         doc: "Vitesse du vibrato.", docEn: "Vibrato speed." },
+      // LA RÉFLEXION DE LA CORDE PINCÉE, ajoutée le 2026-11-27 sur la décision de Fabien, « B, ajouter
+      // Réflexion » : `wgpluck2` la recevait figée à 0,05. Son défaut rend ce son-là, si bien qu'un
+      // graphe enregistré ne change pas. Elle est sans effet hors de la corde pincée, comme le Vibrato
+      // l'est sur la corde pincée et les formants, et sa documentation le dit.
+      { nom: "Réflexion", nomEn: "Reflection", type: "nombre", plage: [1, 99], pas: 1, defaut: 5, unite: "%",
+        doc: "Coefficient de réflexion de la corde pincée au chevalet, krefl de wgpluck2. Plus il est haut, plus la corde s'éteint vite : sur un la à 220 Hz, elle sonne encore au bout de trois secondes jusqu'à 60 %, perd 60 dB en une seconde à 90 % et en un dixième de seconde à 99 %. Sans effet sur les autres instruments.",
+        docEn: "Reflection coefficient of the plucked string at the bridge, krefl of wgpluck2. The higher it is, the faster the string dies out: on an A at 220 Hz, it still rings after three seconds up to 60 %, loses 60 dB in one second at 90 % and in a tenth of a second at 99 %. No effect on the other instruments." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.1, 20], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée de la note, quand aucun MIDI n'est branché.", docEn: "Note duration, when no MIDI is connected." },
       ...PARAMETRES_SORTIE,
@@ -430,6 +437,7 @@ endin`,
         position: ctx.paramNombre("Position", 25) / 100,
         vibrato: ctx.paramNombre("Vibrato", 20) / 100,
         frequenceVibrato: ctx.paramNombre("Fréquence vibrato", 6),
+        reflexion: ctx.paramNombre("Réflexion", 5) / 100,
       });
       const notes = await notesDuMidi(ctx.entree(0));
       let partition: string;

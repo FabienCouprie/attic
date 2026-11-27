@@ -2261,6 +2261,7 @@
     {"nom":"Position","type":"nombre","defaut":25,"min":0,"max":100,"unite":"%"},
     {"nom":"Vibrato","type":"nombre","defaut":20,"min":0,"max":100,"unite":"%"},
     {"nom":"Fréquence vibrato","type":"nombre","defaut":6,"min":0.5,"max":12,"unite":"Hz"},
+    {"nom":"Réflexion","type":"nombre","defaut":5,"min":1,"max":99,"unite":"%"},
     {"nom":"Durée","type":"nombre","defaut":2,"min":0.1,"max":20,"unite":"s"},
     {"nom":"Volume","type":"nombre","defaut":80,"min":0,"max":100,"unite":"%"}
    ]

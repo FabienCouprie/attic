@@ -165,27 +165,40 @@ export const FORMULES: readonly FormuleCsound[] = [
   {
     id: "karplus", fr: "Corde de Karplus-Strong", en: "Karplus-Strong string",
     famille: "Synthèse", familleEn: "Synthesis", canaux: 1,
+    // LES MÉTHODES SONT CELLES DU MANUEL DE `pluck`, relu le 2026-11-27 : 1 la moyenne simple, 3 le
+    // tambour, 6 le filtre récursif. Ce commentaire annonçait 3 récursive et 6 mélange, et la partition
+    // les jouait sans rugosité : à zéro, le tambour de `pluck` refait la moyenne simple, et deux des
+    // trois notes d'essai étaient le même algorithme. La méthode passait en outre par p6, que la
+    // partition tirée d'un MIDI remplit du numéro de note : `pluck` refusait alors chaque note,
+    // « unknown method code », et la corde jouée depuis un MIDI se taisait.
     orchestre: [
       "instr 1",
-      "  ; Une ligne à retard remplie de bruit, moyennée à chaque tour : la corde s'éteint d'elle-même.",
-      "  ; p6 choisit la méthode de lissage — 1 moyenne simple, 3 récursive, 6 mélange.",
-      "  asig pluck p5, p4, p4, 0, p6",
-      "  out  asig * gkNiveau",
+      "  ; Une ligne à retard remplie de bruit, lissée à chaque tour : la corde s'éteint d'elle-même.",
+      "  ; p7 choisit le lissage, comme le manuel de pluck les numérote : 1 la moyenne de deux",
+      "  ; échantillons voisins ; 6 un filtre récursif du premier ordre, plus sombre ; 3 le tambour,",
+      "  ; la même moyenne dont le signe s'inverse au hasard, avec la probabilité p8.",
+      "  ; p6 porte le numéro de note dans une partition tirée d'un MIDI : la méthode n'y est pas lue,",
+      "  ; et toute autre valeur de p7, zéro compris, prend la moyenne.",
+      "  imeth = (p7 == 3 || p7 == 6 ? p7 : 1)",
+      "  asig  pluck p5, p4, p4, 0, imeth, limit(p8, 0, 1)",
+      "  out   asig * gkNiveau",
       "endin",
     ],
     champs: [
       { champ: "p4", fr: "fréquence en hertz", en: "frequency in hertz" },
       { champ: "p5", fr: "amplitude", en: "amplitude" },
-      { champ: "p6", fr: "méthode de lissage : 1, 3 ou 6", en: "smoothing method: 1, 3 or 6" },
+      { champ: "p6", fr: "numéro de note MIDI, que la formule ne lit pas", en: "MIDI note number, which the formula does not read" },
+      { champ: "p7", fr: "lissage : 1 moyenne, 6 filtre récursif, 3 tambour ; toute autre valeur vaut 1", en: "smoothing: 1 average, 6 recursive filter, 3 drum; any other value means 1" },
+      { champ: "p8", fr: "rugosité du tambour, de 0 à 1", en: "drum roughness, 0 to 1" },
     ],
     partition: [
-      "; Les trois méthodes sur la même note : la décroissance et le grain changent.",
-      "i1 0.0 1.5 220 0.6 1",
-      "i1 1.5 1.5 220 0.6 3",
-      "i1 3.0 1.5 220 0.6 6",
+      "; Les trois méthodes sur le même la : la moyenne, le filtre récursif, plus sombre, puis le tambour.",
+      "i1 0.0 1.5 220 0.6 57 1 0",
+      "i1 1.5 1.5 220 0.6 57 6 0",
+      "i1 3.0 1.5 220 0.6 57 3 0.5",
     ],
-    note: "L'algorithme de Kevin Karplus et Alex Strong (1983). Aucune enveloppe : la décroissance vient du modèle lui-même, comme sur une corde réelle.",
-    noteEn: "Kevin Karplus and Alex Strong's algorithm (1983). No envelope: the decay comes from the model itself, as on a real string.",
+    note: "L'algorithme de Kevin Karplus et Alex Strong (1983). Aucune enveloppe : la décroissance vient du modèle lui-même, comme sur une corde réelle. Le tambour est la variante décrite dans le même article ; le manuel de pluck donne une rugosité de 0,5 pour une caisse claire.",
+    noteEn: "Kevin Karplus and Alex Strong's algorithm (1983). No envelope: the decay comes from the model itself, as on a real string. The drum is the variant described in the same paper; the pluck manual gives a roughness of 0.5 for a snare drum.",
   },
   {
     id: "anneau", fr: "Modulation en anneau", en: "Ring modulation",

@@ -9,6 +9,7 @@
 // Filters » ; l'amortissement dans la boucle est celui de Karplus et Strong (1983).
 
 import { valeurA, valeurMax } from "./courbe";
+import { coefficientPasseTout, pasPasseTout } from "./passe-tout";
 
 export interface OptionsPeigne {
   /** Les fréquences des peignes, en hertz. */
@@ -42,10 +43,13 @@ const pic = (b: AudioBuffer) => {
  * LE RETARD FRACTIONNAIRE PASSE PAR UN PASSE-TOUT, ET NON PAR UNE INTERPOLATION LINÉAIRE. Celle-ci
  * est un léger passe-bas, et il est DANS la boucle : un peigne à 880 Hz la traverse 880 fois par
  * seconde, et perdait ainsi 6 dB de plus que son T60 — mesuré, 66 dB en une seconde pour 60. Le
- * passe-tout du premier ordre de Thiran accorde la boucle sans rien retrancher à l'amplitude ; c'est
- * l'accord des cordes de Karplus et Strong (Jaffe et Smith, 1983). Une queue de T60 secondes
- * (plafonnée à vingt) laisse les peignes s'éteindre ; le niveau de sortie est ramené à celui de
- * l'entrée.
+ * passe-tout du premier ordre accorde la boucle sans rien retrancher à l'amplitude ; c'est l'accord
+ * des cordes de Karplus et Strong (Jaffe et Smith, 1983). Une queue de T60 secondes (plafonnée à
+ * vingt) laisse les peignes s'éteindre ; le niveau de sortie est ramené à celui de l'entrée.
+ *
+ * SON COEFFICIENT EST EXACT À LA NOTE DU PEIGNE depuis le 2026-11-27, celui de `audio/passe-tout.ts`.
+ * C'était l'approximation de Thiran, exacte au seul continu : relevé avant, un peigne à 3 000 Hz
+ * résonnait à 2 998,9 Hz et un peigne à 5 000 Hz à 4 993,6 Hz.
  */
 /** Tout ce qu'une voie demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
 export interface OptionsPeigneVoie extends Omit<OptionsPeigne, "mix"> {
@@ -101,11 +105,11 @@ export function peignesVoie(x: Float32Array, o: OptionsPeigneVoie): Float32Array
         const D = Math.min(taille - 3, Math.max(2, sr / (freqs[k] * tr) - retardPB));
         const g = Math.pow(10, (-3 * D) / (sr * t60A(i)));
         // Partie entière et fraction dans [0,1 ; 1,1[ : la plage où le passe-tout reste bien conditionné.
-        const entier = Math.floor(D - 0.1), eta = D - entier;
-        const C = (1 - eta) / (1 + eta);
+        const entier = Math.floor(D - 0.1), fraction = D - entier;
+        const C = coefficientPasseTout(fraction, w);
         const l = lignes[k];
         const u = l[(((ecr - entier) % taille) + taille) % taille], u1 = l[(((ecr - entier - 1) % taille) + taille) % taille];
-        const retour = C * u + u1 - C * passeTout[k];
+        const retour = pasPasseTout(C, u, u1, passeTout[k]);
         passeTout[k] = retour;
         // Un passe-bas d'un pôle dans la boucle : les aigus s'éteignent avant les graves, comme sur une corde.
         filtres[k] = (1 - amort) * retour + amort * filtres[k];

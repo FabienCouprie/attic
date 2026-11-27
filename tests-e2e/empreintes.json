@@ -233,7 +233,7 @@
     },
     "peignes-accordes": {
       "empreintes": [
-        "0.201172813/0.528780282"
+        "0.201172467/0.528780282"
       ],
       "message": "3 peignes"
     },
@@ -575,6 +575,25 @@
         "courbe 0.636804686/1.000000000 · 2000 valeurs · 2000 paliers"
       ],
       "message": "2000 valeurs · 10.0 s"
+    },
+    "pluck-synth": {
+      "empreintes": [
+        "0.011860584/0.426397443"
+      ],
+      "message": "Pluck C4 — 2.00s · graine 7"
+    },
+    "generateur-bruit": {
+      "empreintes": [
+        "0.170539144/0.720000029"
+      ],
+      "message": "Bruit rose · 2.0s · graine 7"
+    },
+    "csound-instruments-physiques": {
+      "empreintes": [
+        "0.273423763/0.448258698",
+        null
+      ],
+      "message": "wgpluck2 · 4.22 s · « durée »"
     }
   }
 }
