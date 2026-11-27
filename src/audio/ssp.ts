@@ -105,15 +105,7 @@ export function selectionner(principe: Principe, taille: number, combien: number
     // TENDANCE : le masque de Koenig. La fenêtre où l'on a le droit de puiser se déplace d'un bout
     // à l'autre de l'ensemble au cours de la suite. Le tirage reste au hasard, mais son domaine
     // dérive — c'est ainsi qu'une forme se dessine sans qu'aucune valeur soit écrite.
-    const largeur = Math.max(1, Math.round(n / 3));
-    for (let i = 0; i < k; i++) {
-      // Le bas du masque est arrondi ICI, et non seulement dans `masqueTendance` : les deux
-      // doivent donner exactement la même fenêtre, sans quoi le tirage dépasse ses propres bornes
-      // d'une unité de temps en temps, et le masque ne veut plus rien dire.
-      const avance = k <= 1 ? 0 : i / (k - 1);
-      const bas = Math.floor(avance * (n - largeur));
-      out.push(Math.min(n - 1, bas + Math.floor(r() * largeur)));
-    }
+    for (let i = 0; i < k; i++) out.push(tirerDansLaFenetre(n, i / k, r));
     return out;
   }
 
@@ -121,12 +113,36 @@ export function selectionner(principe: Principe, taille: number, combien: number
   return out;
 }
 
+/**
+ * La fenêtre du masque de tendance quand on en est à `avance` (de 0 à 1) de la course.
+ *
+ * UN TIERS DE LA LISTE, ET JAMAIS MOINS DE DEUX ÉLÉMENTS. Une fenêtre d'un seul élément ne tire plus
+ * rien : à l'échelle de la forme, la tendance de quatre sections rendait l'ordre de la séquence ; à celle
+ * de l'onde, « -1, 1 » en tendance rendait −1 d'un bout à l'autre, et trois ou quatre amplitudes des
+ * paliers constants. Avec deux éléments, la fenêtre couvre toute la liste et tire comme l'aléa : c'est
+ * le prix du principe, non un défaut. Décision de Fabien du 2026-11-27, « aux deux échelles ».
+ *
+ * CHAQUE POSITION DE LA FENÊTRE TIENT UNE PART ÉGALE DE LA COURSE. L'ancien calcul arrondissait vers le
+ * bas `avance × (n − largeur)`, si bien que la dernière position ne tenait qu'au tout dernier rang : sur
+ * 3 419 tirages parmi six, le sixième élément ne sortait jamais. `masqueTendance` lit cette même fonction,
+ * pour que le test et le tirage ne puissent pas diverger.
+ */
+export function fenetreTendance(n: number, avance: number): { bas: number; largeur: number } {
+  const largeur = Math.min(n, Math.max(2, Math.round(n / 3)));
+  const etapes = n - largeur + 1;
+  return { bas: Math.min(n - largeur, Math.floor(Math.max(0, avance) * etapes)), largeur };
+}
+
+/** Un rang tiré dans la fenêtre de tendance. */
+export function tirerDansLaFenetre(n: number, avance: number, r: () => number): number {
+  const { bas, largeur } = fenetreTendance(n, avance);
+  return Math.min(n - 1, bas + Math.floor(r() * largeur));
+}
+
 /** Les bornes du masque de tendance à un instant donné — de quoi vérifier qu'on les respecte. */
 export function masqueTendance(taille: number, combien: number, rang: number): [number, number] {
   const n = Math.max(1, Math.round(taille));
-  const largeur = Math.max(1, Math.round(n / 3));
-  const avance = combien <= 1 ? 0 : rang / (combien - 1);
-  const bas = Math.floor(avance * (n - largeur));
+  const { bas, largeur } = fenetreTendance(n, combien <= 0 ? 0 : rang / combien);
   return [bas, Math.min(n - 1, bas + largeur - 1)];
 }
 
@@ -184,16 +200,23 @@ export function construireSegment(o: OptionsSegment, r: () => number): { son: Fl
 
   // On tire large : le nombre de points nécessaires dépend des durées tirées, qu'on ignore avant.
   const estimation = Math.ceil(longueur / Math.max(1, Math.min(...temps.map((t) => Math.max(1, Math.round(t)))))) + 8;
-  const indicesAmp = selectionner(o.principeAmplitudes, amplitudes.length, estimation, r);
-  const indicesTemps = selectionner(o.principeTemps, temps.length, estimation, r);
+  // LA TENDANCE SE TIRE POINT PAR POINT, SUR LA POSITION DANS LE SEGMENT. Tirée d'avance sur `estimation`
+  // rangs, elle faisait dériver son masque sur un nombre de points qui suppose chaque écart égal à la plus
+  // courte durée : avec les listes d'origine, 17 648 rangs pour 3 408 points posés, et les amplitudes
+  // restaient entre −1 et −0,6, à −0,80 de composante continue. La position, elle, va toujours de 0 à la
+  // longueur, et les deux tendances avancent ensemble quand les durées s'allongent. Les autres principes
+  // tirent d'avance comme avant, amplitudes puis durées : sans tendance, le son ne change pas d'un
+  // échantillon. Décision de Fabien du 2026-11-27, « par position ».
+  const indicesAmp = o.principeAmplitudes === "tendance" ? null : selectionner(o.principeAmplitudes, amplitudes.length, estimation, r);
+  const indicesTemps = o.principeTemps === "tendance" ? null : selectionner(o.principeTemps, temps.length, estimation, r);
 
-  let position = 0, rang = 0;
-  while (position < longueur && rang < indicesAmp.length) {
-    const amplitude = amplitudes[indicesAmp[rang]];
-    const duree = Math.max(1, Math.round(temps[indicesTemps[rang]]));
-    points.push({ echantillon: position, amplitude, duree });
+  let position = 0;
+  for (let rang = 0; position < longueur && rang < estimation; rang++) {
+    const it = indicesTemps ? indicesTemps[rang] : tirerDansLaFenetre(temps.length, position / longueur, r);
+    const ia = indicesAmp ? indicesAmp[rang] : tirerDansLaFenetre(amplitudes.length, position / longueur, r);
+    const duree = Math.max(1, Math.round(temps[it]));
+    points.push({ echantillon: position, amplitude: amplitudes[ia], duree });
     position += duree;
-    rang++;
   }
 
   for (let p = 0; p < points.length; p++) {
@@ -221,18 +244,66 @@ export interface OptionsComposition extends Omit<OptionsSegment, "longueur"> {
   graine: number;
 }
 
+/** Ce qu'une section puise dans les deux listes. */
+export interface Selection {
+  amplitudes: number[];
+  temps: number[];
+}
+
+/** Une section composée : sa sélection, ses points, et ce qu'elle fait entendre. */
+export interface Section extends Selection {
+  points: Point[];
+  tenue: Tenue;
+}
+
 export interface Composition {
   son: Float32Array;
   /** L'ordre dans lequel les sections ont été posées. */
   ordre: number[];
-  /** Les points du premier segment, pour le rapport. */
-  points: Point[];
-  /** Nombre total de points posés. */
+  /** Les sections composées, posées ou non, dans l'ordre où elles ont été composées. */
+  sections: Section[];
+  /** Les points que le son porte : les sections dans l'ordre posé, répétitions comprises, la dernière coupée. */
   pointsPoses: number;
-  /** Durée moyenne entre deux points, en échantillons. */
+  /** Durée moyenne entre deux de ces points, en échantillons. */
   dureeMoyenne: number;
-  /** Si la première section porte une onde périodique, et à quelle fréquence. */
-  tenue: Tenue;
+}
+
+/** `combien` rangs tirés sans remise parmi `rangs`. */
+function tirerParmi(rangs: readonly number[], combien: number, r: () => number): number[] {
+  const sac = [...rangs];
+  for (let j = sac.length - 1; j > 0; j--) {
+    const m = Math.floor(r() * (j + 1));
+    [sac[j], sac[m]] = [sac[m], sac[j]];
+  }
+  return sac.slice(0, combien);
+}
+
+/**
+ * La sélection d'une section : ce qu'elle puise dans les deux listes, dans l'ordre écrit.
+ *
+ * C'EST CE QUI FAIT QUE LES SECTIONS DIFFÈRENT. Elles puisaient toutes dans les listes entières, avec
+ * les mêmes principes : sous les défauts, quatre tirages du même bruit, et en « Séquence », où rien ne
+ * se tire, quatre fois la même section à l'échantillon. La graine et le principe de la forme ne
+ * changeaient alors rien qu'on entende. Décision de Fabien du 2026-11-27, « sélection par section ».
+ *
+ * LA PLUS BASSE ET LA PLUS HAUTE DES AMPLITUDES SONT TOUJOURS GARDÉES, avec une part tirée au hasard
+ * des autres ; des durées, une part non vide. Sans cette contrainte, une section pouvait ne garder que
+ * des amplitudes d'un même signe : 0,80 de composante continue au pire sur cinquante graines, contre
+ * 0,24 ainsi. Décision de Fabien du 2026-11-27, « P4, les extrêmes ».
+ */
+export function selectionDeSection(amplitudes: readonly number[], temps: readonly number[], r: () => number): Selection {
+  let bas = 0, haut = 0;
+  for (let i = 1; i < amplitudes.length; i++) {
+    if (amplitudes[i] < amplitudes[bas]) bas = i;
+    if (amplitudes[i] > amplitudes[haut]) haut = i;
+  }
+  const autres = amplitudes.map((_, i) => i).filter((i) => i !== bas && i !== haut);
+  const gardees = new Set([bas, haut, ...tirerParmi(autres, Math.floor(r() * (autres.length + 1)), r)]);
+  const durees = new Set(tirerParmi(temps.map((_, i) => i), 1 + Math.floor(r() * temps.length), r));
+  return {
+    amplitudes: amplitudes.filter((_, i) => gardees.has(i)),
+    temps: temps.filter((_, i) => durees.has(i)),
+  };
 }
 
 /**
@@ -242,38 +313,51 @@ export interface Composition {
  * les sections est choisi dans la même liste que celui qui ordonne les amplitudes d'une forme
  * d'onde. Une « série » à l'échelle de la forme veut dire que chaque section passe une fois avant
  * qu'aucune ne repasse — exactement ce qu'elle veut dire à l'échelle de l'échantillon.
+ *
+ * UNE SECTION SEULE GARDE LES LISTES ENTIÈRES, et ne tire aucune sélection : un graphe réglé sur une
+ * section sonne comme avant le 2026-11-27, ce que fige `ssp-sections.test.ts`.
  */
 export function composer(o: OptionsComposition): Composition {
   const r = alea(o.graine);
   const total = Math.max(1, Math.round(o.duree * o.frequence));
   const sections = Math.max(1, Math.round(o.sections));
   const longueurSection = Math.max(2, Math.floor(total / sections));
+  const amplitudes = o.amplitudes.length > 0 ? o.amplitudes : AMPLITUDES_DEFAUT;
+  const temps = o.temps.length > 0 ? o.temps : TEMPS_DEFAUT;
 
-  const segments: { son: Float32Array; points: Point[] }[] = [];
+  const composees: Section[] = [];
+  const sons: Float32Array[] = [];
   for (let s = 0; s < sections; s++) {
-    segments.push(construireSegment({ ...o, longueur: longueurSection }, r));
+    const selection = sections === 1
+      ? { amplitudes: [...amplitudes], temps: [...temps] }
+      : selectionDeSection(amplitudes, temps, r);
+    const segment = construireSegment({ ...o, ...selection, longueur: longueurSection }, r);
+    sons.push(segment.son);
+    composees.push({ ...selection, points: segment.points, tenue: tenueDesPoints(segment.points, o.frequence) });
   }
 
   const combienDePoses = Math.ceil(total / longueurSection);
   const ordre = selectionner(o.principeForme, sections, combienDePoses, r);
 
   const son = new Float32Array(total);
-  let position = 0;
+  let position = 0, pointsPoses = 0, sommeDurees = 0;
   for (const rang of ordre) {
-    const source = segments[rang].son;
+    // LES POINTS COMPTÉS SONT CEUX QUE LE SON PORTE : une section posée deux fois compte deux fois, une
+    // section jamais posée ne compte pas, et la dernière s'arrête où s'arrête la pièce.
+    for (const p of composees[rang].points) {
+      if (position + p.echantillon < total) { pointsPoses++; sommeDurees += p.duree; }
+    }
+    const source = sons[rang];
     for (let i = 0; i < source.length && position < total; i++, position++) son[position] = source[i];
     if (position >= total) break;
   }
 
-  const tousLesPoints = segments.flatMap((s) => s.points);
-  const sommeDurees = tousLesPoints.reduce((s, p) => s + p.duree, 0);
   return {
     son,
     ordre,
-    points: segments[0].points,
-    pointsPoses: tousLesPoints.length,
-    dureeMoyenne: tousLesPoints.length > 0 ? sommeDurees / tousLesPoints.length : 0,
-    tenue: tenueDesPoints(segments[0].points, o.frequence),
+    sections: composees,
+    pointsPoses,
+    dureeMoyenne: pointsPoses > 0 ? sommeDurees / pointsPoses : 0,
   };
 }
 
@@ -284,6 +368,8 @@ export interface Tenue {
   echantillons: number;
   /** La fréquence de l'onde, en hertz, ou `null` quand l'onde n'est pas périodique. */
   hertz: number | null;
+  /** L'amplitude unique d'une section dont le signal ne bouge pas, ou `null`. */
+  constante: number | null;
 }
 
 /**
@@ -316,23 +402,30 @@ export interface Tenue {
  * en séquence sur une durée de 50 donnent 300 échantillons, soit 147,0 Hz, et le suiveur en relève
  * 147,0 ; sur les durées par défaut, 774 échantillons, soit 57,0 Hz, et il en relève 57,0.
  *
- * ELLE PORTE SUR LA PREMIÈRE SECTION, celle dont le rapport donne déjà les points : c'est la
- * périodicité LOCALE qui s'entend comme une hauteur, l'ordre des sections agissant à l'échelle de la
- * forme.
+ * ELLE PORTE SUR CHAQUE SECTION, et le rapport les juge toutes : c'est la périodicité LOCALE qui
+ * s'entend comme une hauteur. Elle ne portait que sur la première, et cela tombait juste parce que les
+ * sections étaient identiques chaque fois qu'une onde tenait ; elles diffèrent depuis le 2026-11-27, et
+ * une section qui n'a tiré qu'une durée tient même quand le principe des durées n'est pas la séquence.
+ *
+ * UNE SEULE AMPLITUDE N'EST PAS UNE ONDE TENUE. Sa suite de points se répète à chaque point, et elle était
+ * annoncée « tenue à 882 Hz » pour un signal constant à 0,5. Décision de Fabien du 2026-11-27, « le dire
+ * constant » plutôt que la refuser.
  */
 export function tenueDesPoints(points: readonly Point[], frequence: number): Tenue {
   // Le couple amplitude-durée de chaque point, encodé en un seul nombre pour chercher la période de
   // la SUITE : deux points ne se répètent que si leurs deux composantes se répètent ensemble.
   const amplitudes = [...new Set(points.map((p) => p.amplitude))];
+  if (amplitudes.length === 1) return { points: 0, echantillons: 0, hertz: null, constante: amplitudes[0] };
   const couples = points.map((p) => amplitudes.indexOf(p.amplitude) * 1e6 + p.duree);
   const periode = periodeDesNotes(couples);
-  if (periode === 0) return { points: 0, echantillons: 0, hertz: null };
+  if (periode === 0) return { points: 0, echantillons: 0, hertz: null, constante: null };
   let echantillons = 0;
   for (let i = 0; i < periode; i++) echantillons += points[i].duree;
   return {
     points: periode,
     echantillons,
     hertz: echantillons > 0 ? frequence / echantillons : null,
+    constante: null,
   };
 }
 
