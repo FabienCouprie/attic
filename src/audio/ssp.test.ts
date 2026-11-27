@@ -122,7 +122,11 @@ describe("ce que les réglages commandent vraiment", () => {
   });
 
   it("LES AMPLITUDES FONT LA CRÊTE, ET LES DURÉES N'Y TOUCHENT PAS", () => {
-    const crete = (amplitudes: number[]) => creteDb(composer({ ...BASE, amplitudes }).son);
+    // CE QUE FAIT UNE LISTE ÉCRITE SE MESURE SUR UNE SECTION, qui la garde entière. Depuis le 2026-11-27,
+    // chaque section de plusieurs ne garde que les deux extrêmes et une part des autres valeurs : sur quatre
+    // sections, « beaucoup de petites et une grande » tombait à 5,43 dB, une section n'en gardant parfois
+    // que deux. Le cas mesurait la liste ; il la mesure là où elle est entière.
+    const crete = (amplitudes: number[]) => creteDb(composer({ ...BASE, sections: 1, amplitudes }).son);
     // Deux valeurs extrêmes : un signal presque carré, donc une crête minime.
     const carre = crete([-1, 1]);
     // Beaucoup de petites valeurs et une grande : une crête bien plus forte.
@@ -348,11 +352,11 @@ describe("tenu ou bruité, et ce qui en décide", () => {
         principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
       });
       const attendu = SR / (6 * t);
-      const dit = `durée ${t} : ${c.tenue.points} points, ${c.tenue.echantillons} éch.,`
-        + ` ${c.tenue.hertz?.toFixed(2)} Hz, attendu ${attendu.toFixed(2)}`;
-      expect(c.tenue.points, dit).toBe(6);
-      expect(c.tenue.echantillons, dit).toBe(6 * t);
-      expect(c.tenue.hertz, dit).toBeCloseTo(attendu, 2);
+      const dit = `durée ${t} : ${c.sections[0].tenue.points} points, ${c.sections[0].tenue.echantillons} éch.,`
+        + ` ${c.sections[0].tenue.hertz?.toFixed(2)} Hz, attendu ${attendu.toFixed(2)}`;
+      expect(c.sections[0].tenue.points, dit).toBe(6);
+      expect(c.sections[0].tenue.echantillons, dit).toBe(6 * t);
+      expect(c.sections[0].tenue.hertz, dit).toBeCloseTo(attendu, 2);
     }
   });
 
@@ -364,7 +368,7 @@ describe("tenu ou bruité, et ce qui en décide", () => {
         ...BASE, temps: [50], sections: 1,
         principeAmplitudes: p, principeTemps: p, principeForme: "sequence",
       });
-      expect(c.tenue.hertz, `${p} sur une durée unique : ${c.tenue.hertz} Hz`).toBeNull();
+      expect(c.sections[0].tenue.hertz, `${p} sur une durée unique : ${c.sections[0].tenue.hertz} Hz`).toBeNull();
     }
   });
 
@@ -379,15 +383,15 @@ describe("tenu ou bruité, et ce qui en décide", () => {
         ...BASE, sections: 1,
         principeAmplitudes: "sequence", principeTemps: p, principeForme: "sequence",
       });
-      const dit = `séquence aux amplitudes, ${p} aux durées : ${plusieurs.tenue.hertz} Hz`;
-      expect(plusieurs.tenue.hertz, dit).toBeNull();
+      const dit = `séquence aux amplitudes, ${p} aux durées : ${plusieurs.sections[0].tenue.hertz} Hz`;
+      expect(plusieurs.sections[0].tenue.hertz, dit).toBeNull();
       // LA SEULE ÉCHAPPATOIRE : une durée unique, où il n'y a rien à rebattre. Les six amplitudes
       // parcourues dans l'ordre sur 50 échantillons font une période de 300.
       const une = composer({
         ...BASE, temps: [50], sections: 1,
         principeAmplitudes: "sequence", principeTemps: p, principeForme: "sequence",
       });
-      expect(une.tenue.hertz as number, `une seule durée, ${p} aux durées`).toBeCloseTo(SR / 300, 2);
+      expect(une.sections[0].tenue.hertz as number, `une seule durée, ${p} aux durées`).toBeCloseTo(SR / 300, 2);
     }
     // ET LES DEUX EN « SÉQUENCE » TIENNENT, sur le même ensemble de cinq durées : six amplitudes et
     // cinq durées se retrouvent au bout de trente points, soit six fois la somme des cinq durées.
@@ -395,10 +399,10 @@ describe("tenu ou bruité, et ce qui en décide", () => {
       ...BASE, sections: 1,
       principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
     });
-    const dit = `${deux.tenue.points} points, ${deux.tenue.echantillons} éch., ${deux.tenue.hertz} Hz`;
-    expect(deux.tenue.points, dit).toBe(30);
-    expect(deux.tenue.echantillons, dit).toBe(774);
-    expect(deux.tenue.hertz as number, dit).toBeCloseTo(SR / 774, 2);
+    const dit = `${deux.sections[0].tenue.points} points, ${deux.sections[0].tenue.echantillons} éch., ${deux.sections[0].tenue.hertz} Hz`;
+    expect(deux.sections[0].tenue.points, dit).toBe(30);
+    expect(deux.sections[0].tenue.echantillons, dit).toBe(774);
+    expect(deux.sections[0].tenue.hertz as number, dit).toBeCloseTo(SR / 774, 2);
   });
 
   it("ET CE N'EST PAS LA TAILLE DE L'ENSEMBLE DES DURÉES, hypothèse que la mesure a réfutée", () => {
@@ -412,13 +416,13 @@ describe("tenu ou bruité, et ce qui en décide", () => {
         ...BASE, temps, sections: 1,
         principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
       });
-      expect(tenu.tenue.hertz, `séquence sur [${temps.join(", ")}]`).not.toBeNull();
+      expect(tenu.sections[0].tenue.hertz, `séquence sur [${temps.join(", ")}]`).not.toBeNull();
       for (const p of ["alea", "serie", "groupe", "tendance"] as Principe[]) {
         const bruite = composer({
           ...BASE, temps, sections: 1,
           principeAmplitudes: p, principeTemps: p, principeForme: "sequence",
         });
-        expect(bruite.tenue.hertz, `${p} sur [${temps.join(", ")}]`).toBeNull();
+        expect(bruite.sections[0].tenue.hertz, `${p} sur [${temps.join(", ")}]`).toBeNull();
       }
     }
   });
@@ -432,10 +436,10 @@ describe("tenu ou bruité, et ce qui en décide", () => {
         principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
       });
       const suivi = suivreHauteur(c.son, SR, { fMin: 40, fMax: 4000, cadence: 100 });
-      const dit = `[${temps.join(", ")}] : prédit ${c.tenue.hertz?.toFixed(2)} Hz,`
+      const dit = `[${temps.join(", ")}] : prédit ${c.sections[0].tenue.hertz?.toFixed(2)} Hz,`
         + ` relevé ${hauteurMediane(suivi).toFixed(2)} Hz à ${partVoisee(suivi).toFixed(3)} de voisé`;
       expect(partVoisee(suivi), dit).toBeGreaterThan(0.9);
-      expect(hauteurMediane(suivi) / (c.tenue.hertz as number), dit).toBeCloseTo(1, 1);
+      expect(hauteurMediane(suivi) / (c.sections[0].tenue.hertz as number), dit).toBeCloseTo(1, 1);
     }
   });
 });
