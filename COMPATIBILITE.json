@@ -4817,9 +4817,9 @@
    "anciensReglages": ["Fondu"]
   },
   "matrice-parametres": {
-   "version": 1,
+   "version": 2,
    "entrees": [
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe du champ piloté","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},
@@ -5828,9 +5828,9 @@
    ]
   },
   "partition-aleatoire-csound": {
-   "version": 1,
+   "version": 2,
    "entrees": [
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe de densité","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},
@@ -5857,10 +5857,10 @@
    ]
   },
   "partition-csound": {
-   "version": 1,
+   "version": 2,
    "entrees": [
     {"nom":"MIDI","type":"midi"},
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe des p-fields","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},

@@ -54,6 +54,13 @@ export interface OptionsAleatoire {
   /** Courbe de 0 à 1 qui module la densité au fil du temps. */
   courbeDensite?: Courbe | null;
   hasard: () => number;
+  /**
+   * Le hasard de l'amincissement, À PART de `hasard`. Tiré du même flux, chaque attaque candidate y
+   * consommait un nombre de plus, et tout ce qui suivait se décalait : une courbe à 1 ne redonnait
+   * pas la partition sans courbe à la même graine. Décision de Fabien du 2026-11-27, « Oui, un flux
+   * à part ».
+   */
+  hasardAmincissement: () => number;
 }
 
 export interface StatsAleatoire {
@@ -101,13 +108,13 @@ function valeurCourbe(courbe: Courbe, t: number): number {
  */
 export function instantsAleatoires(
   duree: number, densite: number, repartition: Repartition,
-  hasard: () => number, courbe?: Courbe | null,
+  hasard: () => number, courbe?: Courbe | null, amincir: () => number = hasard,
 ): number[] {
   const lambda = Math.max(0.01, densite);
   const instants: number[] = [];
   if (repartition === "grille") {
     for (let t = 0; t < duree; t += 1 / lambda) {
-      if (!courbe || hasard() < valeurCourbe(courbe, t)) instants.push(t);
+      if (!courbe || amincir() < valeurCourbe(courbe, t)) instants.push(t);
     }
     return instants;
   }
@@ -117,7 +124,7 @@ export function instantsAleatoires(
   while (t < duree && instants.length < plafond) {
     t += -Math.log(1 - hasard()) / lambda;
     if (t >= duree) break;
-    if (!courbe || hasard() < valeurCourbe(courbe, t)) instants.push(t);
+    if (!courbe || amincir() < valeurCourbe(courbe, t)) instants.push(t);
   }
   return instants;
 }
@@ -191,7 +198,7 @@ function moments(x: readonly number[]): { moyenne: number; ecartType: number } {
 export function composerAleatoire(
   o: OptionsAleatoire,
 ): { evenements: EvenementAleatoire[]; stats: StatsAleatoire } {
-  const instants = instantsAleatoires(o.duree, o.densite, o.repartition, o.hasard, o.courbeDensite);
+  const instants = instantsAleatoires(o.duree, o.densite, o.repartition, o.hasard, o.courbeDensite, o.hasardAmincissement);
   const nbInstruments = Math.max(1, Math.round(o.instruments));
   const avecLibre = o.libreMin !== undefined && o.libreMax !== undefined;
   const evenements: EvenementAleatoire[] = instants.map((debut) => {

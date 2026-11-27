@@ -10,7 +10,7 @@ import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { estCourbe, reechantillonner } from "../audio/courbe";
+import { estCourbe, mettreEnForme, reechantillonner } from "../audio/courbe";
 import {
   champDe, combienDEvenements, construireMatrice, deployer, lireChamp, matriceVersPartition,
   type Colonne,
@@ -33,9 +33,11 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Csound wrapper",
     resume: "Décrit une synthèse paramètre par paramètre plutôt qu'événement par événement, et rend la partition Csound.",
     resumeEn: "Describes a synthesis parameter by parameter rather than event by event, and returns the Csound score.",
-    notice: "Décrit une synthèse paramètre par paramètre et rend la partition Csound correspondante.\n\nUne synthèse additive de deux cents partiels ne s'écrit pas événement par événement. On écrit une ligne pour les fréquences, une pour les amplitudes, une pour les durées, et chacune vaut pour tous les événements à la fois. C'est la structure que l'on trouve dans OMChroma sous le nom de class-array.\n\nUn champ s'écrit de trois façons. Un nombre seul vaut pour tous les événements. Une suite de nombres séparés par des espaces donne les premières valeurs, et la dernière se répète pour les événements restants ; c'est une répétition et non une boucle, une liste bouclée fabriquant une périodicité que personne n'a demandée et qui s'entendrait comme un rythme. Deux nombres séparés par deux points décrivent une rampe droite du premier au second, répartie sur les événements, bornes comprises. Un nombre s'écrit en décimal, et ce qui ne s'écrit pas de ces trois façons fait refuser le composant : le message nomme le réglage et ce qui ne se lit pas.\n\n« Événements » fixe leur nombre. À zéro, il est déduit : c'est la longueur de la plus longue suite écrite. Une rampe ne compte pas, s'étirant à toute longueur, et une matrice de constantes seules donne un unique événement.\n\n« Instrument » est le numéro écrit en tête de chaque ligne, p1.\n\n« Départs » et « Durées » sont p2 et p3, que Csound attend à cette place et interprète lui-même. Ils s'écrivent comme les autres champs. Un départ s'écrit à zéro ou après, et une durée reste positive aux décimales demandées : Csound ne jouerait rien d'une durée nulle et tiendrait la note d'une durée négative, si bien que l'un ou l'autre fait refuser le composant, et le message nomme l'événement.\n\n« p4 » à « p9 » sont les champs libres, dont le sens dépend de l'orchestre qui les lit. Un champ laissé vide après le dernier champ rempli n'est pas écrit. Entre deux champs remplis, il s'écrit 0, et les suivants ne se décalent pas : chaque valeur reste au rang que l'orchestre lit, et les rangs écrits sont dits dans l'analyse.\n\n« Courbe » reçoit une ligne qui remplace un champ, choisi par « Champ piloté ». Elle est lue en autant de points qu'il y a d'événements, puis étalée entre « Minimum » et « Maximum ».\n\n« Décimales » fixe la précision des nombres écrits.\n\nLa sortie « Partition » rend le texte, qui se branche sur le nœud Csound. La sortie « Analyse » donne le nombre d'événements, les rangs écrits, et pour chacun ses premières et dernières valeurs.\n\nLe message donne le nombre d'événements, le nombre de champs et la durée couverte.",
-    noticeEn: "Describes a synthesis parameter by parameter and returns the corresponding Csound score.\n\nAn additive synthesis of two hundred partials is not written event by event. One writes a line for the frequencies, one for the amplitudes, one for the durations, and each holds for every event at once. This is the structure found in OMChroma under the name class-array.\n\nA field is written in three ways. A single number holds for every event. A series of numbers separated by spaces gives the first values, and the last repeats for the remaining events; this is a repetition and not a loop, a looped list manufacturing a periodicity nobody asked for and which would be heard as a rhythm. Two numbers separated by a colon describe a straight ramp from the first to the second, spread over the events, bounds included. A number is written in decimal, and what is not written in one of these three ways makes the node refused: the message names the setting and what cannot be read.\n\n« Events » sets their number. At zero it is deduced: it is the length of the longest series written. A ramp does not count, stretching to any length, and a matrix of constants alone gives a single event.\n\n« Instrument » is the number written at the head of each line, p1.\n\n« Onsets » and « Lengths » are p2 and p3, which Csound expects at that place and interprets itself. They are written like the other fields. An onset is written at zero or later, and a length stays positive at the decimals asked for: Csound would play nothing of a zero length and would hold the note of a negative one, so either makes the node refused, and the message names the event.\n\n« p4 » to « p9 » are the free fields, whose meaning depends on the orchestra that reads them. A field left empty after the last filled one is not written. Between two filled ones it is written 0, and the following ones do not shift: each value stays at the rank the orchestra reads, and the ranks written are stated in the analysis.\n\n« Curve » receives a line that replaces one field, chosen by « Driven field ». It is read at as many points as there are events, then spread between « Minimum » and « Maximum ».\n\n« Decimals » sets the precision of the numbers written.\n\nThe « Score » output returns the text, which connects to the Csound node. The « Analysis » output gives the number of events, the ranks written, and for each its first and last values.\n\nThe message gives the number of events, the number of fields and the length covered.",
-    entrees: [{ nom: "Courbe", nomEn: "Curve", type: "courbe", requis: false }],
+    notice: "Décrit une synthèse paramètre par paramètre et rend la partition Csound correspondante.\n\nUne synthèse additive de deux cents partiels ne s'écrit pas événement par événement. On écrit une ligne pour les fréquences, une pour les amplitudes, une pour les durées, et chacune vaut pour tous les événements à la fois. C'est la structure que l'on trouve dans OMChroma sous le nom de class-array.\n\nUn champ s'écrit de trois façons. Un nombre seul vaut pour tous les événements. Une suite de nombres séparés par des espaces donne les premières valeurs, et la dernière se répète pour les événements restants ; c'est une répétition et non une boucle, une liste bouclée fabriquant une périodicité que personne n'a demandée et qui s'entendrait comme un rythme. Deux nombres séparés par deux points décrivent une rampe droite du premier au second, répartie sur les événements, bornes comprises. Un nombre s'écrit en décimal, et ce qui ne s'écrit pas de ces trois façons fait refuser le composant : le message nomme le réglage et ce qui ne se lit pas.\n\n« Événements » fixe leur nombre. À zéro, il est déduit : c'est la longueur de la plus longue suite écrite. Une rampe ne compte pas, s'étirant à toute longueur, et une matrice de constantes seules donne un unique événement.\n\n« Instrument » est le numéro écrit en tête de chaque ligne, p1.\n\n« Départs » et « Durées » sont p2 et p3, que Csound attend à cette place et interprète lui-même. Ils s'écrivent comme les autres champs. Un départ s'écrit à zéro ou après, et une durée reste positive aux décimales demandées : Csound ne jouerait rien d'une durée nulle et tiendrait la note d'une durée négative, si bien que l'un ou l'autre fait refuser le composant, et le message nomme l'événement.\n\n« p4 » à « p9 » sont les champs libres, dont le sens dépend de l'orchestre qui les lit. Un champ laissé vide après le dernier champ rempli n'est pas écrit. Entre deux champs remplis, il s'écrit 0, et les suivants ne se décalent pas : chaque valeur reste au rang que l'orchestre lit, et les rangs écrits sont dits dans l'analyse.\n\nL'entrée « Courbe du champ piloté » remplace le champ que désigne « Champ piloté », dont le texte n'est alors plus lu ; un champ vide, ou au-delà des champs écrits, est ajouté.\n• La courbe est lue sur toute sa longueur en autant de points qu'il y a d'événements, à intervalles égaux et par interpolation linéaire : le premier événement reçoit son début, le dernier sa fin, quels que soient leurs départs.\n• Chaque point est porté entre les deux bornes, linéairement : 0 devient « Minimum », 1 « Maximum », et 0,5 leur milieu. Une valeur sous 0 compte pour 0, au-dessus de 1 pour 1 : une courbe qui ne va que de 0,48 à 0,52 n'écrit que la tranche correspondante de l'intervalle.\nUne courbe branchée quand « Champ piloté » vaut « Aucun », ou un « Champ piloté » réglé sans courbe branchée, ne remplace rien, et le message le signale ; sinon il nomme le champ remplacé.\n\n« Décimales » fixe la précision des nombres écrits.\n\nLa sortie « Partition » rend le texte, qui se branche sur le nœud Csound. La sortie « Analyse » donne le nombre d'événements, les rangs écrits, et pour chacun ses premières et dernières valeurs.\n\nLe message donne le nombre d'événements, le nombre de champs et la durée couverte.",
+    noticeEn: "Describes a synthesis parameter by parameter and returns the corresponding Csound score.\n\nAn additive synthesis of two hundred partials is not written event by event. One writes a line for the frequencies, one for the amplitudes, one for the durations, and each holds for every event at once. This is the structure found in OMChroma under the name class-array.\n\nA field is written in three ways. A single number holds for every event. A series of numbers separated by spaces gives the first values, and the last repeats for the remaining events; this is a repetition and not a loop, a looped list manufacturing a periodicity nobody asked for and which would be heard as a rhythm. Two numbers separated by a colon describe a straight ramp from the first to the second, spread over the events, bounds included. A number is written in decimal, and what is not written in one of these three ways makes the node refused: the message names the setting and what cannot be read.\n\n« Events » sets their number. At zero it is deduced: it is the length of the longest series written. A ramp does not count, stretching to any length, and a matrix of constants alone gives a single event.\n\n« Instrument » is the number written at the head of each line, p1.\n\n« Onsets » and « Lengths » are p2 and p3, which Csound expects at that place and interprets itself. They are written like the other fields. An onset is written at zero or later, and a length stays positive at the decimals asked for: Csound would play nothing of a zero length and would hold the note of a negative one, so either makes the node refused, and the message names the event.\n\n« p4 » to « p9 » are the free fields, whose meaning depends on the orchestra that reads them. A field left empty after the last filled one is not written. Between two filled ones it is written 0, and the following ones do not shift: each value stays at the rank the orchestra reads, and the ranks written are stated in the analysis.\n\nThe « Driven field curve » input replaces the field that « Driven field » names, whose text is then no longer read; an empty field, or one past the fields written, is added.\n• The curve is read over its whole length at as many points as there are events, at equal intervals and by linear interpolation: the first event receives its start, the last its end, whatever their onsets.\n• Each point is carried between the two bounds, linearly: 0 becomes « Minimum », 1 « Maximum », and 0.5 their midpoint. A value below 0 counts as 0, above 1 as 1: a curve that only goes from 0.48 to 0.52 writes only the matching slice of the interval.\nA curve connected while « Driven field » is « None », or a « Driven field » set with no curve connected, replaces nothing, and the message reports it; otherwise it names the field replaced.\n\n« Decimals » sets the precision of the numbers written.\n\nThe « Score » output returns the text, which connects to the Csound node. The « Analysis » output gives the number of events, the ranks written, and for each its first and last values.\n\nThe message gives the number of events, the number of fields and the length covered.",
+    // RENOMMÉE « COURBE DU CHAMP PILOTÉ » LE 2026-11-27, à la demande de Fabien : « Courbe » ne disait
+    // pas ce qu'elle pilote. Le câble enregistré arrive au même rang, sur le même type.
+    entrees: [{ nom: "Courbe du champ piloté", nomEn: "Driven field curve", type: "courbe", requis: false }],
     sorties: [
       { nom: "Partition", nomEn: "Score", type: "texte" },
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
@@ -64,14 +66,14 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["None", ...RANGS.map((r) => `p${r}`)],
         optionIds: ["aucun", ...RANGS.map((r) => String(r))],
         defaut: "Aucun", defautEn: "None",
-        doc: "Le champ que la courbe branchée remplace. Sans courbe branchée sur « Courbe », il ne remplace rien.",
-        docEn: "The field the connected curve replaces. With no curve on « Curve », it replaces nothing." },
+        doc: "Le champ que la courbe branchée sur « Courbe du champ piloté » remplace, une valeur par événement. Sans courbe branchée, il ne remplace rien, et le message le dit.",
+        docEn: "The field the curve connected to « Driven field curve » replaces, one value per event. With no curve connected, it replaces nothing, and the message says so." },
       { nom: "Minimum", nomEn: "Minimum", plage: [-10000, 10000], pas: 0.1, defaut: 0,
-        doc: "La valeur que le plus bas de la courbe prend. Sans effet sans courbe branchée sur « Courbe », ou quand « Champ piloté » vaut « Aucun ».",
-        docEn: "The value the lowest point of the curve takes. Has no effect with no curve on « Curve », or when « Driven field » is « None »." },
+        doc: "La valeur écrite là où la courbe vaut 0. Sans effet sans courbe branchée sur « Courbe du champ piloté », ou quand « Champ piloté » vaut « Aucun ».",
+        docEn: "The value written where the curve is 0. Has no effect with no curve on « Driven field curve », or when « Driven field » is « None »." },
       { nom: "Maximum", nomEn: "Maximum", plage: [-10000, 10000], pas: 0.1, defaut: 1,
-        doc: "La valeur que le plus haut de la courbe prend. Sans effet sans courbe branchée sur « Courbe », ou quand « Champ piloté » vaut « Aucun ».",
-        docEn: "The value the highest point of the curve takes. Has no effect with no curve on « Curve », or when « Driven field » is « None »." },
+        doc: "La valeur écrite là où la courbe vaut 1. Sans effet sans courbe branchée sur « Courbe du champ piloté », ou quand « Champ piloté » vaut « Aucun ».",
+        docEn: "The value written where the curve is 1. Has no effect with no curve on « Driven field curve », or when « Driven field » is « None »." },
       { nom: "Décimales", nomEn: "Decimals", plage: [0, 6], pas: 1, defaut: 4,
         doc: "La précision des nombres écrits.", docEn: "The precision of the numbers written." },
     ],
@@ -116,11 +118,12 @@ export const fiches: FicheAudio[] = ([
       let deLaCourbe: number[] | null = null;
       if (estCourbe(courbe) && pilote !== "aucun") {
         const rang = Number(pilote);
-        const points = Array.from(reechantillonner(courbe, combien));
-        const bas = Math.min(...points), haut = Math.max(...points);
+        // 0 DEVIENT « MINIMUM » ET 1 « MAXIMUM », la convention du type et le chemin des autres
+        // consommateurs. La courbe était étalée de son propre minimum à son propre maximum : une
+        // rampe de 0,48 à 0,52, que le visualiseur montre plate, écrivait toute la course. Décision
+        // de Fabien du 2026-11-27, « Oui, la convention ».
         const mini = ctx.paramNombre("Minimum", 0), maxi = ctx.paramNombre("Maximum", 1);
-        deLaCourbe = points.map((p) =>
-          haut - bas < 1e-12 ? (mini + maxi) / 2 : mini + ((p - bas) / (haut - bas)) * (maxi - mini));
+        deLaCourbe = Array.from(mettreEnForme(reechantillonner(courbe, combien), { min: mini, max: maxi }));
         const place = colonnes.findIndex((c) => c.rang === rang);
         const remplacant: Colonne = { rang, nom: `p${rang}`, champ: { forme: "liste", valeurs: deLaCourbe } };
         if (place >= 0) colonnes[place] = remplacant;
@@ -166,6 +169,14 @@ export const fiches: FicheAudio[] = ([
         const marque = rang === rangPilote ? `  ${en() ? "(curve)" : "(courbe)"}` : "";
         return `  p${rang}  ${bornes(colonne)}${marque}`;
       });
+      // CE QUE LA COURBE A FAIT SE DIT, ET CE QUI LUI A MANQUÉ AUSSI. L'analyse annonçait « aucune
+      // courbe branchée » quand une courbe l'était sous « Champ piloté » à « Aucun », et rien ne
+      // signalait un champ piloté sans courbe. Relevé le 2026-11-27, à la demande de Fabien.
+      const courbeBranchee = estCourbe(courbe);
+      const sort = deLaCourbe ? traduire("msg.csound.courbeEcrite_var_0", `p${pilote}`)
+        : courbeBranchee ? traduire("msg.matrice.courbeSansChamp")
+        : pilote !== "aucun" ? traduire("msg.matrice.champSansCourbe_var_0", `p${pilote}`)
+        : null;
       const analyse = [
         `${combien} ${en() ? "events" : "événements"} · i${instrument} · ${fin.toFixed(3)} s`,
         "",
@@ -175,12 +186,13 @@ export const fiches: FicheAudio[] = ([
         "",
         deLaCourbe
           ? `${en() ? "curve drives" : "la courbe pilote"} p${pilote}`
-          : (en() ? "no curve connected" : "aucune courbe branchée"),
+          : (sort ?? (en() ? "no curve connected" : "aucune courbe branchée")),
       ].join("\n");
 
       return {
         valeurs: [partition, analyse],
-        message: `${combien} ${en() ? "events" : "événements"} · ${matrice.rangs.length} ${en() ? "fields" : "champs"} · ${fin.toFixed(2)} s`,
+        message: `${combien} ${en() ? "events" : "événements"} · ${matrice.rangs.length} ${en() ? "fields" : "champs"} · ${fin.toFixed(2)} s`
+          + (sort ? ` · ${sort}` : ""),
       };
     },
   }),

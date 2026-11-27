@@ -143,8 +143,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Orchestre", nomEn: "Orchestra", type: "texte", defaut: ORCHESTRE_EXEMPLE, defautEn: ORCHESTRE_EXEMPLE_EN,
-        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 ». La fréquence d'échantillonnage et 0dbfs sont posés par le composant : n'écrivez ni sr ni 0dbfs.",
-        docEn: "The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard only if the orchestra reads it, with « a1 diskin2 \"entree1.wav\", 1 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs." },
+        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 », ou la partition par une table « f1 0 0 1 \"entree1.wav\" 0 0 0 ». La fréquence d'échantillonnage et 0dbfs sont posés par le composant : n'écrivez ni sr ni 0dbfs.",
+        docEn: "The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard only if the orchestra reads it, with « a1 diskin2 \"entree1.wav\", 1 », or the score through a table « f1 0 0 1 \"entree1.wav\" 0 0 0 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs." },
       { nom: "Partition", nomEn: "Score", type: "texte", defaut: PARTITION_EXEMPLE, defautEn: PARTITION_EXEMPLE,
         doc: "Quand jouer quoi. « i1 0 1 220 0.5 » joue l'instrument 1 à l'instant 0 pendant 1 seconde, avec 220 et 0,5 comme p4 et p5. Trois sources possibles, par ordre de priorité : un MIDI branché, puis l'entrée Partition, puis ce champ, et le composant dit dans son message laquelle il a prise. Le « e » final est ajouté s'il manque.",
         docEn: "When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field, and the node states in its message which one it took. The final « e » is added if missing." },
@@ -188,13 +188,23 @@ export const fiches: FicheAudio[] = ([
       // affichée dans le nœud — il faut la brancher pour la lire —, si bien qu'un avertissement
       // qui n'y serait que là passerait inaperçu. Court dans le message, qui est toujours
       // visible ; entier dans le Rapport, qui a la place d'expliquer quoi faire.
+      // LE SON SE LIT AUSSI PAR LA PARTITION, dans une table GEN01 : la chercher dans l'orchestre seul
+      // faisait dire « jamais lu » d'un son entendu. Et un programme qui le lit sans son branché est
+      // refusé en le nommant : Csound refusait la note (« diskin2: entree1.wav: failed to open
+      // file »), ne terminait plus la partition, et le composant accusait celle-ci après cinq
+      // tentatives. Les deux relevés le 2026-11-27, à la demande de Fabien.
+      const programme = `${orchestre.texte}\n${partition}`;
+      if (entrees.length === 0 && orchestreLit(programme, "entree1.wav")) {
+        const refus = traduire("msg.csound.entreeAbsente_var_0", "entree1.wav");
+        return { valeurs: [null, refus], erreur: true, message: refus };
+      }
       const alertes: string[] = [];
       const remarques: string[] = [];
       if (choix.ignoree === "port") {
         alertes.push(traduire("msg.csound.partitionIgnoreeCourt"));
         remarques.push(traduire("msg.csound.partitionIgnoree"));
       }
-      const muettes = entreesNonLues(orchestre.texte, entrees);
+      const muettes = entreesNonLues(programme, entrees);
       alertes.push(...muettes.alertes);
       remarques.push(...muettes.remarques);
 
