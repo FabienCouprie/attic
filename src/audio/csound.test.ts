@@ -7,7 +7,7 @@
 // ramener sous l'unité sans changer les rapports de niveau.
 import { describe, expect, it } from "vitest";
 import {
-  NOM_SORTIE, construireCsd, limiter, messagesUtiles, nomDuContenu, orchestreLit,
+  NOM_SORTIE, construireCsd, limiter, messagesUtiles, nomDuContenu, noteRefusee, orchestreLit,
   partitionDepuisNotes, premiereErreur, sourcePartition, substituerNom, texteBranche,
 } from "./csound";
 import {
@@ -155,6 +155,25 @@ describe("messages de Csound", () => {
     expect(premiereErreur(["end of score.", "0 errors in performance"])).toBeNull();
     // Un bilan non nul, lui, reste un signalement.
     expect(premiereErreur(["2 errors in performance"])).toBe("2 errors in performance");
+  });
+
+  // Les lignes sont celles que Csound a imprimées le 2026-11-27 pour un diskin2 sans fichier : la
+  // note refusée empêchait la fin de partition, et le rendu était annoncé sans fin. Le rendu
+  // lui-même est tenu par `tests-e2e/csound-note-refusee.spec.ts`.
+  it("trouve la note refusée à l'initialisation, et rien quand aucune ne l'est", () => {
+    const refus = [
+      "SECTION 1:",
+      "INIT ERROR in instr 1 (opcode diskin2) line 11: diskin2: entree2.wav: failed to open file (Format not recognised.)",
+      " from file *string* (1),a2\tdiskin2\t\"entree2.wav\"\t1",
+      "\t  B  0.000 - note deleted.  i1 had 1 init errors",
+      "Score finished in csoundPerformKsmps() with 2.",
+    ];
+    expect(noteRefusee(refus)).toBe(
+      "INIT ERROR in instr 1 (opcode diskin2) line 11: diskin2: entree2.wav: failed to open file (Format not recognised.)");
+    expect(noteRefusee([refus.join("\n")])).toMatch(/^INIT ERROR in instr 1/);
+    // Une erreur qui n'est pas d'initialisation n'en est pas une : la reprise garde sa raison d'être.
+    expect(noteRefusee(["error: syntax error in orchestra", "1 errors in performance"])).toBeNull();
+    expect(noteRefusee(["end of score.", "0 errors in performance"])).toBeNull();
   });
 });
 
