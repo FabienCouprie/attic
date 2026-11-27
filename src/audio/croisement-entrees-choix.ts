@@ -211,7 +211,7 @@ export const ENTREES_DES_CHOIX: Entrees = {
     },
   },
   "matrice-parametres": {
-    Courbe: {
+    "Courbe du champ piloté": {
       valeur: () => ({ valeurs: Float32Array.from({ length: 16 }, (_, k) => k / 15), cadence: 4 }),
       raison: "sans courbe, le champ piloté et ses bornes n'avaient rien à remplacer ; une rampe de seize points leur en donne une, et le port ne prend la main sur un champ que si « Champ piloté » le demande",
     },

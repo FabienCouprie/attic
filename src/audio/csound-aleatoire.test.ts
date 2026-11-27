@@ -22,7 +22,7 @@ const options = (o: Partial<OptionsAleatoire> = {}): OptionsAleatoire => ({
   duree: 20, densite: 5, repartition: "poisson", instruments: 1,
   noteBasse: 48, noteHaute: 84, degres: MAJEUR, loiHauteur: "uniforme",
   dureeMin: 0.2, dureeMax: 1, velociteMin: 60, velociteMax: 110,
-  hasard: creerAleatoire(7), ...o,
+  hasard: creerAleatoire(7), hasardAmincissement: creerAleatoire(8), ...o,
 });
 
 describe("la loi normale", () => {
