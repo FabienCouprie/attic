@@ -78,6 +78,10 @@ export const BASES_PROPRES: Record<string, { reglages: Reglages; raison: string 
     reglages: { Réaction: 50 },
     raison: "sans réaction, la traîne ne dure que 79 ms, sous la plus petite borne essayée, 0,5 s : la borne n'avait rien à couper ; à 50 %, la traîne se répète quatorze fois, 1,1 s, et la borne de 0,5 s mord",
   },
+  "matrice-parametres": {
+    reglages: { "Événements": 5 },
+    raison: "les défauts n'écrivent qu'un événement, qui lit la courbe à son début, 0 : depuis que 0 donne « Minimum » et 1 « Maximum » (décision de Fabien du 2026-11-27), « Maximum » n'avait rien à porter ; cinq événements lisent la rampe de 0 à 1",
+  },
   "partition-csound": {
     reglages: { Constante: 1 },
     raison: "la constante par défaut, zéro, est ce qu'écrit le champ « Courbe » sans courbe branchée : les deux choix rendaient la même partition dans chacun des quatre champs ; une constante de un les sépare",

@@ -12,7 +12,8 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { hasardDuNoeud } from "../core";
+import { creerAleatoire, hasardDuNoeud } from "../core";
+import { graineDuTour } from "../core/hasard";
 import { GAMMES_MELODIE_EN, GAMMES_MELODIE_FR, GAMMES_MELODIE_IDS, degresGammeMelodie } from "../audio/generation-melodie";
 import { estCourbe, type Courbe } from "../audio/courbe";
 import { construirePartition, type ChampP, type Convention } from "../audio/csound-partition";
@@ -27,7 +28,9 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Csound wrapper",
     resume: "Tire une partition Csound au sort : instants en processus de Poisson, hauteurs et durées dans des lois, et les statistiques de ce qui a été produit.",
     resumeEn: "Draws a Csound score at random: onsets as a Poisson process, pitches and durations from distributions, and the statistics of what came out.",
-    entrees: [{ nom: "Courbe", nomEn: "Curve", type: "courbe", requis: false }],
+    // RENOMMÉE « COURBE DE DENSITÉ » LE 2026-11-27, à la demande de Fabien : « Courbe » ne disait pas
+    // ce qu'elle pilote. Le câble enregistré arrive au même rang, sur le même type.
+    entrees: [{ nom: "Courbe de densité", nomEn: "Density curve", type: "courbe", requis: false }],
     sorties: [
       { nom: "Partition", nomEn: "Score", type: "texte" },
       { nom: "Statistiques", nomEn: "Statistics", type: "texte" },
@@ -36,13 +39,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.5, 300], pas: 0.5, defaut: 8, unite: "s",
         doc: "Durée de la partition engendrée.", docEn: "Length of the generated score." },
       { nom: "Densité", nomEn: "Density", type: "nombre", plage: [0.2, 50], pas: 0.1, defaut: 4, unite: "/s",
-        doc: "Événements par seconde, en moyenne. Un tirage ne donne pas le nombre demandé : huit secondes à quatre par seconde ne font pas trente-deux événements mais un nombre qui varie d'un tirage à l'autre, et c'est le propre du hasard. La sortie Statistiques annonce le nombre réel.",
-        docEn: "Events per second, on average. A draw does not yield the requested count: eight seconds at four per second do not make thirty-two events but a number that varies from draw to draw, which is what randomness means. The Statistics output reports the real count." },
+        doc: "Événements par seconde, en moyenne. Un tirage ne donne pas le nombre demandé : huit secondes à quatre par seconde ne font pas trente-deux événements mais un nombre qui varie d'un tirage à l'autre, et c'est le propre du hasard. La sortie Statistiques annonce le nombre réel. Une courbe branchée sur « Courbe de densité » la module au fil du temps, et elle en est le maximum : à chaque instant, la densité vaut ce réglage multiplié par la valeur de la courbe, ramenée entre 0 et 1.",
+        docEn: "Events per second, on average. A draw does not yield the requested count: eight seconds at four per second do not make thirty-two events but a number that varies from draw to draw, which is what randomness means. The Statistics output reports the real count. A curve connected to « Density curve » modulates it over time, and it is its maximum: at each instant, the density is this setting times the curve's value, brought between 0 and 1." },
       { nom: "Répartition", nomEn: "Distribution", type: "choix",
         options: ["Poisson (nuage)", "Grille régulière"], optionsEn: ["Poisson (cloud)", "Regular grid"],
         optionIds: ["poisson", "grille"], defaut: "Poisson (nuage)", defautEn: "Poisson (cloud)",
-        doc: "Comment les instants d'attaque se répartissent. Poisson : ils arrivent au hasard, sans mémoire, à la densité demandée, l'intervalle entre deux voisins suit alors une loi exponentielle, et c'est ce que Xenakis employait pour ses pièces stochastiques (la série ST, 1962). Sa signature se mesure : l'écart-type des intervalles égale leur moyenne, et la sortie Statistiques le vérifie. Grille : un événement tous les 1/densité, écart-type nul. C'est la différence entre un nuage et une pulsation.",
-        docEn: "How the onsets are spread. Poisson: they arrive at random, without memory, at the requested density, the interval between neighbours then follows an exponential law, which is what Xenakis used for his stochastic pieces (the ST series, 1962). Its signature is measurable: the standard deviation of the intervals equals their mean, and the Statistics output checks it. Grid: one event every 1/density, zero standard deviation. That is the difference between a cloud and a pulse." },
+        doc: "Comment les instants d'attaque se répartissent. Poisson : ils arrivent au hasard, sans mémoire, à la densité demandée, l'intervalle entre deux voisins suit alors une loi exponentielle, et c'est ce que Xenakis employait pour ses pièces stochastiques (la série ST, 1962). Sa signature se mesure : l'écart-type des intervalles égale leur moyenne, et la sortie Statistiques le vérifie. Grille : un événement tous les 1/densité, écart-type nul. C'est la différence entre un nuage et une pulsation. Une courbe branchée sur « Courbe de densité » retire des points de la grille au hasard, sans déplacer les autres.",
+        docEn: "How the onsets are spread. Poisson: they arrive at random, without memory, at the requested density, the interval between neighbours then follows an exponential law, which is what Xenakis used for his stochastic pieces (the ST series, 1962). Its signature is measurable: the standard deviation of the intervals equals their mean, and the Statistics output checks it. Grid: one event every 1/density, zero standard deviation. That is the difference between a cloud and a pulse. A curve connected to « Density curve » removes grid points at random, without moving the others." },
       { nom: "Instruments", nomEn: "Instruments", type: "nombre", plage: [1, 8], pas: 1, defaut: 1,
         doc: "Sur combien d'instruments répartir les événements, `i1` à `iN`, tirés au sort. À accorder avec « Orchestre Csound », qui numérote les siens dans l'ordre des cases cochées.",
         docEn: "How many instruments to spread the events over, `i1` to `iN`, drawn at random. To be matched with « Csound Orchestra », which numbers its own in the order of the ticked boxes." },
@@ -118,10 +121,18 @@ export const fiches: FicheAudio[] = ([
         } : {}),
         courbeDensite: courbe,
         hasard: aleatoire,
+        // L'AMINCISSEMENT TIRE À PART, d'une graine brassée de celle du nœud : un tour qu'aucune boucle
+        // n'atteint, pour ne rencontrer aucun flux de passe. Le flux principal n'en perd rien, et une
+        // courbe à 1 redonne la partition sans courbe à la même graine.
+        hasardAmincissement: creerAleatoire(graineDuTour(graine, 32767)),
       });
 
       if (evenements.length === 0) {
-        return { valeurs: [null, null], message: traduire("msg.csound.tirageVide") };
+        // UNE COURBE DE DENSITÉ À ZÉRO EST NOMMÉE : le message envoyait monter la densité ou la durée,
+        // ce qui ne rend rien tant que la courbe garde zéro instant sur zéro. Relevé le 2026-11-27.
+        const muette = !!courbe && courbe.valeurs.length > 0
+          && !courbe.valeurs.subarray(0, Math.round(ctx.paramNombre("Durée", 8) * courbe.cadence) + 1).some((v) => v > 0);
+        return { valeurs: [null, null], message: traduire(muette ? "msg.csound.tirageVideCourbe" : "msg.csound.tirageVide") };
       }
       // L'écriture passe par le traducteur : une seule façon d'écrire une partition dans Attic.
       const champs: ChampP[] = avecLibre
