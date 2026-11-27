@@ -587,13 +587,6 @@
         "0.170539144/0.720000029"
       ],
       "message": "Bruit rose · 2.0s · graine 7"
-    },
-    "csound-instruments-physiques": {
-      "empreintes": [
-        "0.273423763/0.448258698",
-        null
-      ],
-      "message": "wgpluck2 · 4.22 s · « durée »"
     }
   }
 }

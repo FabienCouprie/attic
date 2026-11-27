@@ -256,9 +256,11 @@ const SURVEILLES: {
   // leur défaut, zéro, tire au sort à chaque exécution.
   { id: "pluck-synth", parametres: { Graine: 7 } },
   { id: "generateur-bruit", parametres: { Type: "Rose", Graine: 7 } },
-  // LA CORDE PINCÉE DE CSOUND, dont les réglages ont été rendus aux arguments de `wgpluck2` le même
-  // jour. Rendue par Csound, donc tolérante comme « Particules », plus bas.
-  { id: "csound-instruments-physiques", parametres: { Instrument: "wgpluck2" } },
+  // « Instruments Csound » sur `wgpluck2` est écarté de la base, le même jour : son rendu ne se
+  // reproduit pas d'une machine à l'autre. Ici, trois passages à 0,273423763 de valeur efficace ;
+  // sur l'intégration continue, 0,268730044, soit 1,7 %, dix-sept fois la tolérance de « Particules »,
+  // et une tolérance assez large pour l'absorber laisserait passer un changement de niveau de
+  // 0,15 dB. Son réglage « Réflexion » est tenu par `src/plugins/csound.test.ts`.
 ];
 
 interface Ligne {
@@ -270,7 +272,7 @@ interface Ligne {
  * Les composants dont le rendu n'est pas reproductible au bit près d'une machine à l'autre, et la
  * tolérance RELATIVE déclarée pour chacun.
  *
- * POURQUOI CETTE LISTE EXISTE, ET ELLE N'A QUE DES RENDUS DE CSOUND. Mise en intégration continue, cette base a
+ * POURQUOI CETTE LISTE EXISTE, ET ELLE N'A QU'UNE ENTRÉE. Mise en intégration continue, cette base a
  * tenu pour soixante et onze composants sur soixante-douze. Le soixante-douzième a dérivé :
  *
  *   particules : ["0.148725542/0.299995363"] → ["0.148697419/0.299998105"]
@@ -289,16 +291,13 @@ interface Ligne {
  * soit douze fois cette tolérance. Un changement de longueur, de contenu ou de niveau reste donc
  * attrapé ; seul l'arrondi d'un processeur passe.
  *
- * LA CORDE PINCÉE DE CSOUND Y EST ENTRÉE LE 2026-11-27, pour la même raison : `wgpluck2` est rendu
- * par le même Csound en WebAssembly que « Particules ».
- *
  * ET SON MESSAGE PERD LA LONGUEUR QU'IL ANNONCE, ce qui corrige ce que cette note affirmait d'abord.
  * J'avais écrit que « Grains · 60 grains/s · 3.97 s » venait de la partition et non de l'arithmétique
  * du rendu : le coureur a répondu 3,99 s au passage suivant. Cette durée est `r.audio.duration`, la
  * longueur réelle du tampon rendu. Voir `messageTolerant` : l'espèce et la cadence restent comparées,
  * la longueur non, et pour les composants déclarés ici seulement.
  */
-const TOLERANCES: Record<string, number> = { particules: 1e-3, "csound-instruments-physiques": 1e-3 };
+const TOLERANCES: Record<string, number> = { particules: 1e-3 };
 
 /**
  * Deux empreintes disent-elles la même chose, à la tolérance déclarée pour ce composant près ?
