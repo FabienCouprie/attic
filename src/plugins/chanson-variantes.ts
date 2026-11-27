@@ -34,35 +34,93 @@ export const fiches = ([
     notice: "Ce composant rend une nouvelle version d'un audio, en suivant le plan de chanson qu'il reçoit. "
       + "L'entrée « Plan » reçoit le plan, et l'entrée « Audio » le son dont la version est tirée.\n\n"
       + NOTICE_TIMBRE_FR
-      + "« Dosage » règle la part de l'audio reçu que le rendu suit. À un, le rendu s'en approche au plus "
-      + "près ; plus bas, il s'en écarte.\n\n"
-      + "« Bruit » règle le bruit mêlé à l'audio reçu avant le rendu.\n\n"
+      + "« Dosage » règle la part des étapes de débruitage qui suivent l'audio reçu. La forme de cet audio "
+      + "se décide dans les premières étapes : au-dessous d'un seuil, le rendu ne suit que le plan ; "
+      + "au-dessus, il garde cette forme. Le passage de l'un à l'autre se fait d'un cran du curseur au "
+      + "suivant : entre 0,2 et 0,25 sur « Rapide » avec « Glissement » à zéro, entre 0,1 et 0,15 sur "
+      + "« Base ». Sur « Rapide » avec « Glissement » à un, la forme est déjà gardée à 0,15. Une description "
+      + "de plan éloignée de l'audio reçu fait monter ce seuil. Au-dessus du seuil, avec « Quantification "
+      + "des codes » sur « Avec », un dosage plus haut ne change presque plus le résultat ; sur « Sans », "
+      + "le rendu se rapproche de l'audio reçu à mesure que le dosage monte. À zéro, l'audio reçu n'est "
+      + "pas suivi.\n\n"
+      + "« Départ sur l'audio » règle le point d'où le rendu part. À zéro, il part du bruit seul. En montant, "
+      + "il part d'un mélange de bruit et de l'audio reçu, avec moins d'étapes de débruitage, et le rendu se "
+      + "rapproche de cet audio ; à un, il en est presque la copie.\n\n"
       + "« Quantification des codes » décide du traitement des codes audio tirés de l'audio reçu. "
-      + "« Avec » les quantifie, « Sans » les garde continus.\n\n"
+      + "« Avec » les quantifie : le rendu garde la forme de l'audio reçu et s'en écarte dans le détail. "
+      + "« Sans » les garde continus : le rendu suit l'audio reçu de bien plus près, dans sa forme comme "
+      + "dans son harmonie.\n\n"
       + NOTICE_RENDU_FR + SORTIE_NOTICE_FR,
     noticeEn: "This component renders a new version of an audio, following the song plan it receives. The "
       + "« Plan » input receives the plan, and the « Audio » input the sound the version is drawn from.\n\n"
       + NOTICE_TIMBRE_EN
-      + "« Strength » sets how closely the render follows the received audio. At one, the render comes as "
-      + "close as it can; lower, it departs from it.\n\n"
-      + "« Noise » sets the noise mixed into the received audio before the render.\n\n"
+      + "« Strength » sets the share of denoising steps that follow the received audio. The form of that "
+      + "audio is settled in the first steps: below a threshold, the render follows the plan alone; above "
+      + "it, it keeps that form. The change from one to the other happens from one slider notch to the "
+      + "next: between 0.2 and 0.25 on « Fast » with « Shift » at zero, between 0.1 and 0.15 on « Base ». "
+      + "On « Fast » with « Shift » at one, the form is already kept at 0.15. A plan description far from "
+      + "the received audio raises this threshold. Above the threshold, with « Code quantization » on "
+      + "« With », a higher strength hardly changes the result any more; on « Without », the render comes "
+      + "closer to the received audio as the strength rises. At zero, the received audio is not "
+      + "followed.\n\n"
+      + "« Start from the audio » sets the point the render starts from. At zero, it starts from noise alone. "
+      + "Higher up, it starts from a mix of noise and the received audio, with fewer denoising steps, and the "
+      + "render comes closer to that audio; at one, it is almost a copy of it.\n\n"
       + "« Code quantization » decides how the audio codes drawn from the received audio are treated. "
-      + "« With » quantizes them, « Without » keeps them continuous.\n\n"
+      + "« With » quantizes them: the render keeps the form of the received audio and departs from it in "
+      + "the detail. « Without » keeps them continuous: the render follows the received audio much more "
+      + "closely, in its form as in its harmony.\n\n"
       + NOTICE_RENDU_EN + SORTIE_NOTICE_EN,
     entrees: [...ENTREES_SOURCE],
     sorties: [...SORTIE_AUDIO],
     parametres: [
+      // LE DOSAGE EST UN SEUIL, ET C'EST LE MODÈLE QUI LE VEUT. Le moteur lit `audio_cover_strength`
+      // comme la part des pas qui voient la source, et bascule au pas `int(pas × dosage)` sur le silence
+      // et la consigne `text2music`. La forme de la source se décide dans les tout premiers pas : un
+      // basculement après eux la garde, un basculement avant la perd. Le point dépend du modèle et du
+      // glissement (bruit 0,929 perdu et 0,915 gardé sur le rapide, 0,90 encore perdu sur la base),
+      // non du nombre de pas. Mesuré le 2026-11-27
+      // sur 30 s du loup, motif spectral au même instant contre la source (`EXECUTION/reprise-proche/`) :
+      //   Rapide, glissement 3 : 1 → 0,535 ; 0,5 → 0,572 ; 0,25 → 0,443 ; 0,125 → 0,022 ; 0 → −0,140
+      //   Rapide, 32 pas : 6 pas sur la source → 0,056 ; 7 pas → 0,422 (la marche n'est pas la résolution)
+      //   Rapide, glissement 1 : 0,15 → 0,487
+      //   Base : 0,05 → 0,005 ; 0,1 → 0,092 ; 0,15 → 0,287 ; 1 → 0,286
+      //   style piano, Rapide : 0,25 → 0,002
+      //   « Sans », Rapide : 1 → 0,927 ; 0,5 → 0,670 ; 0,25 → 0,247 ; 0,2 → 0,009 ; 0,1 → −0,140
+      //   « Sans », Base : 0,1 → 0,193 ; 0,15 → 0,294
+      // Le seuil est le même sur les deux quantifications ; au-dessus, « Avec » fait un plateau et
+      // « Sans » une pente.
+      // L'échelle et le défaut restent ceux du moteur, par décision de Fabien : la notice dit le seuil.
       { nom: "Dosage", nomEn: "Strength", type: "curseur", plage: [0, 1], pas: 0.05, defaut: 1,
-        doc: "Part de l'audio reçu que le rendu suit. À un, il s'en approche au plus près.",
-        docEn: "How closely the render follows the received audio. At one, it comes as close as it can." },
-      { nom: "Bruit", nomEn: "Noise", type: "curseur", plage: [0, 1], pas: 0.05, defaut: 0,
-        doc: "Bruit mêlé à l'audio reçu avant le rendu.",
-        docEn: "Noise mixed into the received audio before the render." },
+        doc: "Part des étapes de débruitage qui suivent l'audio reçu. Sa forme se décide dans les premières : au-dessous d'un seuil, le rendu ne suit que le plan ; au-dessus, il la garde. Le seuil est entre 0,2 et 0,25 sur « Rapide » avec « Glissement » à zéro, entre 0,1 et 0,15 sur « Base ». Au-dessus, sur « Avec », le dosage ne change presque plus rien ; sur « Sans », le rendu se rapproche de l'audio à mesure qu'il monte.",
+        docEn: "Share of the denoising steps that follow the received audio. Its form is settled in the first ones: below a threshold, the render follows the plan alone; above it, it keeps that form. The threshold lies between 0.2 and 0.25 on « Fast » with « Shift » at zero, between 0.1 and 0.15 on « Base ». Above it, on « With », the strength hardly changes anything more; on « Without », the render comes closer to the audio as it rises." },
+      // CE RÉGLAGE S'APPELAIT « BRUIT », ET IL DISAIT LE CONTRAIRE DE CE QU'IL FAIT. Le moteur lit
+      // `cover_noise_strength` comme la proximité du point de départ à la source : « 0 = pure noise,
+      // 1 = source » (`request.h` d'acestep.cpp), et il part de `t × bruit + (1 − t) × source`, `t`
+      // étant le pas le plus proche de 1 − valeur, la liste des pas tronquée d'autant. La notice
+      // promettait du bruit mêlé à l'audio : monter le curseur pour s'éloigner de l'original l'en
+      // rapprochait. Mesuré le 2026-11-27 sur 30 s du loup, motif spectral au même instant contre la
+      // source : 0,535 à zéro, puis 0,719, 0,850, 0,929 et 0,947 à 0,1, 0,25, 0,5 et 1, le moteur ne
+      // gardant que six, quatre, deux puis un pas (`EXECUTION/reprise-proche/RAPPORT.md`).
+      //
+      // LA VALEUR ENVOYÉE N'A PAS CHANGÉ, SEULS LE NOM ET LE TEXTE ONT CHANGÉ. L'autre réparation,
+      // envoyer `1 − valeur` sous l'ancien nom, aurait fait d'un graphe enregistré à zéro une
+      // quasi-copie de sa source sans rien dire. Le nom d'avant est hérité : un projet qui porte
+      // « Bruit » rouvre avec sa valeur ici (`ui/pertes-chargement.ts`).
+      { nom: "Départ sur l'audio", nomEn: "Start from the audio", nomsHerites: ["Bruit"],
+        type: "curseur", plage: [0, 1], pas: 0.05, defaut: 0,
+        doc: "Point d'où le rendu part. À zéro, le bruit seul ; en montant, un mélange de bruit et de l'audio reçu, avec moins d'étapes, et le rendu s'en rapproche ; à un, il en est presque la copie.",
+        docEn: "Point the render starts from. At zero, noise alone; higher up, a mix of noise and the received audio, with fewer steps, and the render comes closer to it; at one, it is almost a copy of it." },
+      // « SANS » SUIT L'AUDIO REÇU DE BIEN PLUS PRÈS, et la notice le dit depuis le 2026-11-27. Le moteur
+      // saute alors l'aller-retour FSQ (25 Hz → 5 Hz → 25 Hz) qui efface le détail de la source. Mesuré
+      // sur 30 s du loup, au dosage 1, contre la source : motif spectral au même instant 0,927 contre
+      // 0,535 sur « Avec », DTW du chroma 0,030 contre 0,093. Le timbre n'en est pas plus proche (MFCC
+      // 17,5 contre 17,2), et le son est plus clair (centroïde +1 274 Hz).
       { nom: "Quantification des codes", nomEn: "Code quantization", type: "choix",
         options: ["Avec", "Sans"], optionsEn: ["With", "Without"], optionIds: ["cover", "cover-nofsq"],
         defaut: "Avec", defautEn: "With",
-        doc: "Traitement des codes audio tirés de l'audio reçu. « Avec » les quantifie, « Sans » les garde continus.",
-        docEn: "How the audio codes drawn from the received audio are treated. « With » quantizes them, « Without » keeps them continuous." },
+        doc: "Traitement des codes audio tirés de l'audio reçu. « Avec » les quantifie, et le rendu s'écarte de l'audio dans le détail ; « Sans » les garde continus, et le rendu le suit de bien plus près, dans sa forme comme dans son harmonie.",
+        docEn: "How the audio codes drawn from the received audio are treated. « With » quantizes them, and the render departs from the audio in the detail; « Without » keeps them continuous, and the render follows it much more closely, in its form as in its harmony." },
       PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
@@ -74,7 +132,9 @@ export const fiches = ([
         // et « Sans » vaut `cover-nofsq`, donc le choix se lit sans table de correspondance.
         tache: c.paramTexte("Quantification des codes", "cover") || "cover",
         dosage: c.paramNombre("Dosage", 1),
-        bruit: c.paramNombre("Bruit", 0),
+        // LE CHAMP DU PONT GARDE SON NOM, `bruit`, que `appliquerTache` verse tel quel dans
+        // `cover_noise_strength` : c'est le nom que le moteur donne à cette proximité.
+        bruit: c.paramNombre("Départ sur l'audio", 0),
       }));
     },
   }),

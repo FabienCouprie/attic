@@ -9,26 +9,39 @@
 // une liste à lui. La sienne oubliait les ports ouverts à la main, que l'en-cours écrivait : une
 // séance reprise les refermait, là où le même projet importé les gardait. Relevé le 2026-11-11, en
 // même temps que l'oubli inverse, du côté qui écrit. Voir `ui/en-cours-a-relire.test.ts`.
+//
+// LES NOMS DE RÉGLAGE HÉRITÉS SE TRADUISENT ICI COMME À L'IMPORT, par la même fonction
+// (`ui/pertes-chargement.ts`). Ajouté le 2026-11-27 à la demande de Fabien, au premier renommage
+// déclaré du catalogue (« Bruit » de « Reprendre une chanson », devenu « Départ sur l'audio ») :
+// l'import d'un fichier retrouvait la valeur sous le nom d'avant, la séance reprise la perdait, le
+// réglage retombant en silence sur son défaut.
 import { CHAMPS_DU_PROJET } from "../core/saisies";
 import { trouverDef } from "./ports-canevas";
+import { traduireNomsHerites } from "./pertes-chargement";
 import { tailleDefaut } from "./tailles-noeuds";
 
 /**
  * Chaque nœud d'un en-cours, tel que le canevas le reçoit : sa taille par défaut quand l'en-cours n'en
  * porte pas, et des réglages vides s'il n'en a pas. Son statut n'y est pas : il vit dans
  * `ui/statuts.ts`, et un nœud qui n'y figure pas est en attente. Ses gestes non plus : ils viennent du
- * contexte de `ui/gestes-noeud.ts`, de sorte qu'un nœud restauré ne peut plus en manquer.
+ * contexte de `ui/gestes-noeud.ts`, de sorte qu'un nœud restauré ne peut plus en manquer. Un réglage
+ * enregistré sous un nom que sa fiche déclare hérité revient sous le nom d'aujourd'hui.
+ *
+ * LES RÉGLAGES SONT COPIÉS, et non repris par référence : la traduction renomme des clés en place, et
+ * l'objet reçu n'a pas à changer sous son appelant.
  */
 export function noeudsRelus(noeuds: readonly any[]): any[] {
-  return noeuds.map((n: any) => {
+  const relus = noeuds.map((n: any) => {
     const def = trouverDef(n.data.ficheId);
     const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
     return {
       id: n.id, type: "atelier", position: n.position, width: n.width ?? width, height: n.height ?? height,
       data: {
         ...Object.fromEntries([...CHAMPS_DU_PROJET].map((c) => [c, n.data[c]])),
-        parametres: n.data.parametres ?? {},
+        parametres: { ...n.data.parametres },
       },
     };
   });
+  traduireNomsHerites(relus, trouverDef);
+  return relus;
 }
