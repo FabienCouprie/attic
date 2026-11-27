@@ -76,4 +76,20 @@ describe("l'en-cours, écrit puis relu", () => {
     const relus = noeudsRelus([{ id: "q", position: { x: 0, y: 0 }, data: { ficheId: "inconnue" } }]);
     expect(relus[0]).toMatchObject({ width: 230, height: 200, data: { parametres: {} } });
   });
+
+  it("UN RÉGLAGE ENREGISTRÉ SOUS UN NOM HÉRITÉ REVIENT SOUS LE NOM D'AUJOURD'HUI, comme à l'import", () => {
+    // L'import d'un fichier traduisait déjà les noms hérités ; la séance reprise ne le faisait pas,
+    // et le réglage renommé retombait en silence sur son défaut. Le nœud d'origine ne bouge pas.
+    const r = creerRegistre<unknown, unknown>();
+    r.enregistrer({
+      id: "essai-herite", nom: "essai-herite", univers: "Traitement", famille: "Effets", resume: "Le composant d'essai.",
+      entrees: [], sorties: [], executer: async () => ({ valeurs: [] }),
+      parametres: [{ nom: "Neuf", nomsHerites: ["Ancien"], type: "curseur", plage: [0, 1], defaut: 0 }],
+    });
+    configurerRegistreUI(r);
+    const parametres = { Ancien: 0.4, Autre: 2 };
+    const relus = noeudsRelus([{ id: "h", position: { x: 0, y: 0 }, data: { ficheId: "essai-herite", parametres } }]);
+    expect(relus[0].data.parametres).toEqual({ Neuf: 0.4, Autre: 2 });
+    expect(parametres, "l'en-cours reçu n'est pas modifié").toEqual({ Ancien: 0.4, Autre: 2 });
+  });
 });

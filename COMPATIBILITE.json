@@ -6731,7 +6731,7 @@
    ],
    "reglages": [
     {"nom":"Dosage","type":"curseur","defaut":1,"min":0,"max":1},
-    {"nom":"Bruit","type":"curseur","defaut":0,"min":0,"max":1},
+    {"nom":"Départ sur l'audio","type":"curseur","defaut":0,"min":0,"max":1,"nomsHerites":["Bruit"]},
     {"nom":"Quantification des codes","type":"choix","defaut":"cover","choix":["cover","cover-nofsq"]},
     {"nom":"Modèle","type":"choix","defaut":"rapide","choix":["rapide","base"]},
     {"nom":"Pas de débruitage","type":"nombre","defaut":0,"min":0,"max":50},
