@@ -11,9 +11,10 @@
 // stables toucherait 1983 réglages et invaliderait tout projet enregistré sur le disque de
 // quelqu'un. Ce champ ne demande aucun changement de clé.
 //
-// ═══ ET LE CATALOGUE N'EN DÉCLARE AUCUN AUJOURD'HUI, CE QUI SE DIT ═══
+// ═══ ET LE CATALOGUE EN DÉCLARE UN AUJOURD'HUI, CE QUI SE DIT ═══
 //
-// Le mécanisme précède son premier usage : `contrat-cles-de-reglage.test.ts` a mesuré ZÉRO clé
+// Le mécanisme a précédé son premier usage, venu le 2026-11-27 (« Bruit » de « Reprendre une
+// chanson »). Avant lui, `contrat-cles-de-reglage.test.ts` avait mesuré ZÉRO clé
 // orpheline sur les 19 graphes livrés, donc aucun renommage passé n'est à rattraper. Un garde qui
 // surveille un ensemble vide ne prouve rien tant qu'il ne le dit pas — un cas inscrit donc le
 // chiffre, pour que le jour où il monte soit un jour où l'on regarde. Le comportement, lui, est
@@ -80,11 +81,13 @@ describe("les noms de réglage hérités", () => {
     ].join("\n")).toEqual([]);
   });
 
-  it("et le catalogue en compte ZÉRO aujourd'hui, ce qui est dit plutôt que tu", () => {
+  it("et le catalogue en compte UN aujourd'hui, ce qui est dit plutôt que tu", () => {
     // ═══ UN GARDE QUI SURVEILLE LE VIDE NE PROUVE RIEN TANT QU'IL NE LE DIT PAS ═══
     //
-    // Le mécanisme précède son premier usage. Ce chiffre n'est pas un plafond : il monte au
-    // premier renommage, et c'est alors que les deux cas ci-dessus commencent à mordre.
+    // Le mécanisme a précédé son premier usage. Ce chiffre n'est pas un plafond : il monte à chaque
+    // renommage. Le premier, le 2026-11-27 : « Bruit » de « Reprendre une chanson », devenu « Départ
+    // sur l'audio » parce que le moteur lit cette valeur en sens contraire de l'ancien nom
+    // (`plugins/reprendre-chanson.test.ts`).
     expect(heritages().length, [
       "",
       "LE NOMBRE DE NOMS HÉRITÉS A CHANGÉ.",
@@ -95,6 +98,6 @@ describe("les noms de réglage hérités", () => {
       "S'il a DESCENDU : un héritage a été retiré. Un projet enregistré qui porte encore l'ancien",
       "nom reperdra donc son réglage, en silence. Le retirer se décide, il ne se subit pas.",
       "",
-    ].join("\n")).toBe(0);
+    ].join("\n")).toBe(1);
   });
 });
