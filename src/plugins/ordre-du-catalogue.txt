@@ -115,6 +115,7 @@ matrice-activite
 motif-au-hasard
 motif-par-fragments
 motif-crescendo
+melodie-harmonie
 glissando-harmonique
 glissando-de-gamme
 pulsation

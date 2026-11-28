@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **534 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **535 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 113 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (9) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 114 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (10) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -2400,6 +2400,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | [Chord Pad](#chord-pad) | Holds the notes of each chord of the harmony for the whole chord, one line per note. |
 | [Crescendo Pattern](#crescendo-pattern) | Repeats a pattern between a prefix and a suffix, the velocity rising from one end to the other. |
 | [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
+| [Melody over the Harmony](#melody-over-the-harmony) | Draws one melody per kind of section, a walk on the scale and the chord, repeated when the section comes back. |
 | [Pattern from Fragments](#pattern-from-fragments) | Assembles a pattern from written fragments, drawn at random up to the length of each part. |
 | [Random Pattern](#random-pattern) | Draws a pattern of notes and rests, part by part, with its variations. |
 | [Voice on the Chord](#voice-on-the-chord) | Lays a pattern over the harmony, note by note on the current chord or in free pitches, one line per pattern. |
@@ -2546,6 +2547,35 @@ Draws a chord pattern from a bank, resolves its table references, then repeats i
 | Register | number | 3 | -6 – 11, step 1 | Where named chords sit: the lowest note of each falls between the register minus twelve and the register minus one, in semitones from middle C. At 3, between the E flat below middle C and the D above it. No effect on a chord written by its three pitches. |
 | Closest inversion | checkbox | 1 | 0 / 1 | Checked, each chord takes the inversion, up to an octave, whose middle note is closest to that of the pattern's first chord, which keeps the voices from leaping. Unchecked, each chord keeps the inversion its name writes. |
 | Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the pattern and the tables. 0 = drawn at every run, and given in the message so it can be copied back here. No effect when the bank has a single pattern without table references. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### Melody over the Harmony
+
+`melodie-harmonie` · Inputs → SoundHelix
+
+*Draws one melody per kind of section, a walk on the scale and the chord, repeated when the section comes back.*
+
+Draws one melody for each kind of section of the received harmony, a random walk on the scale and on the chord, and plays it again each time the section comes back. The model is that of the melody engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). Two sections carrying the same chords for the same lengths are of the same kind. « Melodies per section » gives, separated by commas, the number of melodies of each kind, in the order the kinds appear, the list looped: at 1,2,2,3, the first kind has a single melody, the second two. The returns of a kind play its melodies in turn. « Pattern » gives the rhythm, restarted at the start of each section; the « Pattern » input, when connected, replaces it. An entry is written joker or offset, then ~ to tie the note to the next one, /length in ticks, :velocity out of 1000; - is a rest. + moves by a step drawn from « Steps », in degrees of the C major scale; # and a written offset move by a step among the notes of the current chord; * repeats the note before. The first note of each melody is a note of the chord. « Ticks per beat » is the resolution the pattern is written in, brought to the grid of the harmony. « Steps » gives the possible steps, separated by commas; a step written twice is drawn twice as often. The walk stays between « Pitch min » and « Pitch max », in semitones from middle C: a step that would leave it is drawn again, and after twenty tries it goes inward. The « Activity » input carries an activity matrix: one line per voice, its name, then one sign per chord section, x when the voice plays, . when it is silent; debut= and fin=, optional, move each entry and each exit of the voice, in ticks. « Voice » names the line that governs the melody. A note only starts on a tick where its voice plays, and it is not cut when the voice falls silent. Without a matrix connected, the voice plays the whole piece and « Voice » has no effect. « Transpose » shifts all notes, in semitones. « Velocity » scales the velocity of each note. « Seed » fixes the draw; 0 draws a seed at every run, and the message gives it. « Instrument » writes the channel's program into the file. The « MIDI » output carries the notes on channel 1, at the grid and tempo of the harmony, middle C at 60. The message gives the number of notes, the voice followed and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Harmony | MIDI (harmonie) |  |
+| input | Activity | text (activite) |  |
+| input | Pattern | text (motif) |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pattern | text | `#/2,+/2,+/2,+/2,#/4,*/2,-/2` |  | The rhythm of the melody: + a step on the scale, # a step on the chord, * the note before, - a rest, /length in ticks, :velocity. No effect when the « Pattern » input is connected. |
+| Melodies per section | text | `1,2,2,3` |  | The number of melodies of each kind of section, in the order the kinds appear, separated by commas, the list looped. |
+| Pitch min | number | 0 st | -24 – 36 st, step 1 | The lowest note of the walk, in semitones from middle C. |
+| Pitch max | number | 12 st | -24 – 36 st, step 1 | The highest note of the walk, in semitones from middle C. |
+| Steps | text | `-2,-1,-1,1,1,2` |  | The steps of the walk, separated by commas, in degrees of the scale for + and in notes of the chord for #; a step written twice is drawn twice as often. |
+| Voice | text | `v1` |  | The name of the activity matrix line that governs the melody. No effect when the « Activity » input is free. |
+| Transpose | number | 0 st | -48 – 48 st, step 1 | The shift of all notes, in semitones. |
+| Velocity | number | 100 % | 1 – 100 %, step 1 | The velocity of each note, scaled: at 50 %, a note written at 1000 plays at 500, out of 1000. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The resolution the pattern is written in, in ticks per beat, brought to the grid of the harmony. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the melodies. 0 = drawn at every run, and given in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Pattern from Fragments

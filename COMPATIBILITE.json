@@ -5055,6 +5055,30 @@
     {"nom":"Instrument","type":"sf2instrument","defaut":0}
    ]
   },
+  "melodie-harmonie": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Harmonie","type":"midi","sousType":"harmonie"},
+    {"nom":"Activité","type":"texte","sousType":"activite","requis":false},
+    {"nom":"Motif","type":"texte","sousType":"motif","requis":false}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Motif","type":"texte","defaut":"#/2,+/2,+/2,+/2,#/4,*/2,-/2"},
+    {"nom":"Mélodies par section","type":"texte","defaut":"1,2,2,3"},
+    {"nom":"Hauteur min","type":"curseur","defaut":0,"min":-24,"max":36,"unite":" ½-ton"},
+    {"nom":"Hauteur max","type":"curseur","defaut":12,"min":-24,"max":36,"unite":" ½-ton"},
+    {"nom":"Pas","type":"texte","defaut":"-2,-1,-1,1,1,2"},
+    {"nom":"Voix","type":"texte","defaut":"v1"},
+    {"nom":"Transposition","type":"curseur","defaut":0,"min":-48,"max":48,"unite":" ½-ton"},
+    {"nom":"Vélocité","type":"curseur","defaut":100,"min":1,"max":100,"unite":"%"},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true},
+    {"nom":"Instrument","type":"sf2instrument","defaut":0}
+   ]
+  },
   "melodie-sur-accords": {
    "version": 1,
    "entrees": [
