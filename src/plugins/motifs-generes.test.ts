@@ -64,7 +64,7 @@ describe("les générateurs de motifs", () => {
   });
 
   it("CHAQUE RÉGLAGE CHANGE CE QUE LE COMPOSANT REND, ce que le banc de croisement, qui ne lance que les nœuds à choix, ne voit pas", async () => {
-    const cas: [typeof hasard, Record<string, unknown>, Record<string, unknown>][] = [
+    const cas: [typeof hasard, Record<string, string | number>, Record<string, string | number>][] = [
       [hasard, { Graine: 7, "Tics joués max": 16 }, { Plan: "A1,B1", Tics: 12, "Probabilité de note": 90, "Probabilité de liaison": 80, "Vélocité min": 100,
         "Vélocité max": 600, "Tics joués min": 11, "Tics joués max": 7, "Décalages": "0,5", "Longueurs de note": "3",
         "Longueurs de silence": "3", "Corrélation hauteur et vélocité": 0, "Exposant de vélocité": 3, Graine: 8 }],
