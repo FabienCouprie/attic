@@ -43,7 +43,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Lays a pattern over the harmony, note by note on the current chord or in free pitches, one line per pattern.",
     notice: NOTICE, noticeEn: NOTICE_EN,
     entrees: [
-      { nom: "Harmonie", nomEn: "Harmony", type: "midi" },
+      { nom: "Harmonie", nomEn: "Harmony", type: "midi", sousType: "harmonie" },
       { nom: "Activité", nomEn: "Activity", type: "texte", sousType: "activite", requis: false },
       { nom: "Motif", nomEn: "Pattern", type: "texte", sousType: "motif", requis: false },
     ],

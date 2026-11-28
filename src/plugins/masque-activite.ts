@@ -31,7 +31,7 @@ export const fiches: FicheAudio[] = ([
     notice: NOTICE, noticeEn: NOTICE_EN,
     entrees: [
       { nom: "MIDI", type: "midi" },
-      { nom: "Harmonie", nomEn: "Harmony", type: "midi" },
+      { nom: "Harmonie", nomEn: "Harmony", type: "midi", sousType: "harmonie" },
       { nom: "Activité", nomEn: "Activity", type: "texte", sousType: "activite" },
     ],
     sorties: [{ nom: "MIDI", type: "midi" }],

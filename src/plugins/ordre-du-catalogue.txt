@@ -111,6 +111,7 @@ voix-sur-accord
 masque-activite
 arpege-duree-accord
 nappe-accords
+matrice-activite
 glissando-harmonique
 glissando-de-gamme
 pulsation
