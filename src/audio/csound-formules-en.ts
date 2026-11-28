@@ -36,12 +36,20 @@ export const COMMENTAIRES_EN: Readonly<Record<string, string>> = {
   "; Le spectre se vide pendant la note : trente harmoniques au départ, un seul à la fin.":
     "; The spectrum empties during the note: thirty harmonics at the start, a single one at the end.",
   // Karplus-Strong
-  "  ; Une ligne à retard remplie de bruit, moyennée à chaque tour : la corde s'éteint d'elle-même.":
-    "  ; A delay line filled with noise, averaged at each pass: the string dies away by itself.",
-  "  ; p6 choisit la méthode de lissage — 1 moyenne simple, 3 récursive, 6 mélange.":
-    "  ; p6 picks the smoothing method: 1 simple average, 3 recursive, 6 blend.",
-  "; Les trois méthodes sur la même note : la décroissance et le grain changent.":
-    "; The three methods on the same note: the decay and the grain change.",
+  "  ; Une ligne à retard remplie de bruit, lissée à chaque tour : la corde s'éteint d'elle-même.":
+    "  ; A delay line filled with noise, smoothed at each pass: the string dies away by itself.",
+  "  ; p7 choisit le lissage, comme le manuel de pluck les numérote : 1 la moyenne de deux":
+    "  ; p7 picks the smoothing, numbered as in the pluck manual: 1 the average of two",
+  "  ; échantillons voisins ; 6 un filtre récursif du premier ordre, plus sombre ; 3 le tambour,":
+    "  ; neighbouring samples; 6 a first-order recursive filter, darker; 3 the drum,",
+  "  ; la même moyenne dont le signe s'inverse au hasard, avec la probabilité p8.":
+    "  ; the same average whose sign flips at random, with probability p8.",
+  "  ; p6 porte le numéro de note dans une partition tirée d'un MIDI : la méthode n'y est pas lue,":
+    "  ; p6 carries the note number in a score drawn from a MIDI file: the method is not read there,",
+  "  ; et toute autre valeur de p7, zéro compris, prend la moyenne.":
+    "  ; and any other value of p7, zero included, takes the average.",
+  "; Les trois méthodes sur le même la : la moyenne, le filtre récursif, plus sombre, puis le tambour.":
+    "; The three methods on the same A: the average, the recursive filter, darker, then the drum.",
   // Anneau
   "  ; Deux sinus multipliés : il ne reste que la somme et la différence de leurs fréquences.":
     "  ; Two sines multiplied: only the sum and the difference of their frequencies remain.",

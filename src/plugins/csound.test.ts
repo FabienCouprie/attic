@@ -270,6 +270,42 @@ describe("csound-instruments-physiques et csound-spectral : les bibliothèques d
     });
   }
 
+  // LA CORDE PINCÉE, relevée le 2026-11-27 : « Pression » y réglait le point de pincement et
+  // « Position » le point de captation, sa documentation disait autre chose, et la réflexion restait
+  // figée à 0,05, d'où une corde qui ne s'éteignait pas. Décision de Fabien, « B, ajouter
+  // Réflexion » : chaque argument de `wgpluck2 iplk, kamp, icps, kpick, krefl` a son réglage, et
+  // ceux d'avant gardent leur sens, de sorte qu'un graphe enregistré garde son son.
+  describe("wgpluck2 : chaque réglage arrive à son argument, et à lui seul", () => {
+    /** Les cinq arguments de wgpluck2 dans le CSD rendu. */
+    const argumentsDe = (csd: string | null) => {
+      const ligne = /wgpluck2\s+([^\n]+)/.exec(csd ?? "");
+      expect(ligne, "aucune ligne wgpluck2 dans le CSD").not.toBeNull();
+      return ligne![1].split(",").map((a) => a.trim());
+    };
+    const CAS: [string, number, number, number][] = [
+      ["Pression", 10, 90, 0], ["Position", 10, 90, 3], ["Réflexion", 10, 90, 4],
+    ];
+    for (const [nom, bas, haut, rang] of CAS) {
+      it(`« ${nom} » change l'argument ${rang + 1}, et aucun autre`, async () => {
+        const a = argumentsDe((await executer("csound-instruments-physiques", [null], { Instrument: "wgpluck2", [nom]: bas })).csd);
+        const b = argumentsDe((await executer("csound-instruments-physiques", [null], { Instrument: "wgpluck2", [nom]: haut })).csd);
+        const changes = a.map((v, i) => (v === b[i] ? -1 : i)).filter((i) => i >= 0);
+        expect(changes, `${a.join(", ")} → ${b.join(", ")}`).toEqual([rang]);
+      });
+    }
+
+    it("« Réflexion » vaut krefl en pour cent, et son défaut est le 0,05 d'avant", async () => {
+      expect(argumentsDe((await executer("csound-instruments-physiques", [null], { Instrument: "wgpluck2" })).csd)[4]).toBe("0.050");
+      expect(argumentsDe((await executer("csound-instruments-physiques", [null], { Instrument: "wgpluck2", "Réflexion": 90 })).csd)[4]).toBe("0.900");
+    });
+
+    it("« Réflexion » est sans effet hors de wgpluck2, ce que sa documentation dit", async () => {
+      const a = await executer("csound-instruments-physiques", [null], { Instrument: "wgbow", "Réflexion": 10 });
+      const b = await executer("csound-instruments-physiques", [null], { Instrument: "wgbow", "Réflexion": 90 });
+      expect(a.csd).toBe(b.csd);
+    });
+  });
+
   it("« Note » fixe la hauteur jouée sans MIDI", async () => {
     const grave = await executer("csound-instruments-physiques", [null], { "Note": "A1" });
     const aigu = await executer("csound-instruments-physiques", [null], { "Note": "A5" });

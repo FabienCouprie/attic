@@ -222,8 +222,8 @@ export const fiches: FicheAudio[] = ([
         plage: [0.1, 20],
         pas: 0.1,
         defaut: 1,
-        doc: "Quantité de bruit à l'attaque.",
-        docEn: "Amount of noise at the attack.",
+        doc: "Durée du bruit rose qui pince la corde, comptée en périodes de la note : à 1 il dure une période, à 20 vingt périodes, et jamais moins d'une milliseconde. Tant qu'il dure, il entre dans la boucle : plus il est long, plus la corde reçoit d'énergie et plus elle sonne fort.",
+        docEn: "Duration of the pink noise that plucks the string, counted in periods of the note: at 1 it lasts one period, at 20 twenty periods, and never less than one millisecond. While it lasts it feeds the loop: the longer it is, the more energy the string receives and the louder it sounds.",
       },
       {
         nom: "Dampening",
@@ -233,8 +233,8 @@ export const fiches: FicheAudio[] = ([
         pas: 10,
         defaut: 4000,
         unite: "Hz",
-        doc: "Fréquence de coupure du filtre passe-bas du peigne.",
-        docEn: "Cutoff frequency of the comb filter's lowpass.",
+        doc: "Fréquence de coupure du passe-bas placé dans la boucle de la corde, celui qui éteint l'aigu avant le grave : plus elle est basse, plus la corde est sourde.",
+        docEn: "Cutoff frequency of the lowpass inside the string's loop, the one that makes the treble die out before the bass: the lower it is, the duller the string.",
       },
       {
         nom: "Resonance",

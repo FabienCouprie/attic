@@ -126,6 +126,84 @@ test.describe("Csound relit ce que les nœuds écrivent", () => {
     }
   });
 
+  // LA CORDE DE KARPLUS-STRONG, relevée le 2026-11-27. Sa méthode passait par p6, que la partition
+  // tirée d'un MIDI remplit du numéro de note : `pluck` refusait chaque note, « unknown method code »,
+  // et la corde se taisait. Et sa partition d'essai jouait le tambour sans rugosité, ce qui refait la
+  // moyenne simple : deux de ses trois notes étaient le même algorithme. Les deux se tiennent ici, sur
+  // le son : la corde sonne depuis un MIDI, et chacune de ses trois notes d'essai se distingue des
+  // deux autres, le filtre récursif par sa chute, le tambour par la périodicité qu'il perd.
+  test("la corde de Karplus-Strong joue depuis un MIDI, et ses trois méthodes s'entendent", async ({ page }) => {
+    test.setTimeout(300_000);
+    const r = await page.evaluate(async (m) => {
+      const { lancerFiche } = await import(/* @vite-ignore */ m.lancer);
+      const { registre } = await import(/* @vite-ignore */ m.registre);
+      const { notesVersFichierMidi } = await import(/* @vite-ignore */ m.midi);
+      const F = (id: string) => registre.trouverDef(id);
+      const ecrit = await lancerFiche(F("formules-csound"), { Formule: "karplus" }, { entrees: [] });
+      const midi = notesVersFichierMidi([
+        { note: 57, velocite: 100, debut: 0, fin: 1 },
+        { note: 64, velocite: 100, debut: 1, fin: 2 },
+      ], 120);
+      const joue = await lancerFiche(F("csound"), {}, { entrees: [null, midi, ecrit.valeurs[0], null] });
+      const essai = await lancerFiche(F("csound"), {}, { entrees: [null, null, ecrit.valeurs[0], ecrit.valeurs[1]] });
+      const efficace = (d: Float32Array, i0: number, i1: number) => {
+        let s = 0;
+        for (let i = i0; i < i1; i++) s += d[i] * d[i];
+        return Math.sqrt(s / Math.max(1, i1 - i0));
+      };
+      /** L'amplitude d'une fréquence de `i0` à `i1`, par Goertzel. */
+      const amplitude = (d: Float32Array, fe: number, hz: number, i0: number, i1: number) => {
+        const k = 2 * Math.cos((2 * Math.PI * hz) / fe);
+        let s1 = 0, s2 = 0;
+        for (let i = i0; i < i1; i++) { const s0 = d[i] + k * s1 - s2; s2 = s1; s1 = s0; }
+        return Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - k * s1 * s2));
+      };
+      /**
+       * Sur 0,05-0,45 s : le rang moyen des trente premiers harmoniques du la, pondéré par leur
+       * amplitude, et l'autocorrélation normalisée à la période. La chute de 0,05-0,45 s à 1,0-1,4 s,
+       * en dB, est relevée avec.
+       */
+      const note = (b: AudioBuffer, debut: number) => {
+        const d = b.getChannelData(0), fe = b.sampleRate, at = (t: number) => Math.round((debut + t) * fe);
+        const chute = 20 * Math.log10(efficace(d, at(0.05), at(0.45)) / Math.max(1e-12, efficace(d, at(1.0), at(1.4))));
+        let somme = 0, ponderee = 0;
+        for (let h = 1; h <= 30; h++) {
+          const a = amplitude(d, fe, 220 * h, at(0.05), at(0.45));
+          somme += a; ponderee += h * a;
+        }
+        const rang = ponderee / Math.max(1e-12, somme);
+        let periodicite = 0;
+        const p = fe / 220;
+        for (let lag = Math.floor(p) - 3; lag <= Math.ceil(p) + 3; lag++) {
+          let xy = 0, xx = 0, yy = 0;
+          for (let i = at(0.05); i < at(0.45); i++) { xy += d[i] * d[i + lag]; xx += d[i] * d[i]; yy += d[i + lag] * d[i + lag]; }
+          periodicite = Math.max(periodicite, xy / Math.sqrt(xx * yy || 1));
+        }
+        return { chute, rang, periodicite };
+      };
+      const audio = joue.valeurs[0] as AudioBuffer | null;
+      const b = essai.valeurs[0] as AudioBuffer | null;
+      return {
+        midi: { message: String(joue.message), refus: joue.erreurRendue === true, crete: audio ? Math.max(...Array.from(audio.getChannelData(0), Math.abs)) : 0 },
+        essai: { message: String(essai.message), notes: b ? [note(b, 0), note(b, 1.5), note(b, 3)] : [] },
+      };
+    }, MODULES);
+    // Les deux défauts sont indépendants : chacun dit le sien, sans que le premier cache le second.
+    expect.soft(r.midi.refus, r.midi.message).toBe(false);
+    expect.soft(r.midi.crete, r.midi.message).toBeGreaterThan(0.01);
+    expect(r.essai.notes.length, r.essai.message).toBe(3);
+    const [moyenne, recursif, tambour] = r.essai.notes;
+    const releve = JSON.stringify(r.essai.notes.map((n) => ({ chute: +n.chute.toFixed(1), rang: +n.rang.toFixed(2), periodicite: +n.periodicite.toFixed(3) })));
+    console.log(`karplus : ${releve} · depuis un MIDI : ${r.midi.message}, crête ${r.midi.crete.toFixed(3)}`);
+    // La moyenne et le filtre récursif restent des cordes, accordées sur leur période.
+    expect.soft(moyenne.periodicite, releve).toBeGreaterThan(0.9);
+    expect.soft(recursif.periodicite, releve).toBeGreaterThan(0.9);
+    // Le filtre récursif est plus sombre que la moyenne : ses harmoniques pèsent moins haut.
+    expect.soft(moyenne.rang - recursif.rang, releve).toBeGreaterThan(0.5);
+    // Le tambour n'est plus périodique : son signe s'inverse au hasard une fois sur deux.
+    expect.soft(tambour.periodicite, releve).toBeLessThan(0.5);
+  });
+
   // L'ENTRÉE AUDIO DU NŒUD « CSOUND » SERT, et cette épreuve le tient. Fabien a demandé le 2026-11-27
   // si elle servait à quelque chose ; le son y arrive comme un fichier, « entree1.wav », que l'orchestre
   // lit par `diskin2` ou la partition par une table GEN01. Un sinus de 440 Hz doit en ressortir tel

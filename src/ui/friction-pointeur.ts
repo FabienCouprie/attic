@@ -25,6 +25,8 @@
 //     monte avec la vitesse, de deux cents hertz, qui s'entend lourd et rugueux, à mille huit cents,
 //     qui s'entend fin et rapide.
 
+import { bruitRoseKellet } from "../core/bruit-rose";
+
 /** Le niveau le plus fort que la friction atteint, en gain linéaire. */
 export const NIVEAU_MAX = 0.4;
 
@@ -102,32 +104,11 @@ export function commandeDepuisVitesse(vitesse: number): Commande {
 /**
  * Un bruit rose, en échantillons.
  *
- * LES SEPT ÉTATS SONT SEPT FILTRES PASSE-BAS de fréquences échelonnées, dont la somme approche la
- * pente en un sur f. Les coefficients sont ceux de Paul Kellett ; le dernier terme n'est pas
- * filtré, c'est lui qui rend l'aigu.
+ * LE FILTRE EST CELUI DE `core/bruit-rose.ts`, le seul du dépôt : sept états, dont la somme
+ * approche la pente en un sur f. Le tirage uniforme sur [0 ; 1[ est ramené ici sur [−1 ; 1].
  */
 export function echantillonsDeBruitRose(combien: number, tirage: () => number): Float32Array {
-  const n = Math.max(0, Math.round(combien));
-  const x = new Float32Array(n);
-  let b0 = 0;
-  let b1 = 0;
-  let b2 = 0;
-  let b3 = 0;
-  let b4 = 0;
-  let b5 = 0;
-  let b6 = 0;
-  for (let i = 0; i < n; i++) {
-    const blanc = tirage() * 2 - 1;
-    b0 = 0.99886 * b0 + blanc * 0.0555179;
-    b1 = 0.99332 * b1 + blanc * 0.0750759;
-    b2 = 0.96900 * b2 + blanc * 0.1538520;
-    b3 = 0.86650 * b3 + blanc * 0.3104856;
-    b4 = 0.55000 * b4 + blanc * 0.5329522;
-    b5 = -0.7616 * b5 - blanc * 0.0168980;
-    x[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + blanc * 0.5362) * 0.11;
-    b6 = blanc * 0.115926;
-  }
-  return x;
+  return bruitRoseKellet(combien, () => tirage() * 2 - 1);
 }
 
 /** La durée du tampon de bruit, en secondes. Il tourne en boucle. */

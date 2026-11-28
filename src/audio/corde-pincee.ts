@@ -9,14 +9,16 @@
 // partout.
 //
 // L'ACCORD EST EXACT À LA FONDAMENTALE. La période se partage entre la ligne à retard, un nombre
-// entier d'échantillons, un passe-tout du premier ordre pour la fraction, et le passe-bas, dont le
-// retard de phase à la fondamentale est déduit. Sans cette déduction, le grave sortait d'une
-// vingtaine de cents trop bas.
+// entier d'échantillons, le passe-tout d'accord de `audio/passe-tout.ts` pour la fraction, et le
+// passe-bas, dont le retard de phase à la fondamentale est déduit. Sans cette déduction, le grave
+// sortait d'une vingtaine de cents trop bas.
 //
 // LA BOUCLE NE REND JAMAIS PLUS QUE LA RÉSONANCE. Le passe-bas est un Butterworth, sans bosse à la
 // coupure, et le passe-tout a un gain de 1 à toute fréquence.
 
 import { creerAleatoire, resoudreGraine } from "../core/hasard";
+import { bruitRoseKellet } from "../core/bruit-rose";
+import { coefficientPasseTout, pasPasseTout } from "./passe-tout";
 
 export interface ReglagesCorde {
   /** La fréquence de la note, en hertz. */
@@ -66,45 +68,12 @@ function retardDuPasseBas(f: ReturnType<typeof passeBas>, w: number): number {
   return -phase / w;
 }
 
-/** Le retard de phase du passe-tout `(η + z⁻¹) / (1 + η·z⁻¹)` à la pulsation `w`, en échantillons. */
-const retardDuPasseTout = (eta: number, w: number) =>
-  -(Math.atan2(-Math.sin(w), eta + Math.cos(w)) - Math.atan2(-eta * Math.sin(w), 1 + eta * Math.cos(w))) / w;
-
 /**
- * Le coefficient du passe-tout qui retarde la fondamentale de `fraction` échantillons, par
- * dichotomie : le retard décroît quand le coefficient croît.
+ * Le bruit rose de Paul Kellet, mis en régime avant d'être gardé : la corde reçoit une tranche prise
+ * dans un bruit établi, et non le départ à froid de ses filtres.
  */
-function coefficientDuPasseTout(fraction: number, w: number): number {
-  let bas = -0.999, haut = 0.999;
-  for (let k = 0; k < 60; k++) {
-    const milieu = (bas + haut) / 2;
-    if (retardDuPasseTout(milieu, w) > fraction) bas = milieu;
-    else haut = milieu;
-  }
-  return (bas + haut) / 2;
-}
-
-/**
- * Le bruit rose de Paul Kellet, celui de Tone.js, mis en régime avant d'être gardé : la corde
- * reçoit une tranche prise dans un bruit établi, et non le départ à froid de ses filtres.
- */
-function bruitRose(n: number, aleatoire: () => number): Float32Array {
-  const sortie = new Float32Array(n);
-  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-  const REGIME = 4096;
-  for (let i = -REGIME; i < n; i++) {
-    const blanc = aleatoire() * 2 - 1;
-    b0 = 0.99886 * b0 + blanc * 0.0555179;
-    b1 = 0.99332 * b1 + blanc * 0.0750759;
-    b2 = 0.969 * b2 + blanc * 0.153852;
-    b3 = 0.8665 * b3 + blanc * 0.3104856;
-    b4 = 0.55 * b4 + blanc * 0.5329522;
-    b5 = -0.7616 * b5 - blanc * 0.016898;
-    if (i >= 0) sortie[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + blanc * 0.5362) * 0.11;
-    b6 = blanc * 0.115926;
-  }
-  return sortie;
-}
+const bruitRose = (n: number, aleatoire: () => number) =>
+  bruitRoseKellet(n, () => aleatoire() * 2 - 1, { regime: 4096 });
 
 /** Calcule la corde pincée, un canal ; le tampon audio se fait chez l'appelant. */
 export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer> {
@@ -117,7 +86,7 @@ export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer>
   // dixième et un échantillon un dixième, où son retard varie le moins avec la fréquence.
   const reste = sr / r.frequence - retardDuPasseBas(filtre, w);
   const ligne = Math.max(1, Math.floor(reste - 0.1));
-  const eta = coefficientDuPasseTout(Math.max(0.1, reste - ligne), w);
+  const eta = coefficientPasseTout(Math.max(0.1, reste - ligne), w);
 
   const resonance = Math.min(1, Math.max(0, r.resonance));
   const debut = r.debutRelache * sr, longueurRelache = r.relache * sr;
@@ -134,7 +103,7 @@ export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer>
   let y1 = 0, y2 = 0, f1 = 0, f2 = 0;
   for (let i = 0; i < n; i++) {
     const lu = retard[curseur];
-    const y = eta * lu + entreeAvant - eta * passeToutAvant;
+    const y = pasPasseTout(eta, lu, entreeAvant, passeToutAvant);
     entreeAvant = lu;
     passeToutAvant = y;
     sortie[i] = y * r.volume;

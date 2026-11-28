@@ -210,6 +210,23 @@ describe("banc de peignes", () => {
     expect(Math.abs(ou - 220), `crête à ${ou} Hz`).toBeLessThanOrEqual(1);
   });
 
+  it("UN PEIGNE AIGU RÉSONNE À SA NOTE, au demi-hertz près", () => {
+    // LE PASSE-TOUT D'ACCORD ÉTAIT CELUI DE THIRAN jusqu'au 2026-11-27, exact au seul continu : son
+    // retard croît avec la fréquence, et la boucle sonnait trop bas d'autant plus qu'elle était aiguë.
+    // Relevé avant : 3 000 Hz résonnait à 2 998,9 Hz, 5 000 Hz à 4 993,6 Hz.
+    const releves = [3000, 5000].map((f) => {
+      const y = peignes(impulsion(), { frequences: [f], t60: 2, amortissement: 0, mix: 100 }).getChannelData(0);
+      let meilleur = 0, ou = 0;
+      for (let h = f - 30; h <= f + 30; h += 0.1) {
+        const v = amplitude(y, h, SR / 10, SR);
+        if (v > meilleur) { meilleur = v; ou = h; }
+      }
+      return { f, ou };
+    });
+    const ecarts = releves.map(({ f, ou }) => `${f} Hz : crête à ${ou.toFixed(1)} Hz`);
+    for (const { f, ou } of releves) expect(Math.abs(ou - f), ecarts.join(" ; ")).toBeLessThanOrEqual(0.5);
+  });
+
   it("UNE TRANSPOSITION PILOTÉE FAIT GLISSER L'ACCORD, et la sortie reste finie", () => {
     const n = 2 * SR;
     const tr = Float32Array.from({ length: n + 3 * SR }, (_, i) => (i < n / 2 ? 1 : 2));
