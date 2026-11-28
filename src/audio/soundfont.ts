@@ -3,6 +3,9 @@ import {
   AUCUN_DECALAGE, ENVELOPPE_PAR_DEFAUT, additionnerEnveloppes, enveloppeDeZone, lireGenerateurEnveloppe,
   type GenerateursEnveloppe,
 } from "./sf2-enveloppe";
+import {
+  AUCUN_DECALAGE_FILTRE, FILTRE_PAR_DEFAUT, additionnerFiltres, filtreDeZone, lireGenerateurFiltre, type GenerateursFiltre,
+} from "./sf2-filtre";
 
 export interface EchantillonSF2 {
   nom: string;
@@ -32,6 +35,8 @@ export interface ZoneInstrument {
   enveloppe?: GenerateursEnveloppe;
   /** Générateur 57 : une note plus jeune de la même classe étouffe celle-ci. Zéro ou absent, aucune. */
   classeExclusive?: number;
+  /** Le filtre et l'enveloppe de modulation, valeurs absolues ; absents, un filtre ouvert. */
+  filtre?: GenerateursFiltre;
 }
 
 export interface InstrumentSF2 {
@@ -49,8 +54,9 @@ export interface PresetZone {
   fineTune?: number;
   attenuation?: number;
   pan?: number;
-  /** Ce que la zone de preset ajoute à l'enveloppe de l'instrument ; absente, rien. */
+  /** Ce que la zone de preset ajoute à l'enveloppe et au filtre de l'instrument ; absents, rien. */
   enveloppe?: GenerateursEnveloppe;
+  filtre?: GenerateursFiltre;
 }
 
 export interface PresetSF2 {
@@ -222,10 +228,10 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
     //
     // La première zone d'un instrument qui ne nomme aucun échantillon donne ses générateurs par défaut
     // aux autres. Elle était jetée entière, et c'est là que FluidR3 écrit l'enveloppe : 132 de ses 193
-    // instruments y posent leur relâchement. Seuls les générateurs de l'enveloppe de volume en sont lus
-    // ici, et sa classe exclusive ; ce qu'elle porte d'autre (atténuation, filtre, accord) reste à
-    // décider, et n'est pas lu.
-    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {};
+    // instruments y posent leur relâchement. Les générateurs des deux enveloppes et du filtre en sont
+    // lus ici, et sa classe exclusive ; ce qu'elle porte d'autre (atténuation, accord) reste à décider,
+    // et n'est pas lu.
+    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {}, filtreGlobal: Partial<GenerateursFiltre> = {};
     let classeGlobale = 0;
     for (let zi = zoneDebut; zi < Math.min(zoneFin, nbIbag); zi++) {
       const genDebut = lireIbagIndex(zi);
@@ -240,7 +246,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let fineTune = 0;
       let attenuation = 0;
       let pan = 0;
-      const enveloppe: Partial<GenerateursEnveloppe> = {};
+      const enveloppe: Partial<GenerateursEnveloppe> = {}, filtre: Partial<GenerateursFiltre> = {};
       let classeExclusive: number | undefined;
 
       for (let gi = genDebut; gi < Math.min(genFin, nbIgen); gi++) {
@@ -248,7 +254,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         const type = lireUint16(v, genBase);
         const valeur = lireUint16(v, genBase + 2);
 
-        if (lireGenerateurEnveloppe(enveloppe, type, valeur)) continue;
+        if (lireGenerateurEnveloppe(enveloppe, type, valeur) || lireGenerateurFiltre(filtre, type, valeur)) continue;
         if (type === GEN_KEY_RANGE) {
           noteMin = valeur & 0xFF;
           noteMax = (valeur >> 8) & 0xFF;
@@ -281,10 +287,11 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         zones.push({
           noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune, attenuation, pan,
           enveloppe: enveloppeDeZone(enveloppeGlobale, enveloppe, ENVELOPPE_PAR_DEFAUT),
-          classeExclusive: classeExclusive ?? classeGlobale,
+          classeExclusive: classeExclusive ?? classeGlobale, filtre: filtreDeZone(filtreGlobal, filtre, FILTRE_PAR_DEFAUT),
         });
       } else if (zi === zoneDebut && echantillonId === -1) {
         enveloppeGlobale = enveloppe;
+        filtreGlobal = filtre;
         classeGlobale = classeExclusive ?? 0;
       }
     }
@@ -322,7 +329,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
     let globalPan = 0;
     // L'enveloppe d'une zone de preset DÉCALE celle de l'instrument. Sa zone globale suit la norme :
     // un générateur local la remplace, il ne s'y ajoute pas, à la différence des accumulateurs voisins.
-    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {};
+    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {}, filtreGlobal: Partial<GenerateursFiltre> = {};
     for (let zi = zoneDebut; zi < Math.min(zoneFin, nbPbag); zi++) {
       const genDebut = lirePbagIndex(zi);
       const genFin = lirePbagIndex(zi + 1);
@@ -334,14 +341,14 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let fineTune = 0;
       let attenuation = 0;
       let pan = 0;
-      const enveloppe: Partial<GenerateursEnveloppe> = {};
+      const enveloppe: Partial<GenerateursEnveloppe> = {}, filtre: Partial<GenerateursFiltre> = {};
 
       for (let gi = genDebut; gi < Math.min(genFin, nbPgen); gi++) {
         const genBase = pgenChunk.pos + gi * 4;
         const type = lireUint16(v, genBase);
         const valeur = lireUint16(v, genBase + 2);
 
-        if (lireGenerateurEnveloppe(enveloppe, type, valeur)) continue;
+        if (lireGenerateurEnveloppe(enveloppe, type, valeur) || lireGenerateurFiltre(filtre, type, valeur)) continue;
         if (type === GEN_KEY_RANGE) {
           noteMin = valeur & 0xFF;
           noteMax = (valeur >> 8) & 0xFF;
@@ -372,6 +379,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
           attenuation: attenuation + globalAttenuation,
           pan: pan + globalPan,
           enveloppe: enveloppeDeZone(enveloppeGlobale, enveloppe, AUCUN_DECALAGE),
+          filtre: filtreDeZone(filtreGlobal, filtre, AUCUN_DECALAGE_FILTRE),
         });
       } else if (instrumentIdx === -1) {
         // Zone globale (pas d'instrument) : accumulateurs pour les zones suivantes
@@ -380,6 +388,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         globalAttenuation += attenuation;
         globalPan += pan;
         enveloppeGlobale = { ...enveloppeGlobale, ...enveloppe };
+        filtreGlobal = { ...filtreGlobal, ...filtre };
       }
     }
 
@@ -472,6 +481,7 @@ function zonesDeLInstrument(
       attenuation: finalAttenuation,
       pan: finalPan,
       enveloppe: additionnerEnveloppes(zone.enveloppe ?? ENVELOPPE_PAR_DEFAUT, presetZone?.enveloppe),
+      filtre: additionnerFiltres(zone.filtre ?? FILTRE_PAR_DEFAUT, presetZone?.filtre),
     };
 
     matches.push({

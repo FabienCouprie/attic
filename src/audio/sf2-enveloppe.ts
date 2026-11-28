@@ -40,6 +40,8 @@
 // milliseconde, et toute la pièce avec elle contre ce que rend la synthèse FM du même graphe.
 // Au-dessus du plancher, il est lu.
 
+import { additionner, borne, deZone, lireDans, secondes, type Champs } from "./sf2-generateurs";
+
 /** Les huit générateurs de l'enveloppe de volume, 33 à 40, dans les unités du fichier. */
 export interface GenerateursEnveloppe {
   /** 33, delayVolEnv : timecents. */
@@ -60,7 +62,7 @@ export interface GenerateursEnveloppe {
   toucheChute: number;
 }
 
-const CHAMPS: Readonly<Record<number, keyof GenerateursEnveloppe>> = {
+const CHAMPS: Champs<GenerateursEnveloppe> = {
   33: "retard", 34: "attaque", 35: "maintien", 36: "chute",
   37: "palier", 38: "relachement", 39: "toucheMaintien", 40: "toucheChute",
 };
@@ -82,10 +84,7 @@ export const AUCUN_DECALAGE: Readonly<GenerateursEnveloppe> = {
  * Les huit sont signés sur seize bits : un relâchement de −1586 s'écrit 63950 dans le fichier.
  */
 export function lireGenerateurEnveloppe(cible: Partial<GenerateursEnveloppe>, type: number, brut: number): boolean {
-  const champ = CHAMPS[type];
-  if (!champ) return false;
-  cible[champ] = brut & 0x8000 ? brut - 65536 : brut;
-  return true;
+  return lireDans(CHAMPS, cible, type, brut);
 }
 
 /**
@@ -98,17 +97,14 @@ export function lireGenerateurEnveloppe(cible: Partial<GenerateursEnveloppe>, ty
 export function enveloppeDeZone(
   globale: Partial<GenerateursEnveloppe>, locale: Partial<GenerateursEnveloppe>, defaut: Readonly<GenerateursEnveloppe>,
 ): GenerateursEnveloppe {
-  return { ...defaut, ...globale, ...locale };
+  return deZone(globale, locale, defaut);
 }
 
 /** Ce que joue une zone d'instrument sous une zone de preset : la somme, générateur par générateur. */
 export function additionnerEnveloppes(
   instrument: Readonly<GenerateursEnveloppe>, preset: Readonly<GenerateursEnveloppe> | undefined,
 ): GenerateursEnveloppe {
-  const somme = { ...instrument };
-  if (!preset) return somme;
-  for (const champ of Object.values(CHAMPS)) somme[champ] += preset[champ];
-  return somme;
+  return additionner(CHAMPS, instrument, preset);
 }
 
 /** L'enveloppe d'une note, en secondes, et son palier en centibels. */
@@ -127,8 +123,6 @@ export interface EnveloppeEnSecondes {
 /** −7200 timecents, 15,6 ms : le plancher de FluidSynth, contre le claquement. Voir l'en-tête. */
 export const PLANCHER_RELACHEMENT = -7200;
 
-const borne = (x: number, min: number, max: number) => Math.min(max, Math.max(min, x));
-const secondes = (tc: number, min: number, max: number) => 2 ** (borne(tc, min, max) / 1200);
 
 /**
  * L'enveloppe que joue la touche `note`, les plages de la norme appliquées APRÈS la somme du preset

@@ -18,6 +18,7 @@ import type { NoteEvenement } from "./midi-sequence";
 import { echantillonCubique } from "./interpolation";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { CourseEnveloppe, ENVELOPPE_PAR_DEFAUT, RELACHEMENT_ETOUFFE, enveloppeEnSecondes } from "./sf2-enveloppe";
+import { CourseModulation, FILTRE_PAR_DEFAUT, FiltreVoix, filtreOuvert, modulationEnSecondes } from "./sf2-filtre";
 
 /** Une note jouée par une zone, prête à rendre : tout ce que la boucle d'échantillons lit. */
 interface Voix {
@@ -31,6 +32,8 @@ interface Voix {
   gainDroite: number;
   boucleActive: boolean;
   enveloppe: CourseEnveloppe;
+  /** Le passe-bas de la zone, ou rien quand il est ouvert : voir `sf2-filtre.ts`. */
+  filtre: FiltreVoix | null;
 }
 
 const panDe = (match: ZoneJouee) => {
@@ -57,17 +60,20 @@ function preparerVoix(match: ZoneJouee, n: NoteEvenement, sr: number, vol: numbe
   const debutEch = Math.max(0, Math.floor(n.debut * sr));
   const etouffement = etouffe === undefined ? undefined : { debut: etouffe - debutEch, relachement: RELACHEMENT_ETOUFFE };
   const enveloppe = new CourseEnveloppe(enveloppeEnSecondes(zone.enveloppe ?? ENVELOPPE_PAR_DEFAUT, n.note), sr, tenue, etouffement);
+  const f = zone.filtre ?? FILTRE_PAR_DEFAUT;
+  const filtre = filtreOuvert(f) ? null : new FiltreVoix(f, sr,
+    f.versCoupure !== 0 ? new CourseModulation(modulationEnSecondes(f, n.note), sr, tenue, etouffement) : null);
   // Sans boucle, la voix ne dure pas plus que son échantillon, quoi que dise le relâchement : un
   // relâchement de vingt-neuf secondes sur une frappe de trois dixièmes n'allonge pas le tampon.
   const finEchantillon = boucleActive ? Infinity : Math.ceil(srcLen / ratio);
   return {
     match, debutEch, nbEch: Math.min(enveloppe.longueur, finEchantillon),
-    ratio, gain, gainGauche: Math.sqrt((1 - pan) / 2), gainDroite: Math.sqrt((1 + pan) / 2), boucleActive, enveloppe,
+    ratio, gain, gainGauche: Math.sqrt((1 - pan) / 2), gainDroite: Math.sqrt((1 + pan) / 2), boucleActive, enveloppe, filtre,
   };
 }
 
 function jouerVoix(v: Voix, gauche: Float32Array, droite: Float32Array): void {
-  const { match, ratio, gain, gainGauche, gainDroite, boucleActive, enveloppe, debutEch } = v;
+  const { match, ratio, gain, gainGauche, gainDroite, boucleActive, enveloppe, debutEch, filtre } = v;
   const ech = match.echantillon;
   const donnees = match.donnees;
   const srcDebut = match.debutSample;
@@ -118,7 +124,8 @@ function jouerVoix(v: Voix, gauche: Float32Array, droite: Float32Array): void {
       }
       return donnees[srcDebut + Math.min(srcLen - 1, Math.max(0, rel))];
     };
-    const g = echantillonCubique(lire, srcDebut + srcPos);
+    const lu = echantillonCubique(lire, srcDebut + srcPos);
+    const g = filtre ? filtre.traiter(lu) : lu;
     const mono = (g / 32768) * gain * enveloppe.suivant();
     gauche[posSortie] += mono * gainGauche;
     droite[posSortie] += mono * gainDroite;
