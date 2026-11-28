@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et quarante-trois gardes sur lui-même : ils
+cela un banc de mesure, une base d'empreintes et quarante-quatre gardes sur lui-même : ils
 s'emploient, ils ne se réinventent pas.
 
 ---
@@ -198,11 +198,12 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — quarante-trois contrats sur le dépôt lui-même : registre des réglages,
+- **`src/docs/*.test.ts`** — quarante-quatre contrats sur le dépôt lui-même : registre des réglages,
   **le contrat de chaque composant tel qu'un graphe enregistré en dépend**, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
-  théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, **les identifiants
+  théorique, contrat de graphe, générateur commun du hasard, **le bruit rose commun — que le filtre de
+  Kellet ne s'écrive qu'une fois** —, frontière du domaine, **les identifiants
   de fiche — qu'aucune chaîne du cœur n'en nomme un, plus aucune dette depuis le 2026-11-21** —, frontière du cache
   du moteur, couverture des
   empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **le croisement
@@ -224,7 +225,7 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
-- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 90 composants
+- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 91 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :
 

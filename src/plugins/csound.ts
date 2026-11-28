@@ -143,8 +143,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Orchestre", nomEn: "Orchestra", type: "texte", defaut: ORCHESTRE_EXEMPLE, defautEn: ORCHESTRE_EXEMPLE_EN,
-        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 ». La fréquence d'échantillonnage et 0dbfs sont posés par le composant : n'écrivez ni sr ni 0dbfs.",
-        docEn: "The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard only if the orchestra reads it, with « a1 diskin2 \"entree1.wav\", 1 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs." },
+        doc: "Les instruments, en langage Csound, employés si aucune entrée Orchestre n'est branchée. Un son branché sur l'entrée Audio est écrit sous le nom « entree1.wav » et ne se joue que si l'orchestre le lit, par « a1 diskin2 \"entree1.wav\", 1 », ou la partition par une table « f1 0 0 1 \"entree1.wav\" 0 0 0 ». La fréquence d'échantillonnage et 0dbfs sont posés par le composant : n'écrivez ni sr ni 0dbfs.",
+        docEn: "The instruments, in Csound language, used when no Orchestra input is connected. A sound connected to the Audio input is written as « entree1.wav » and is heard only if the orchestra reads it, with « a1 diskin2 \"entree1.wav\", 1 », or the score through a table « f1 0 0 1 \"entree1.wav\" 0 0 0 ». The sampling rate and 0dbfs are set by the node: do not write sr or 0dbfs." },
       { nom: "Partition", nomEn: "Score", type: "texte", defaut: PARTITION_EXEMPLE, defautEn: PARTITION_EXEMPLE,
         doc: "Quand jouer quoi. « i1 0 1 220 0.5 » joue l'instrument 1 à l'instant 0 pendant 1 seconde, avec 220 et 0,5 comme p4 et p5. Trois sources possibles, par ordre de priorité : un MIDI branché, puis l'entrée Partition, puis ce champ, et le composant dit dans son message laquelle il a prise. Le « e » final est ajouté s'il manque.",
         docEn: "When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field, and the node states in its message which one it took. The final « e » is added if missing." },
@@ -162,8 +162,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Canaux d'entrée", nomEn: "Input channels", type: "choix",
         ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
-        doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon, ce qui donne un rendu muet.",
-        docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
+        doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon : le composant rend alors l'erreur de Csound.",
+        docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise: the node then returns Csound's error." },
       ...PARAMETRES_SORTIE,
     ],
     async executer(ctx) {
@@ -188,13 +188,23 @@ export const fiches: FicheAudio[] = ([
       // affichée dans le nœud — il faut la brancher pour la lire —, si bien qu'un avertissement
       // qui n'y serait que là passerait inaperçu. Court dans le message, qui est toujours
       // visible ; entier dans le Rapport, qui a la place d'expliquer quoi faire.
+      // LE SON SE LIT AUSSI PAR LA PARTITION, dans une table GEN01 : la chercher dans l'orchestre seul
+      // faisait dire « jamais lu » d'un son entendu. Et un programme qui le lit sans son branché est
+      // refusé en le nommant : Csound refusait la note (« diskin2: entree1.wav: failed to open
+      // file »), ne terminait plus la partition, et le composant accusait celle-ci après cinq
+      // tentatives. Les deux relevés le 2026-11-27, à la demande de Fabien.
+      const programme = `${orchestre.texte}\n${partition}`;
+      if (entrees.length === 0 && orchestreLit(programme, "entree1.wav")) {
+        const refus = traduire("msg.csound.entreeAbsente_var_0", "entree1.wav");
+        return { valeurs: [null, refus], erreur: true, message: refus };
+      }
       const alertes: string[] = [];
       const remarques: string[] = [];
       if (choix.ignoree === "port") {
         alertes.push(traduire("msg.csound.partitionIgnoreeCourt"));
         remarques.push(traduire("msg.csound.partitionIgnoree"));
       }
-      const muettes = entreesNonLues(orchestre.texte, entrees);
+      const muettes = entreesNonLues(programme, entrees);
       alertes.push(...muettes.alertes);
       remarques.push(...muettes.remarques);
 
@@ -336,8 +346,8 @@ endin`,
       { nom: "Canaux d'entrée", nomEn: "Input channels", type: "choix",
         ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
-        doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon, ce qui donne un rendu muet.",
-        docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
+        doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon : le composant rend alors l'erreur de Csound.",
+        docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise: the node then returns Csound's error." },
       ...PARAMETRES_SORTIE,
     ],
     async executer(ctx) {
@@ -398,16 +408,23 @@ endin`,
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A3", defautEn: "A3",
         doc: "Note jouée quand aucun MIDI n'est branché. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.", docEn: "Note played when no MIDI is connected. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Pression", nomEn: "Pressure", type: "nombre", plage: [0, 100], pas: 1, defaut: 40, unite: "%",
-        doc: "Pression d'archet, raideur d'anche, souffle ou tension des lèvres selon l'instrument.",
-        docEn: "Bow pressure, reed stiffness, breath or lip tension depending on the instrument." },
+        doc: "Pression d'archet, raideur d'anche, souffle ou tension des lèvres selon l'instrument ; sur la corde pincée, le point de pincement, de 11 à 95 % de la corde.",
+        docEn: "Bow pressure, reed stiffness, breath or lip tension depending on the instrument; on the plucked string, the pluck point, from 11 to 95 % of the string." },
       { nom: "Position", nomEn: "Position", type: "nombre", plage: [0, 100], pas: 1, defaut: 25, unite: "%",
-        doc: "Position d'archet, rapport du jet d'air, temps d'attaque ou fréquence de formant selon l'instrument. C'est le réglage le plus sensible de la plupart d'entre eux.",
-        docEn: "Bow position, air jet ratio, attack time or formant frequency depending on the instrument. It is the most sensitive control of most of them." },
+        doc: "Position d'archet, rapport du jet d'air, temps d'attaque ou fréquence de formant selon l'instrument ; sur la corde pincée, le point de captation, de 5 à 45 % de la corde. C'est le réglage le plus sensible de la plupart d'entre eux.",
+        docEn: "Bow position, air jet ratio, attack time or formant frequency depending on the instrument; on the plucked string, the pickup point, from 5 to 45 % of the string. It is the most sensitive control of most of them." },
       { nom: "Vibrato", nomEn: "Vibrato", type: "nombre", plage: [0, 100], pas: 1, defaut: 20, unite: "%",
         doc: "Profondeur du vibrato. Sans effet sur la corde pincée et les formants.",
         docEn: "Vibrato depth. No effect on the plucked string and the formants." },
       { nom: "Fréquence vibrato", nomEn: "Vibrato rate", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 6, unite: "Hz",
         doc: "Vitesse du vibrato.", docEn: "Vibrato speed." },
+      // LA RÉFLEXION DE LA CORDE PINCÉE, ajoutée le 2026-11-27 sur la décision de Fabien, « B, ajouter
+      // Réflexion » : `wgpluck2` la recevait figée à 0,05. Son défaut rend ce son-là, si bien qu'un
+      // graphe enregistré ne change pas. Elle est sans effet hors de la corde pincée, comme le Vibrato
+      // l'est sur la corde pincée et les formants, et sa documentation le dit.
+      { nom: "Réflexion", nomEn: "Reflection", type: "nombre", plage: [1, 99], pas: 1, defaut: 5, unite: "%",
+        doc: "Coefficient de réflexion de la corde pincée au chevalet, krefl de wgpluck2. Plus il est haut, plus la corde s'éteint vite : sur un la à 220 Hz, elle sonne encore au bout de trois secondes jusqu'à 60 %, perd 60 dB en une seconde à 90 % et en un dixième de seconde à 99 %. Sans effet sur les autres instruments.",
+        docEn: "Reflection coefficient of the plucked string at the bridge, krefl of wgpluck2. The higher it is, the faster the string dies out: on an A at 220 Hz, it still rings after three seconds up to 60 %, loses 60 dB in one second at 90 % and in a tenth of a second at 99 %. No effect on the other instruments." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.1, 20], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée de la note, quand aucun MIDI n'est branché.", docEn: "Note duration, when no MIDI is connected." },
       ...PARAMETRES_SORTIE,
@@ -420,6 +437,7 @@ endin`,
         position: ctx.paramNombre("Position", 25) / 100,
         vibrato: ctx.paramNombre("Vibrato", 20) / 100,
         frequenceVibrato: ctx.paramNombre("Fréquence vibrato", 6),
+        reflexion: ctx.paramNombre("Réflexion", 5) / 100,
       });
       const notes = await notesDuMidi(ctx.entree(0));
       let partition: string;

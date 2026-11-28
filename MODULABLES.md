@@ -96,9 +96,9 @@ Ces composants sont écartés **en entier** : la raison porte sur le composant.
 - `visualiseur-courbe` : il DESSINE une courbe au lieu d'en être piloté ; « Largeur » et « Hauteur » sont les dimensions de son image, non des grandeurs du son
 - `profil-melodique` : la courbe est sa matière : il en tire un profil de hauteurs, il n'en est pas piloté
 - `evolution-melodie` : la courbe est sa matière : elle décrit l'évolution demandée, elle ne pilote aucun réglage
-- `matrice-parametres` : la courbe est sa matière : elle alimente la matrice, elle ne pilote aucun réglage
-- `partition-csound` : la courbe est sa matière : elle devient une partition, elle ne pilote aucun réglage
-- `partition-aleatoire-csound` : la courbe est sa matière : elle devient une partition, elle ne pilote aucun réglage
+- `matrice-parametres` : la courbe est sa matière : elle remplace le champ que désigne « Champ piloté », une valeur par événement, et ne pilote aucun réglage
+- `partition-csound` : la courbe est sa matière : elle s'écrit, à l'attaque de chaque note, dans les p-fields réglés sur « Courbe », et ne pilote aucun réglage
+- `partition-aleatoire-csound` : la courbe module la densité des attaques par amincissement, une décision par attaque tirée : elle écrit une partition et non un son, qu'aucune valeur par échantillon n'aurait à suivre
 - `parole-vers-sequence` : sa transposition s'applique une fois par MOT, sur un numéro de note MIDI arrondi : quelques valeurs par seconde, et elle n'a de sens qu'au moment où une note se pose
 - `sms-sinusoides-bruit` : une transposition nulle DÉCOUPE les partiels dans le son, une transposition non nulle les REFABRIQUE par addition : à 0,001 demi-ton, le rendu s'écarte déjà de celui à zéro de 113 % de sa valeur efficace, et son « Seuil » décide quels partiels sont suivis, par trames
 - `stn-sinus-transitoires-bruit` : traitement par trames : une valeur par bloc, non par échantillon

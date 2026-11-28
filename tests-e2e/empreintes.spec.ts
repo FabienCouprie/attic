@@ -249,11 +249,21 @@ const SURVEILLES: {
   // Logistique, dont l etiquette annoncait une courbe en S et rendait une suite chaotique. Son
   // empreinte porte le nombre de paliers, qui distingue une courbe lisse d un escalier.
   { id: "generateur-courbe", parametres: { Forme: "Logistique" } },
-  // LES DEUX CORDES QUE CALCULE `audio/corde-pincee.ts`, retouché le 2026-11-27 pour la corde de
-  // Karplus-Strong : la seconde est née ce jour-là, et la première ne devait pas bouger d'un
-  // échantillon. La graine est épinglée, le bruit qui pince la corde étant tiré au hasard. La corde de
-  // Karplus-Strong reçoit le MIDI d'essai, que le banc donne à son entrée MIDI.
-  { id: "pluck-synth", parametres: { "Graine": 1 } },
+  // LE BRUIT ROSE ET LE PASSE-TOUT D'ACCORD, ÉCRITS UNE SEULE FOIS le 2026-11-27 : quatre copies du
+  // filtre de Kellet et deux du passe-tout sont devenues `core/bruit-rose.ts` et
+  // `audio/passe-tout.ts`. « Peignes accordés » est surveillé plus haut ; ces deux générateurs
+  // prennent les deux modules, et leur empreinte a été écrite sur les copies d'avant. Graine épinglée :
+  // leur défaut, zéro, tire au sort à chaque exécution.
+  { id: "pluck-synth", parametres: { Graine: 7 } },
+  { id: "generateur-bruit", parametres: { Type: "Rose", Graine: 7 } },
+  // « Instruments Csound » sur `wgpluck2` est écarté de la base, le même jour : son rendu ne se
+  // reproduit pas d'une machine à l'autre. Ici, trois passages à 0,273423763 de valeur efficace ;
+  // sur l'intégration continue, 0,268730044, soit 1,7 %, dix-sept fois la tolérance de « Particules »,
+  // et une tolérance assez large pour l'absorber laisserait passer un changement de niveau de
+  // 0,15 dB. Son réglage « Réflexion » est tenu par `src/plugins/csound.test.ts`.
+  // LA CORDE DE KARPLUS-STRONG, née le 2026-11-27 sur le même `audio/corde-pincee.ts`, graine épinglée.
+  // Elle reçoit le MIDI d'essai, que le banc donne à son entrée MIDI ; « Pluck Synth » aussi, depuis
+  // qu'il a la sienne (2026-11-28), et son empreinte a été réécrite ce jour-là.
   { id: "karplus-strong", parametres: { "Graine": 1 } },
 ];
 

@@ -63,6 +63,33 @@
     "réglage « Durée » : défaut 8 → 12"
    ],
    "raison": "Décision de Fabien du 2026-11-26, après la sonde du tempo sur le catalogue : la Musique fractale lisait son Tempo puis l'annulait, en recalant toute sa mélodie pour remplir sa « Durée ». Chaque note dure désormais sa « Valeur d'une note », réglage neuf en temps que le Tempo convertit, et la « Durée » est une longueur maximale : les notes qui n'y tiennent pas entières ne sont pas jouées, et le message le dit. Le garde ne voit que le défaut de la durée, qui passe de 8 à 12 s pour que la mélodie par défaut, 27 croches à 80 BPM, soit 10,125 s, tienne entière. LE SON CHANGE AUSSI SOUS LA MÊME DURÉE, ce que le manifeste ne lit pas : un graphe enregistré à 8 s rendait 27 notes de 0,296 s ; il en rend 21 de 0,375 s, coupées à 8 s, et le message le dit. Aucun graphe de exemples/ ni de presets/ n'emploie ce composant ; tests-e2e/montage-pistes.spec.ts l'emploie à ses défauts et ne mesure que la crête de ses deux premières secondes."
+  },
+  {
+   "composant": "matrice-parametres",
+   "version": 2,
+   "date": "2026-11-27",
+   "ruptures": [
+    "entrée 0 « Courbe » : renommée « Courbe du champ piloté »"
+   ],
+   "raison": "Demandé par Fabien le 2026-11-27 : « les nodes csounds pilotés par des courbes, ne disent pas ce que la courbe pilote ». Le port garde son rang et son type, et un câble enregistré arrive toujours sur lui : rien n'est perdu à l'ouverture, seul le nom affiché change, pour dire que la courbe remplace le champ que désigne « Champ piloté ». LA PARTITION CHANGE AUSSI, ce que le manifeste ne lit pas : décision de Fabien du 2026-11-27, « Oui, la convention », 0 donne « Minimum » et 1 « Maximum », là où la courbe était étalée de son propre minimum à son propre maximum. Une rampe de 0,48 à 0,52 sur cinq événements, de 100 à 1000, écrivait 100 à 1000 ; elle écrit 532 à 568. Une rampe de 0 à 1 écrit la même chose qu'avant. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant par un câble ; tests-e2e/csound-relit.spec.ts le lance par rang, sans courbe."
+  },
+  {
+   "composant": "partition-aleatoire-csound",
+   "version": 2,
+   "date": "2026-11-27",
+   "ruptures": [
+    "entrée 0 « Courbe » : renommée « Courbe de densité »"
+   ],
+   "raison": "Demandé par Fabien le 2026-11-27, pour la même raison : la courbe module la densité des attaques, et « Courbe » ne le disait pas. Le port garde son rang et son type, et un câble enregistré arrive toujours sur lui : rien n'est perdu à l'ouverture, seul le nom affiché change. LA PARTITION CHANGE AUSSI QUAND UNE COURBE EST BRANCHÉE, ce que le manifeste ne lit pas : décision de Fabien du 2026-11-27, « Oui, un flux à part », l'amincissement tire ses nombres d'un générateur à part, si bien qu'une courbe à 1 redonne la partition sans courbe à la même graine. Une partition enregistrée avec une courbe garde sa densité et sa loi, mais pas ses événements. Sans courbe, rien ne change. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant par un câble ; tests-e2e/csound-relit.spec.ts le lance par rang, sans courbe."
+  },
+  {
+   "composant": "partition-csound",
+   "version": 2,
+   "date": "2026-11-27",
+   "ruptures": [
+    "entrée 1 « Courbe » : renommée « Courbe des p-fields »"
+   ],
+   "raison": "Demandé par Fabien le 2026-11-27, pour la même raison : la courbe s'écrit dans les p-fields réglés sur « Courbe », et « Courbe » ne le disait pas. Le port garde son rang et son type, et un câble enregistré arrive toujours sur lui : rien n'est perdu à l'ouverture, seul le nom affiché change. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant par un câble ; tests-e2e/csound-relit.spec.ts le lance par rang, sans courbe."
   }
  ]
 }

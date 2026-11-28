@@ -87,6 +87,10 @@ const BLOCS_MAX = 10_000;
  * cent vingt : environ un pour cent, trop rare pour qu'une reprise ait pu être observée en train de
  * le rattraper. La reprise est gardée parce qu'elle ne coûte rien et que le mode existe, non parce
  * qu'une mesure l'a validée.
+ *
+ * SAUF QUAND UNE NOTE A ÉTÉ REFUSÉE À L'INITIALISATION : voir `noteRefusee`. La cause est alors dans
+ * l'orchestre, et la reprendre ne la change pas : relevé le 2026-11-27, cinq tentatives sur cinq
+ * portaient la même INIT ERROR, sur diskin2, soundin et un fichier stéréo lu par une seule sortie.
  */
 const TENTATIVES = 5;
 
@@ -267,6 +271,27 @@ export function premiereErreur(messages: string[]): string | null {
     if (/error|unknown opcode|syntax error|used before|cannot find/i.test(ligne)) {
       return ligne.trim().slice(0, 200);
     }
+  }
+  return null;
+}
+
+/**
+ * La note que Csound a refusée à l'initialisation, quand il en a refusé une.
+ *
+ * UNE NOTE REFUSÉE PEUT EMPÊCHER LA FIN DE LA PARTITION, et c'est ce que le refus nommait mal.
+ * Relevé le 2026-11-27 : un orchestre qui lit « entree2.wav » sans qu'aucun son ne porte ce nom fait
+ * imprimer « INIT ERROR … diskin2: entree2.wav: failed to open file », puis « Score finished in
+ * csoundPerformKsmps() with 2 » et « end of score » ; `performBuffer` ne rend pourtant que des zéros,
+ * le plafond de blocs est atteint, et le composant accusait la partition après cinq tentatives de
+ * quatre à cinq secondes en tout. Même chose par soundin, et par un diskin2 à une sortie sur un
+ * fichier stéréo. Une note refusée parmi d'autres qui jouent, elle, laisse la partition finir.
+ *
+ * Elle ne se cherche donc que dans les messages d'une tentative qui a tapé le plafond, et la ligne
+ * rendue est celle de Csound, qui nomme l'opcode, le fichier et la raison.
+ */
+export function noteRefusee(messages: string[]): string | null {
+  for (const ligne of messages.flatMap((m) => m.split("\n"))) {
+    if (/^\s*INIT ERROR/.test(ligne)) return ligne.trim().slice(0, 200);
   }
   return null;
 }
@@ -513,6 +538,8 @@ async function rendreCsdSansFile(
       // `cleanup()` de la fin retronque le fichier à son en-tête dès qu'il est lu, et il ne
       // reste qu'une entrée de répertoire de quatre-vingts octets.
       const nomSortie = `sortie-${++numeroRendu}.wav`;
+      // Les messages de CETTE tentative commencent ici : une note refusée se lit dans les siens.
+      const depuis = messages.length;
       const code = await csound.compileCsdText(substituerNom(programme, NOM_SORTIE, nomSortie));
       if (code !== 0) {
         // Remettre l'instance à zéro même ici : la laisser avec un orchestre à moitié compilé
@@ -544,6 +571,10 @@ async function rendreCsdSansFile(
       // quarante au repos, une sur quarante sous charge, et les deux fois `sansFin`. Une partition
       // qui se termine trente-neuf fois sur quarante n'est pas une partition sans fin.
       if (!sansFin && octets.length > 128) break;
+      // Une note refusée à l'initialisation explique le plafond : elle est rendue telle que Csound
+      // l'a dite, sans reprise ni trace de perte, le moteur n'ayant rien perdu.
+      const refusee = sansFin ? noteRefusee(messages.slice(depuis)) : null;
+      if (refusee) return { ...vide, erreur: refusee, blocs, ms: performance.now() - debut };
       const perdue = sansFin
         ? `tentative ${essai} perdue : ${blocs} blocs sans fin de partition`
         : `tentative ${essai} perdue : ${octets.length} octets écrits`;
@@ -612,6 +643,8 @@ async function rendreCsdSansFile(
     // diskin2 mal apparié, le nœud annonçait un succès de trois secondes muettes. On
     // remonte donc l'erreur quand le rendu est silencieux — et faute d'erreur imprimée, on le
     // dit quand même, plutôt que de rendre un buffer vide en annonçant un succès.
+    // Relevé le 2026-11-27, ce diskin2 mal apparié ne vient plus jusqu'ici : sa note refusée empêche
+    // la fin de partition, et c'est `noteRefusee` qui la nomme. Ce chemin reste pour le rendu muet.
     if (crete < 1e-6) {
       return {
         ...vide,

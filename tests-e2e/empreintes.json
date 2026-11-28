@@ -233,7 +233,7 @@
     },
     "peignes-accordes": {
       "empreintes": [
-        "0.201172813/0.528780282"
+        "0.201172467/0.528780282"
       ],
       "message": "3 peignes"
     },
@@ -578,9 +578,15 @@
     },
     "pluck-synth": {
       "empreintes": [
-        "0.010046746/0.396614760"
+        "0.011921163/0.335746020"
       ],
-      "message": "8 note(s) du MIDI · 4.95 s · graine 1"
+      "message": "8 note(s) du MIDI · 4.95 s · graine 7"
+    },
+    "generateur-bruit": {
+      "empreintes": [
+        "0.170539144/0.720000029"
+      ],
+      "message": "Bruit rose · 2.0s · graine 7"
     },
     "karplus-strong": {
       "empreintes": [

@@ -57,7 +57,9 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Translates MIDI into a Csound score: one note per line, with a choice of pitch convention and p-fields.",
     entrees: [
       { nom: "MIDI", type: "midi" },
-      { nom: "Courbe", nomEn: "Curve", type: "courbe", requis: false },
+      // RENOMMÉE « COURBE DES P-FIELDS » LE 2026-11-27, à la demande de Fabien : « Courbe » ne disait
+      // pas ce qu'elle pilote. Le câble enregistré arrive au même rang, sur le même type.
+      { nom: "Courbe des p-fields", nomEn: "P-field curve", type: "courbe", requis: false },
     ],
     sorties: [
       { nom: "Partition", nomEn: "Score", type: "texte" },
@@ -79,17 +81,17 @@ export const fiches: FicheAudio[] = ([
         doc: "Oui : chaque canal MIDI présent reçoit son propre numéro d'instrument, à la suite du précédent. Un fichier sur les canaux 1, 2 et 10 donne les instruments 1, 2 et 3, et non 1, 2 et 10, parce qu'un orchestre numérote ses instruments à la suite. C'est ce qui permet de jouer un arrangement complet avec plusieurs instruments Csound, et la sortie Rapport dit la correspondance. Non : tout part sur le même numéro.",
         docEn: "Yes: each MIDI channel present gets its own instrument number, following the previous one. A file on channels 1, 2 and 10 yields instruments 1, 2 and 3, not 1, 2 and 10, because an orchestra numbers its instruments consecutively. This is what lets a whole arrangement be played by several Csound instruments, and the Report output states the mapping. NO: everything goes to the same number." },
       champ("p4", "p4", "hauteur",
-        "Ce que porte le quatrième champ de chaque note. La hauteur y est l'usage, et la plupart des orchestres la lisent là. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
-        "What the fourth field of each note carries. Pitch is the custom, and most orchestras read it there. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
+        "Ce que porte le quatrième champ de chaque note. La hauteur y est l'usage, et la plupart des orchestres la lisent là. « Courbe » y écrit la valeur de la courbe branchée sur « Courbe des p-fields » à l'attaque de la note, telle quelle. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
+        "What the fourth field of each note carries. Pitch is the custom, and most orchestras read it there. « Curve » writes there the value of the curve connected to « P-field curve » at the note's onset, as is. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
       champ("p5", "p5", "amplitude",
-        "Ce que porte le cinquième champ. L'amplitude, c'est-à-dire la vélocité ramenée entre 0 et 1, y est l'usage, `0dbfs` valant 1 ici. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
-        "What the fifth field carries. Amplitude, that is velocity brought to the range 0 to 1, is the custom, `0dbfs` being 1 here. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
+        "Ce que porte le cinquième champ. L'amplitude, c'est-à-dire la vélocité ramenée entre 0 et 1, y est l'usage, `0dbfs` valant 1 ici. « Courbe » y écrit la valeur de la courbe branchée sur « Courbe des p-fields » à l'attaque de la note, telle quelle. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
+        "What the fifth field carries. Amplitude, that is velocity brought to the range 0 to 1, is the custom, `0dbfs` being 1 here. « Curve » writes there the value of the curve connected to « P-field curve » at the note's onset, as is. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
       champ("p6", "p6", "note",
-        "Ce que porte le sixième champ. Le numéro DE note y est commode même quand p4 porte déjà la hauteur : un orchestre s'en sert pour choisir une table ou un registre. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
-        "What the sixth field carries. The note number is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
+        "Ce que porte le sixième champ. Le numéro DE note y est commode même quand p4 porte déjà la hauteur : un orchestre s'en sert pour choisir une table ou un registre. « Courbe » y écrit la valeur de la courbe branchée sur « Courbe des p-fields » à l'attaque de la note, telle quelle. « Rien » y écrit 0 si un champ suivant est écrit, et l'omet sinon.",
+        "What the sixth field carries. The note number is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. « Curve » writes there the value of the curve connected to « P-field curve » at the note's onset, as is. « Nothing » writes 0 there if a later field is written, and omits it otherwise."),
       champ("p7", "p7", "rien",
-        "Ce que porte le septième champ. « Rien » l'omet.",
-        "What the seventh field carries. « Nothing » omits it."),
+        "Ce que porte le septième champ. « Courbe » y écrit la valeur de la courbe branchée sur « Courbe des p-fields » à l'attaque de la note, telle quelle. « Rien » l'omet.",
+        "What the seventh field carries. « Curve » writes there the value of the curve connected to « P-field curve » at the note's onset, as is. « Nothing » omits it."),
       { nom: "Constante", nomEn: "Constant", type: "nombre", plage: [-1000, 1000], pas: 0.01, defaut: 0,
         doc: "Valeur du champ « Constante ». Sert à passer un réglage fixe à l'orchestre, un indice de table, un facteur, une position stéréo. N'agit que si l'un des champs « p4 », « p5 », « p6 » ou « p7 » vaut « Constante ».",
         docEn: "Value of the « Constant » field. Used to pass a fixed setting to the orchestra, a table index, a factor, a stereo position. Acts only when one of the fields « p4 », « p5 », « p6 » or « p7 » is « Constant »." },
@@ -132,10 +134,14 @@ export const fiches: FicheAudio[] = ([
 
       // Un champ « Courbe » demandé sans courbe branchée vaudrait zéro partout, en silence : c'est
       // le genre d'oubli qui fait chercher longtemps du côté de l'orchestre.
+      // ET LE MESSAGE NOMME LES CHAMPS QUI PORTENT LA COURBE, ou dit qu'aucun ne la porte : le port ne
+      // pilote rien par lui-même, ce sont les champs réglés sur « Courbe » qui la lisent, et une
+      // courbe branchée sans eux était jetée sans un mot. Demandé par Fabien le 2026-11-27.
       const alertes: string[] = [];
-      if (!courbe && CHAMPS_DECLARES.some(([nom, defaut]) => ctx.paramTexte(nom, defaut) === "courbe")) {
-        alertes.push(traduire("msg.csound.courbeAbsente"));
-      }
+      const lecteurs = CHAMPS_DECLARES.filter(([nom, defaut]) => ctx.paramTexte(nom, defaut) === "courbe").map(([nom]) => nom);
+      if (!courbe && lecteurs.length > 0) alertes.push(traduire("msg.csound.courbeAbsente"));
+      if (courbe && lecteurs.length > 0) alertes.push(traduire("msg.csound.courbeEcrite_var_0", lecteurs.join(", ")));
+      if (courbe && lecteurs.length === 0) alertes.push(traduire("msg.csound.courbeInutile"));
       return {
         valeurs: [texte, rapportLisible(rapport, langueCourante() === "en")],
         message: traduire("msg.csound.partitionEcrite",

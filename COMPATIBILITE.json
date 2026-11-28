@@ -2261,6 +2261,7 @@
     {"nom":"Position","type":"nombre","defaut":25,"min":0,"max":100,"unite":"%"},
     {"nom":"Vibrato","type":"nombre","defaut":20,"min":0,"max":100,"unite":"%"},
     {"nom":"Fréquence vibrato","type":"nombre","defaut":6,"min":0.5,"max":12,"unite":"Hz"},
+    {"nom":"Réflexion","type":"nombre","defaut":5,"min":1,"max":99,"unite":"%"},
     {"nom":"Durée","type":"nombre","defaut":2,"min":0.1,"max":20,"unite":"s"},
     {"nom":"Volume","type":"nombre","defaut":80,"min":0,"max":100,"unite":"%"}
    ]
@@ -4844,9 +4845,9 @@
    "anciensReglages": ["Fondu"]
   },
   "matrice-parametres": {
-   "version": 1,
+   "version": 2,
    "entrees": [
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe du champ piloté","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},
@@ -5859,9 +5860,9 @@
    ]
   },
   "partition-aleatoire-csound": {
-   "version": 1,
+   "version": 2,
    "entrees": [
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe de densité","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},
@@ -5888,10 +5889,10 @@
    ]
   },
   "partition-csound": {
-   "version": 1,
+   "version": 2,
    "entrees": [
     {"nom":"MIDI","type":"midi"},
-    {"nom":"Courbe","type":"courbe","requis":false}
+    {"nom":"Courbe des p-fields","type":"courbe","requis":false}
    ],
    "sorties": [
     {"nom":"Partition","type":"texte"},

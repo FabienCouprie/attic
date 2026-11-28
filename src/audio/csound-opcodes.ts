@@ -68,8 +68,8 @@ export const OPCODES: Opcode[] = [
   {
     id: "wgpluck2", fr: "Corde pincée (wgpluck2)", en: "Plucked string (wgpluck2)",
     sorte: "instrument", entrees: 0, gain: 2,
-    reglages: "Pression = réflexion de la corde, donc la durée du son. Position = point de pincement. Vibrato = sans effet.",
-    reglagesEn: "Pressure = string reflection, hence the decay. Position = pluck point. Vibrato = no effect.",
+    reglages: "Pression = point de pincement, de 11 à 95 % de la corde. Position = point de captation, de 5 à 45 %. Réflexion = coefficient de réflexion au chevalet : plus il est haut, plus la corde s'éteint vite. Vibrato = sans effet.",
+    reglagesEn: "Pressure = pluck point, from 11 to 95 % of the string. Position = pickup point, from 5 to 45 %. Reflection = reflection coefficient at the bridge: the higher it is, the faster the string dies out. Vibrato = no effect.",
   },
   {
     id: "fof2", fr: "Formants (fof2)", en: "Formants (fof2)",
@@ -119,6 +119,11 @@ export interface ReglagesInstrument {
   position: number;
   vibrato: number;
   frequenceVibrato: number;
+  /**
+   * Le coefficient de réflexion de la corde pincée, `krefl` de `wgpluck2`, de 0 à 1 ; les autres
+   * opcodes ne le lisent pas. Absent, il vaut 0,05, la valeur que `wgpluck2` a toujours reçue ici.
+   */
+  reflexion?: number;
 }
 
 /**
@@ -134,12 +139,16 @@ export function orchestreInstrument(o: Opcode, r: ReglagesInstrument): string {
   const pos = Math.max(0.01, Math.min(1, r.position));
   const vib = Math.max(0, Math.min(1, r.vibrato));
   const fvib = Math.max(0.1, r.frequenceVibrato);
+  // LA RÉFLEXION DE `wgpluck2` EST LE PÔLE DU PASSE-BAS AU CHEVALET (`repluck.c`), et l'opcode la
+  // refuse à 0 et à 1 en la ramenant à 0,5. Elle était figée à 0,05 : la corde ne s'éteignait pas
+  // pendant la note. Les arguments suivent l'ordre du manuel, `iplk, kamp, icps, kpick, krefl`.
+  const refl = Math.max(0.01, Math.min(0.99, r.reflexion ?? 0.05));
   const corps = {
     wgbow: `asig wgbow p5, p4, ${(1 + 9 * p).toFixed(3)}, ${(0.02 + 0.45 * pos).toFixed(3)}, ${fvib.toFixed(2)}, ${(0.03 * vib).toFixed(4)}, 1`,
     wgclar: `asig wgclar p5, p4, ${(0.1 + 0.8 * p).toFixed(3)}, ${(0.05 + 1.5 * pos).toFixed(3)}, 0.05, 0.3, ${fvib.toFixed(2)}, ${(0.1 * vib).toFixed(4)}`,
     wgflute: `asig wgflute p5, p4, ${(0.2 + 0.3 * pos).toFixed(3)}, 0.1, 0.1, ${(0.05 + 0.3 * p).toFixed(3)}, ${fvib.toFixed(2)}, ${(0.1 * vib).toFixed(4)}, 1`,
     wgbrass: `asig wgbrass p5, p4, ${(0.2 + 0.8 * p).toFixed(3)}, ${(0.02 + 0.3 * pos).toFixed(3)}, ${fvib.toFixed(2)}, ${(0.1 * vib).toFixed(4)}, 1`,
-    wgpluck2: `asig wgpluck2 ${(0.1 + 0.85 * p).toFixed(3)}, p5, p4, ${(0.05 + 0.4 * pos).toFixed(3)}, 0.05`,
+    wgpluck2: `asig wgpluck2 ${(0.1 + 0.85 * p).toFixed(3)}, p5, p4, ${(0.05 + 0.4 * pos).toFixed(3)}, ${refl.toFixed(3)}`,
     fof2: `asig fof2 p5, 100, ${Math.round(200 + 2000 * pos)}, 0, ${Math.round(10 + 190 * p)}, 0.003, 0.02, 0.007, 20, 1, 2, p3, 0, 0`,
   }[o.id] ?? `asig oscili p5, p4`;
   return [
