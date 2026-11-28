@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<!--
+  Essai de niveau 1 pour Attic : la batterie a motifs et ses motifs conditionnels, tous a la
+  probabilite 100, dont deux crescendos. Chaque choix est unique.
+  Ecrit pour Attic, aucun motif n'est repris des exemples de SoundHelix.
+-->
+<SoundHelix version="0.9">
+  <structure>
+    <bars>48</bars>
+    <beatsPerBar>4</beatsPerBar>
+    <ticksPerBeat>4</ticksPerBeat>
+    <maxVelocity>1000</maxVelocity>
+  </structure>
+  <harmonyEngine class="PatternHarmonyEngine">
+    <chordPattern>Am/16</chordPattern>
+  </harmonyEngine>
+  <arrangementEngine class="SimpleArrangementEngine">
+    <maxIterations>1000000</maxIterations>
+    <minActivityCount>1</minActivityCount>
+    <maxActivityCount>5</maxActivityCount>
+    <maxActivityChangeCount>2</maxActivityChangeCount>
+    <startActivityCounts>1,2,3</startActivityCounts>
+    <stopActivityCounts>3,1</stopActivityCounts>
+    <activityVector name="grosse_caisse">
+      <startAfterSection>0</startAfterSection>
+      <minActive>40</minActive>
+      <maxActive>80</maxActive>
+      <minSegmentLength>2</minSegmentLength>
+      <minSegmentCount>2</minSegmentCount>
+    </activityVector>
+    <activityVector name="caisse_claire">
+      <startAfterSection>1</startAfterSection>
+      <minActive>30</minActive>
+      <maxActive>80</maxActive>
+      <minSegmentCount>2</minSegmentCount>
+    </activityVector>
+    <activityVector name="charleston">
+      <minActive>40</minActive>
+      <maxActive>90</maxActive>
+      <minSegmentCount>2</minSegmentCount>
+    </activityVector>
+    <activityVector name="cymbale">
+      <minActive>10</minActive>
+    </activityVector>
+    <activityVector name="basse">
+      <minActive>30</minActive>
+    </activityVector>
+
+    <track>
+      <instrument>batterie</instrument>
+      <sequenceEngine class="DrumSequenceEngine">
+        <pattern>
+          <pitch>36</pitch>
+          <patternEngine class="StringPatternEngine">
+            <string>0,-,-,-,0,-,-,0,-,-,0,-,0,-,-,-</string>
+          </patternEngine>
+        </pattern>
+        <pattern>
+          <pitch>38</pitch>
+          <patternEngine class="StringPatternEngine">
+            <string>(-/4,0/4:900)*2</string>
+          </patternEngine>
+        </pattern>
+        <pattern>
+          <pitch>42</pitch>
+          <patternEngine class="StringPatternEngine">
+            <string>E(5,8,0:600,-)</string>
+          </patternEngine>
+        </pattern>
+        <pattern>
+          <pitch>46</pitch>
+          <patternEngine class="StringPatternEngine">
+            <string>-/6,0/2:700</string>
+          </patternEngine>
+        </pattern>
+        <pattern>
+          <pitch>49</pitch>
+          <patternEngine class="StringPatternEngine">
+            <string>-</string>
+          </patternEngine>
+        </pattern>
+
+        <conditionalPattern>
+          <target>1</target>
+          <precondition>-grosse_caisse</precondition>
+          <postcondition>+grosse_caisse</postcondition>
+          <mode>replace</mode>
+          <probability>100</probability>
+          <patternEngine class="CrescendoPatternEngine">
+            <patternTicks>16</patternTicks>
+            <minVelocity>100</minVelocity>
+            <maxVelocity>1000</maxVelocity>
+            <velocityExponent>2</velocityExponent>
+            <pattern>0</pattern>
+          </patternEngine>
+        </conditionalPattern>
+        <conditionalPattern>
+          <target>4</target>
+          <precondition></precondition>
+          <postcondition>+grosse_caisse,+caisse_claire</postcondition>
+          <mode>add</mode>
+          <probability>100</probability>
+          <patternEngine class="StringPatternEngine">
+            <string>-/3,0:1000</string>
+          </patternEngine>
+        </conditionalPattern>
+        <conditionalPattern>
+          <target>2,3</target>
+          <precondition>+charleston</precondition>
+          <postcondition>-charleston</postcondition>
+          <mode>replace</mode>
+          <probability>100</probability>
+          <patternEngine class="StringPatternEngine">
+            <string>-/8</string>
+          </patternEngine>
+        </conditionalPattern>
+        <conditionalPattern>
+          <target>0</target>
+          <precondition>-caisse_claire</precondition>
+          <postcondition>+caisse_claire</postcondition>
+          <mode>add</mode>
+          <probability>100</probability>
+          <patternEngine class="CrescendoPatternEngine">
+            <patternTicks>12</patternTicks>
+            <minVelocity>300</minVelocity>
+            <maxVelocity>900</maxVelocity>
+            <velocityExponent>1</velocityExponent>
+            <prefixPattern>-/2</prefixPattern>
+            <pattern>0/2</pattern>
+            <suffixPattern>0,0</suffixPattern>
+          </patternEngine>
+        </conditionalPattern>
+      </sequenceEngine>
+      <activityVector>grosse_caisse</activityVector>
+      <activityVector>caisse_claire</activityVector>
+      <activityVector>charleston</activityVector>
+      <activityVector>charleston</activityVector>
+      <activityVector>cymbale</activityVector>
+    </track>
+
+    <track>
+      <instrument>basse</instrument>
+      <transposition>-24</transposition>
+      <sequenceEngine class="PatternSequenceEngine">
+        <patternEngine class="StringPatternEngine">
+          <string>0/3,0/3,-/2,E(3,8,0,-)</string>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>basse</activityVector>
+    </track>
+  </arrangementEngine>
+
+  <player class="MidiPlayer">
+    <bpm>128</bpm>
+    <transposition>57</transposition>
+    <groove>125,75,115,85</groove>
+    <beforePlayWaitTicks>0</beforePlayWaitTicks>
+    <afterPlayWaitTicks>0</afterPlayWaitTicks>
+    <device name="device1" clockSynchronization="false">Gervill</device>
+    <map instrument="batterie" device="device1" channel="10" />
+    <map instrument="basse" device="device1" channel="2" program="39" />
+  </player>
+</SoundHelix>
