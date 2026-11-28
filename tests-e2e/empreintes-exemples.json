@@ -1037,6 +1037,24 @@
       },
       "erreurs": []
     },
+    "un-morceau-a-la-soundhelix.json": {
+      "lecteurs": {
+        "ecoute": {
+          "rms": 0.12879304439232817,
+          "crete": 0.7283026576042175,
+          "trames": 5375995,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2031.0439379759541,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-son-projete-en-microtonal.json": {
       "lecteurs": {
         "cloche": {
