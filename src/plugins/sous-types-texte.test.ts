@@ -64,10 +64,11 @@ describe("les contenus du flux texte", () => {
     // LES DEUX CONTENUS DU CHANTIER SOUNDHELIX, nés le 2026-11-28 : la matrice entre dans « Voix sur
     // l'accord », « Masque d'activité », « Arpège par durée d'accord » et « Nappe d'accords », et
     // « Matrice d'activité » la rend ; le motif entre dans la première, dans l'arpège et dans la
-    // mélodie, et les trois générateurs de motifs le rendent. La mélodie reçoit aussi la matrice.
-    expect([compte("activite", "sorties"), compte("activite", "entrees")]).toEqual([1, 5]);
-    expect([compte("motif", "sorties"), compte("motif", "entrees")]).toEqual([3, 3]);
-    expect(ports.length).toBe(52);
+    // mélodie, et les trois générateurs de motifs le rendent. La mélodie reçoit aussi la matrice, comme
+    // la batterie à motifs et le motif conditionnel, qui reçoit aussi un motif.
+    expect([compte("activite", "sorties"), compte("activite", "entrees")]).toEqual([1, 7]);
+    expect([compte("motif", "sorties"), compte("motif", "entrees")]).toEqual([3, 4]);
+    expect(ports.length).toBe(55);
   });
 
   // ─── Le cas fondateur ───

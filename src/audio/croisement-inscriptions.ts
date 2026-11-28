@@ -235,6 +235,7 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Plier", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
+  { ou: "groove-midi·Tics par temps", valeurs: ["2", "4", "6", "8"], raison: "le MIDI d'essai ne pose ses notes que sur des temps ; sous une grille paire, chaque temps clôt un tour entier du groove de deux pas, et rien n'y bouge ; tenu par plugins/batterie-soundhelix.test.ts sur des doubles croches ; dit dans sa documentation" },
   { ou: "matrice-activite·Recherche", valeurs: ["exacte", "gloutonne"], raison: "tant qu'aucune section n'est sans issue, les deux recherches gardent le même premier choix sans écart, et sous l'harmonie d'essai aucune ne l'est ; tenu par audio/soundhelix-arrangement.test.ts, où des contraintes impossibles les séparent ; dit dans sa documentation" },
   { ou: "accords-vers-notation·Gamme", valeurs: GAMMES_DES_ROMAINS.map((g) => g.id), raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
   ...COINCIDENCES_DES_CHOIX,

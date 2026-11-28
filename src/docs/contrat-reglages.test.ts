@@ -54,6 +54,9 @@ const CHAMPS_LEGITIMES: Record<string, string> = {
   // Les voix parallèles de SoundHelix sont une liste de décalages, une ligne par valeur : « 0 » en
   // est la plus courte, et « 0,1,2 » l'accord plaqué.
   "voix-sur-accord/Voix parallèles": "une liste de décalages sur l'accord, une ligne par valeur",
+  // Les percussions visées par un motif conditionnel sont une liste de hauteurs MIDI, comme les
+  // canaux du répartiteur : « 38 » en est la plus courte, « 42,46 » vide les deux charlestons.
+  "motif-conditionnel/Percussions visées": "une liste de hauteurs MIDI, une ou plusieurs",
 };
 
 /** Le défaut se lit-il comme une grandeur : un nombre seul, une rampe « a:b », un tirage « a~b » ? */

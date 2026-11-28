@@ -676,6 +676,25 @@
     {"nom":"Volume","type":"curseur","defaut":60,"min":0,"max":100,"unite":"%"}
    ]
   },
+  "batterie-motifs": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Harmonie","type":"midi","sousType":"harmonie"},
+    {"nom":"Activité","type":"texte","sousType":"activite","requis":false},
+    {"nom":"Motif 1","type":"texte","requis":false},
+    {"nom":"Motif 2","type":"texte","requis":false},
+    {"nom":"Motif 3","type":"texte","requis":false},
+    {"nom":"Motif 4","type":"texte","requis":false}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Lignes","type":"texte","defaut":"36  v1  0,-,-,-,-,-,0,-,0,-,-,-,-,-,-,-\n38  v1  -/4,0/4:900,-/4,0/4:900\n42  v1  E(5,8,0:600,-)\n46  v1  -/6,0/2:700\n49  v1  -"},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]},
+    {"nom":"Vélocité","type":"curseur","defaut":100,"min":1,"max":100,"unite":"%"}
+   ]
+  },
   "beat-repeat": {
    "version": 1,
    "entrees": [
@@ -4149,6 +4168,19 @@
     {"nom":"Mix","type":"nombre","defaut":100,"min":0,"max":100,"unite":"%"}
    ]
   },
+  "groove-midi": {
+   "version": 1,
+   "entrees": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Groove","type":"texte","defaut":"110,90"},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]}
+   ]
+  },
   "haas": {
    "version": 1,
    "entrees": [
@@ -5505,6 +5537,28 @@
     {"nom":"Corrélation hauteur et vélocité","type":"curseur","defaut":50,"min":0,"max":100,"unite":"%"},
     {"nom":"Exposant de vélocité","type":"curseur","defaut":1,"min":0.1,"max":5},
     {"nom":"Parties distinctes","type":"case","defaut":1},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
+  "motif-conditionnel": {
+   "version": 1,
+   "entrees": [
+    {"nom":"MIDI","type":"midi"},
+    {"nom":"Harmonie","type":"midi","sousType":"harmonie"},
+    {"nom":"Activité","type":"texte","sousType":"activite"},
+    {"nom":"Motif","type":"texte","sousType":"motif","requis":false}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Motif","type":"texte","defaut":"(0/1)*16"},
+    {"nom":"Percussions visées","type":"texte","defaut":"38"},
+    {"nom":"Avant","type":"texte","defaut":"-v1"},
+    {"nom":"Après","type":"texte","defaut":"+v1"},
+    {"nom":"Mode","type":"choix","defaut":"remplacer","choix":["remplacer","ajouter"]},
+    {"nom":"Probabilité","type":"curseur","defaut":100,"min":0,"max":100,"unite":"%"},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]},
     {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
    ]
   },

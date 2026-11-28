@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**535 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**538 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -163,6 +163,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Étaler sur le clavier | `banque-clavier` | 240 × 140 |
 | Barre modale | `barre-modale` | 240 × 118 |
 | Battements binauraux | `battements-binauraux` | 240 × 140 |
+| Batterie à motifs | `batterie-motifs` | 240 × 228 |
 | Beat Repeat / Stutter | `beat-repeat` | 240 × 162 |
 | Bitcrusher | `bitcrusher` | 240 × 162 |
 | Groove Box | `boite-groove` | 240 × 206 |
@@ -328,6 +329,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Granulation écologique | `granulation-ecologique` | 240 × 228 |
 | Granulation spectrale | `granulation-spectrale` | 240 × 118 |
 | Griffin-Lim | `griffin-lim` | 240 × 118 |
+| Groove | `groove-midi` | 240 × 118 |
 | Effet Haas | `haas` | 240 × 118 |
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie par motifs | `harmonie-motifs` | 240 × 140 |
@@ -389,6 +391,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Morphologie | `morphologie` | 240 × 140 |
 | Mosaïquage par corpus | `mosaiquage` | 240 × 162 |
 | Motif au hasard | `motif-au-hasard` | 240 × 118 |
+| Motif conditionnel | `motif-conditionnel` | 240 × 184 |
 | Motif en crescendo | `motif-crescendo` | 240 × 118 |
 | Écho de notes | `motif-echo-notes` | 240 × 140 |
 | Éclaircir | `motif-eclaircir` | 240 × 140 |
