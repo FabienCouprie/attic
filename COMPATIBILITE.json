@@ -5460,6 +5460,46 @@
     {"nom":"Modulation max","type":"curseur","defaut":100,"min":0,"max":100,"unite":"%"}
    ]
   },
+  "motif-au-hasard": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Motif","type":"texte","sousType":"motif"}
+   ],
+   "reglages": [
+    {"nom":"Plan","type":"texte","defaut":"A1,A2,A1,B1"},
+    {"nom":"Tics","type":"curseur","defaut":16,"min":1,"max":256},
+    {"nom":"Probabilité de note","type":"curseur","defaut":60,"min":0,"max":100,"unite":"%"},
+    {"nom":"Probabilité de liaison","type":"curseur","defaut":0,"min":0,"max":100,"unite":"%"},
+    {"nom":"Vélocité min","type":"curseur","defaut":500,"min":1,"max":1000},
+    {"nom":"Vélocité max","type":"curseur","defaut":1000,"min":1,"max":1000},
+    {"nom":"Tics joués min","type":"curseur","defaut":6,"min":0,"max":256},
+    {"nom":"Tics joués max","type":"curseur","defaut":12,"min":0,"max":256},
+    {"nom":"Décalages","type":"texte","defaut":"0,1,2,3,4"},
+    {"nom":"Longueurs de note","type":"texte","defaut":"1,2"},
+    {"nom":"Longueurs de silence","type":"texte","defaut":"1,2"},
+    {"nom":"Corrélation hauteur et vélocité","type":"curseur","defaut":50,"min":0,"max":100,"unite":"%"},
+    {"nom":"Exposant de vélocité","type":"curseur","defaut":1,"min":0.1,"max":5},
+    {"nom":"Parties distinctes","type":"case","defaut":1},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
+  "motif-crescendo": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Motif","type":"texte","sousType":"motif"}
+   ],
+   "reglages": [
+    {"nom":"Tics","type":"curseur","defaut":16,"min":1,"max":256},
+    {"nom":"Vélocité min","type":"curseur","defaut":100,"min":1,"max":1000},
+    {"nom":"Vélocité max","type":"curseur","defaut":1000,"min":1,"max":1000},
+    {"nom":"Exposant","type":"curseur","defaut":2,"min":0.1,"max":5},
+    {"nom":"Préfixe","type":"texte","defaut":""},
+    {"nom":"Motif","type":"texte","defaut":"0/1"},
+    {"nom":"Suffixe","type":"texte","defaut":""}
+   ]
+  },
   "motif-echo-notes": {
    "version": 1,
    "entrees": [
@@ -5515,6 +5555,20 @@
     {"nom":"Synthèse","type":"choix","defaut":"auto","choix":["auto","fm","soundfont"]},
     {"nom":"Instrument","type":"sf2instrument","defaut":0},
     {"nom":"Volume","type":"nombre","defaut":80,"min":0,"max":100,"unite":"%"}
+   ]
+  },
+  "motif-par-fragments": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Motif","type":"texte","sousType":"motif"}
+   ],
+   "reglages": [
+    {"nom":"Plan","type":"texte","defaut":"A1,A2,A1,B1"},
+    {"nom":"Tics","type":"curseur","defaut":16,"min":1,"max":256},
+    {"nom":"Fragments","type":"texte","defaut":"A : 0,-,-,- | 0,-,0,- | 0/2,-/2 | -/2,0/2\nB : 0/3,0/1 | -,0,-,0 | 0/4"},
+    {"nom":"Parties distinctes","type":"case","defaut":1},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
    ]
   },
   "motif-repeter-tourner": {

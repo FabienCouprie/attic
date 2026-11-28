@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-531 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+534 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -435,12 +435,12 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
 
   Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
   du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
-  du réglage. Le registre porte **99 composants à graine** depuis le 2026-11-28, les accords joués et
+  du réglage. Le registre porte **101 composants à graine** depuis le 2026-11-28, les accords joués et
   la gamme jouée ayant gagné la leur le 2026-11-14, la corde pincée la sienne le lendemain, le
   « Dither » étant né avec la sienne le même jour, « Harmoniser (Coconet) », « Harmoniser à quatre
   voix » et « Apprendre sur un corpus » avec la leur le 2026-11-22, la « Corde de Karplus-Strong »
-  avec la sienne le 2026-11-27, « Harmonie par motifs » et « Matrice d'activité » avec la leur le
-  2026-11-28. Relevé sur les
+  avec la sienne le 2026-11-27, « Harmonie par motifs », « Matrice d'activité », « Motif au hasard »
+  et « Motif par fragments » avec la leur le 2026-11-28. Relevé sur les
   89 d'avant : 59 comparés sur le son,
   zéro infidèle ; 88 en 14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans
   sortie audio. « Dither » passé seul le 2026-11-15 : comparé sur le son, fidèle.

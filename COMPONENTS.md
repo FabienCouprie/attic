@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **531 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **534 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 110 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (6) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 113 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (9) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -2398,7 +2398,10 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | [Activity Matrix](#activity-matrix) | Draws which voices play in each chord section, under each voice's constraints. |
 | [Arpeggio by Chord Length](#arpeggio-by-chord-length) | Arpeggiates each chord of the harmony with the pattern whose length covers its duration. |
 | [Chord Pad](#chord-pad) | Holds the notes of each chord of the harmony for the whole chord, one line per note. |
+| [Crescendo Pattern](#crescendo-pattern) | Repeats a pattern between a prefix and a suffix, the velocity rising from one end to the other. |
 | [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
+| [Pattern from Fragments](#pattern-from-fragments) | Assembles a pattern from written fragments, drawn at random up to the length of each part. |
+| [Random Pattern](#random-pattern) | Draws a pattern of notes and rests, part by part, with its variations. |
 | [Voice on the Chord](#voice-on-the-chord) | Lays a pattern over the harmony, note by note on the current chord or in free pitches, one line per pattern. |
 
 #### Activity Mask
@@ -2497,6 +2500,28 @@ Holds the notes of each chord of the received harmony for the whole chord, one l
 | Velocity | number | 70 % | 1 – 100 %, step 1 | The velocity of each note, out of 1000: at 70 %, 700. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
+#### Crescendo Pattern
+
+`motif-crescendo` · Inputs → SoundHelix
+
+*Repeats a pattern between a prefix and a suffix, the velocity rising from one end to the other.*
+
+Repeats a pattern between a prefix and a suffix, the velocity rising from one end to the other. The model is that of the crescendo pattern engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Prefix », « Pattern » and « Suffix » are patterns: the node lays the prefix, repeats the pattern up to the room of the suffix, cuts it when needed, then lays the suffix; « Ticks » is the total length. The prefix and the suffix may be empty. Each note takes the velocity « Velocity min » + (« Velocity max » − « Velocity min ») × (t / (« Ticks » − 1)) to the power « Exponent », t being the tick where it starts, truncated to an integer, then scaled by the velocity the pattern writes for it, out of 1000. At 1, the velocity rises in a straight line; above, it first rises slowly. The « Pattern » output carries the pattern as text, one entry per note or rest, separated by commas: offset, ~ when the note is tied to the next one, /length in ticks, :velocity out of 1000; - is a rest. The message gives the number of ticks and notes.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Pattern | text (motif) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Ticks | number | 16 | 1 – 256, step 1 | The total length of the pattern, in ticks, prefix and suffix included. |
+| Velocity min | number | 100 | 1 – 1000, step 1 | The velocity at the first tick, out of 1000. |
+| Velocity max | number | 1000 | 1 – 1000, step 1 | The velocity at the last tick, out of 1000. |
+| Exponent | number | 2 | 0.1 – 5, step 0.1 | The curve of the rise: at 1, straight; above, slow at first. |
+| Prefix | text | — |  | The pattern laid at the start, once; empty, nothing. |
+| Pattern | text | `0/1` |  | The pattern repeated between the prefix and the suffix, cut when needed. |
+| Suffix | text | — |  | The pattern laid at the end, once; empty, nothing. |
+
 #### Harmony from Patterns
 
 `harmonie-motifs` · Inputs → SoundHelix
@@ -2522,6 +2547,56 @@ Draws a chord pattern from a bank, resolves its table references, then repeats i
 | Closest inversion | checkbox | 1 | 0 / 1 | Checked, each chord takes the inversion, up to an octave, whose middle note is closest to that of the pattern's first chord, which keeps the voices from leaping. Unchecked, each chord keeps the inversion its name writes. |
 | Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the pattern and the tables. 0 = drawn at every run, and given in the message so it can be copied back here. No effect when the bank has a single pattern without table references. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### Pattern from Fragments
+
+`motif-par-fragments` · Inputs → SoundHelix
+
+*Assembles a pattern from written fragments, drawn at random up to the length of each part.*
+
+Assembles a pattern from written fragments, drawn at random up to the exact length of each part. The model is that of the fragment pattern engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Fragments » gives one group per line: a letter, a colon, then fragments separated by a vertical bar, each a short pattern, A : 0,-,-,- | 0,-,0,- for instance. A line starting with # is a comment. « Plan » gives the parts of the pattern, separated by commas, each a letter and a digit, A1,A2,A1,B1 for instance. A new letter draws a new part; a new digit of the same letter draws a variation; a part already named repeats as it is. « Ticks » is the length of each part. « Distinct parts » checked, two parts with different names are never identical, when the draws allow it. The letter of a part names its group: the part is made of fragments of that group, drawn one by one among those that fit the remaining room, up to the exact length. A variation is a new draw from the same group. When no draw reaches the length in a thousand tries, the node says so. « Seed » fixes the draw; 0 draws a seed at every run, and the message gives it. The « Pattern » output carries the pattern as text, one entry per note or rest, separated by commas: offset, ~ when the note is tied to the next one, /length in ticks, :velocity out of 1000; - is a rest. The message gives the number of parts, ticks and notes, and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Pattern | text (motif) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Plan | text | `A1,A2,A1,B1` |  | The parts of the pattern, each a letter and a digit: the letter names the group of fragments, a new digit draws a new part from the same group, a part already named repeats. |
+| Ticks | number | 16 | 1 – 256, step 1 | The length of each part, in ticks. |
+| Fragments | text | `A : 0,-,-,- \| 0,-,0,- \| 0/2,-/2 \| -/2,0/2 B : 0/3,0/1 \| -…` |  | One group per line: a letter, a colon, then short patterns separated by a vertical bar. |
+| Distinct parts | checkbox | 1 | 0 / 1 | Checked, two parts with different names are never identical, when the draws allow it. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw. 0 = drawn at every run, and given in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Random Pattern
+
+`motif-au-hasard` · Inputs → SoundHelix
+
+*Draws a pattern of notes and rests, part by part, with its variations.*
+
+Draws a pattern of notes and rests, part by part, with its variations. The model is that of the random pattern engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Plan » gives the parts of the pattern, separated by commas, each a letter and a digit, A1,A2,A1,B1 for instance. A new letter draws a new part; a new digit of the same letter draws a variation; a part already named repeats as it is. « Ticks » is the length of each part. « Distinct parts » checked, two parts with different names are never identical, when the draws allow it. A variation is its base part, two pairs of its events swapped. Each part is drawn step by step: a note with the « Note probability », a rest otherwise; the note lasts one of the « Note lengths », the rest one of the « Rest lengths », in ticks, separated by commas; the note takes one of the « Offsets ». A part whose total of notes does not fall between « Played ticks min » and « Played ticks max » is drawn again; after a thousand draws, the node says so. A note followed by a note is tied to it with the « Tie probability ». The velocity of each note falls between « Velocity min » and « Velocity max », out of 1000. « Pitch and velocity correlation » mixes pitch into chance: at 100 %, the highest note of the « Offsets » plays loudest; at 0 %, pitch has no part in it. « Velocity exponent » bends this mix: above 1, soft notes are more numerous. « Seed » fixes the draw; 0 draws a seed at every run, and the message gives it. The « Pattern » output carries the pattern as text, one entry per note or rest, separated by commas: offset, ~ when the note is tied to the next one, /length in ticks, :velocity out of 1000; - is a rest. The message gives the number of parts, ticks and notes, and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Pattern | text (motif) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Plan | text | `A1,A2,A1,B1` |  | The parts of the pattern, separated by commas, each a letter and a digit: a new letter draws a part, a new digit of the same letter a variation, a part already named repeats. |
+| Ticks | number | 16 | 1 – 256, step 1 | The length of each part, in ticks. |
+| Note probability | number | 60 % | 0 – 100 %, step 1 | The chance that a step of the part is a note rather than a rest. |
+| Tie probability | number | 0 % | 0 – 100 %, step 1 | The chance that a note followed by a note is tied to it. |
+| Velocity min | number | 500 | 1 – 1000, step 1 | The softest velocity of a note, out of 1000. |
+| Velocity max | number | 1000 | 1 – 1000, step 1 | The loudest velocity of a note, out of 1000. |
+| Played ticks min | number | 6 | 0 – 256, step 1 | The shortest total of the notes of a part, in ticks; a sparser part is drawn again. |
+| Played ticks max | number | 12 | 0 – 256, step 1 | The longest total of the notes of a part, in ticks; a fuller part is drawn again. |
+| Offsets | text | `0,1,2,3,4` |  | The offsets a note may take, separated by commas; on the chord, 0 is the bass. |
+| Note lengths | text | `1,2` |  | The lengths a note may take, in ticks, separated by commas. |
+| Rest lengths | text | `1,2` |  | The lengths a rest may take, in ticks, separated by commas. |
+| Pitch and velocity correlation | number | 50 % | 0 – 100 %, step 1 | The share of pitch in velocity: at 100 %, the highest note plays loudest; at 0 %, the velocity is drawn at random. |
+| Velocity exponent | number | 1 | 0.1 – 5, step 0.1 | The curve of the velocity between its bounds: at 1, straight; above, soft notes are more numerous. |
+| Distinct parts | checkbox | 1 | 0 / 1 | Checked, two parts with different names are never identical, when the draws allow it. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw. 0 = drawn at every run, and given in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Voice on the Chord
 
