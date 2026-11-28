@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **525 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **526 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 104 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 105 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -2422,6 +2422,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Component | Summary |
 |---|---|
 | [FM / AM Synth](#fm--am-synth) | Generates a note with frequency modulation (FM) or amplitude modulation (AM). |
+| [Karplus-Strong String](#karplus-strong-string) | Plays each note of a MIDI file on a Karplus-Strong string: a delay line filled with noise, averaged on each pass. |
 | [Membrane Synth](#membrane-synth) | Generates a synthetic kick drum with Tone.js. |
 | [Metal Synth](#metal-synth) | Generates a metallic sound (hi-hat, bell, cymbal) with Tone.js. |
 | [Pluck Synth](#pluck-synth) | Generates a plucked string note using Karplus-Strong synthesis. |
@@ -2434,17 +2435,18 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 
 *Generates a note with frequency modulation (FM) or amplitude modulation (AM).*
 
-Generates a note using frequency modulation (FM) or amplitude modulation (AM) via Tone.js. Settings: • the mode • note • duration • harmonicity • modulation index • ADSR envelope. The sound is rendered offline.
+Generates a note using frequency modulation (FM) or amplitude modulation (AM) via Tone.js. Settings: • the mode • note • duration • harmonicity • modulation index • ADSR envelope. The sound is rendered offline. A file connected to the « MIDI » input is played note by note: each note starts at its beginning, at its pitch, held for the time the MIDI gives it and then released, at a level proportional to its velocity; the « Note » and « Duration » are then not used. The mix is only reduced above a 0.99 peak.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Mode | choice | FM | FM / AM | Modulation type: FM (frequency) or AM (amplitude). |
-| Note | text | `C4` |  | Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
-| Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
+| Note | text | `C4` |  | Note to play (e.g. C4, G5), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 3 | 0.1 – 10, step 0.1 | Frequency ratio between carrier and modulator. |
 | Modulation index | number | 10 | 0 – 100, step 1 | Modulation depth (FM only). Has no effect when « Mode » is « AM ». |
@@ -2453,22 +2455,53 @@ Generates a note using frequency modulation (FM) or amplitude modulation (AM) vi
 | Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
 | Release | number | 0.5 s | 0 – 3 s, step 0.01 | Envelope release time after the note ends. It is taken from the « Duration »: the note is released early enough to fade out before the sound ends, but never before its attack and decay are over. |
 
+#### Karplus-Strong String
+
+`karplus-strong` · Inputs → Synthesizers
+
+*Plays each note of a MIDI file on a Karplus-Strong string: a delay line filled with noise, averaged on each pass.*
+
+Plays each note of a MIDI file on a Karplus-Strong string, and the set « Note » for its « Duration » when no MIDI is connected. A delay line one period long is filled by the excitation; what comes out of it is averaged, multiplied by the « Loop gain » and sent back into the line. The average makes the treble die out before the bass, and the string decays by itself. The period is shared between the line, a first-order allpass for the fraction of a sample, and the filter's delay: the note played is the one requested, fractions of a semitone included. Settings: • « Excitation » and « Excitation length »: what fills the string, and for how many periods; « Audio input » reads the « Excitation » input at the instant of each note. • « Blend »: the blend factor b of the drum variant, the probability of keeping the sign of what returns into the loop; at 0, the string sounds an octave lower, on its odd harmonics only. • « Decay stretch »: the factor S, which makes the low partials last S times longer. • « Loop gain »: the factor ρ, which shortens the decay of every partial. • « Pick position », « Pick direction » and « Brightness »: three filters on the excitation, a comb that silences the partials that are multiples of 1/β, a first-order lowpass, and the dynamic-level filter, whose bandwidth follows the velocity and which gives the fundamental the same amplitude at every pitch. • « Release »: the ramp of the gain down to zero at the end of each note. • « Seed »: the noise and the sign draw; the same seed replays the same sound. The « Audio » output returns the mix of the strings in stereo, brought to a 0.9 peak and then to the « Volume ». References: K. Karplus and A. Strong, « Digital Synthesis of Plucked-String and Drum Timbres », Computer Music Journal 7(2), 1983, pp. 43-55; D. A. Jaffe and J. O. Smith, « Extensions of the Karplus-Strong Plucked-String Algorithm », Computer Music Journal 7(2), 1983, pp. 56-69.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| input | Excitation | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and each of its notes is played on a string of its own. A name with its octave, in letters or French names, with #, b, ♯ or ♭. An unreadable note, or one without an octave, is refused and named. |
+| Duration | number | 2 s | 0.1 – 10 s, step 0.1 | Note duration, when no MIDI is connected; the « Release » starts at its end. |
+| Excitation | choice | White noise | White noise / Pink noise / Impulse / Audio input | What fills the string at the start of each note. White noise is Karplus and Strong's; pink noise is darker; the impulse is a single sample, hence a click attack louder than what the string then sustains. « Audio input » reads the sound of the « Excitation » input at the instant of each note, and refuses to play when nothing is connected there. |
+| Excitation length | number | 1 periods | 0.25 – 20 periods, step 0.25 | How many periods of the note the excitation lasts. At 1, the line is filled once, as in the original algorithm; beyond, the excitation keeps adding to what circulates, and the attack is longer and louder. No effect when the « Excitation » is the « Impulse », which lasts a single sample. |
+| Blend | number | 1 | 0 – 1, step 0.01 | The blend factor b of the drum variant: on each sample, the sign of what returns into the loop is kept with probability b, and flipped otherwise. At 1, the string; near 0.5, a drum, with no clear pitch; at 0, the loop flips on every pass, and the string sounds an octave lower, on its odd harmonics only. The « Seed » fixes the draw. |
+| Decay stretch | number | 1 | 1 – 50, step 0.1 | The decay stretch factor S, in Karplus and Strong's sense: the low partials last S times longer. The loop averages two samples weighted 1 − s and s, as in Jaffe and Smith, with s(1 − s) = 1/(4S); at 1, s is ½, the original algorithm's average, and each partial dies out faster the higher it is. The pitch does not move: the filter's delay is taken off the line. |
+| Loop gain | number | 1 | 0.9 – 1, step 0.0005 | The factor ρ, which multiplies what returns into the loop on each pass, hence on each period: it shortens the decay of every partial, the faster the higher the note. At 1, only the average silences the string. |
+| Pick position | number | 0 | 0 – 0.5, step 0.01 | The point β where the string is plucked, as a share of its length. The excitation goes through the comb 1 − z^(−⌊βN + ½⌋), N being the period: the partials that are multiples of 1/β die out, as on a string plucked at that point. At 0.2, partials 5, 10, 15; at 0.5, all even partials. At 0, no comb. |
+| Pick direction | number | 0 | 0 – 0.95, step 0.01 | The coefficient p of the lowpass (1 − p) / (1 − p·z⁻¹) the excitation goes through: at 0, nothing is filtered; the higher p, the darker the attack, like a pluck the other way. |
+| Brightness | number | 20000 Hz | 200 – 20000 Hz, step 10 | The dynamic level L, a bandwidth in hertz, at velocity 127; a softer note has a proportionally narrower band. The excitation goes through the lowpass (1 − R) / (1 − R·z⁻¹), whose pole R is computed for each note: its gain at the fundamental equals the gain a lowpass of bandwidth L, with pole e^(−πL/fs), has at the reference frequency, the geometric mean of 20 Hz and half the sample rate. At an equal dynamic level, the fundamental thus has the same amplitude at every pitch; a narrower level darkens the note. The note also comes out quieter, in proportion to its velocity. |
+| Release | number | 0.2 s | 0 – 3 s, step 0.01 | At the end of each note, the string loses 60 dB over this time, whatever its pitch, on top of its own decay: the loop gain becomes 10^(−3 / (f·T)) per period. At 0, it stops at once; no effect on a note the string has already finished sounding. |
+| Volume | number | 60 % | 0 – 100 %, step 1 | Output volume. The mix of the notes is first brought to a 0.9 peak. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the noise that plucks the string and of the « Blend » sign draw. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays exactly the same sound. No effect when the « Excitation » is the « Impulse » or the « Audio input » and the « Blend » is 1: nothing is drawn there. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
 #### Membrane Synth
 
 `membrane-synth` · Inputs → Synthesizers
 
 *Generates a synthetic kick drum with Tone.js.*
 
-Generates a synthetic kick drum using Tone.js MembraneSynth. The sound is rendered offline to directly produce an audio buffer. Settings: • the note (pitch) • duration • volume • pitch decay • octave range • decay • release.
+Generates a synthetic kick drum using Tone.js MembraneSynth. The sound is rendered offline to directly produce an audio buffer. Settings: • the note (pitch) • duration • volume • pitch decay • octave range • decay • release. A file connected to the « MIDI » input is played note by note: each hit starts at the beginning of its note, at its pitch, at a level proportional to its velocity; the « Note » and « Duration » are then not used. The mix is only reduced above a 0.99 peak.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
-| Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. The sound is extended if the envelope exceeds this value. |
+| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. The sound is extended if the envelope exceeds this value. No effect when a MIDI file is connected: each note lasts what the MIDI gives it. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Pitch decay | number | 0.05 s | 0.001 – 1 s, step 0.001 | Pitch envelope decay time. |
 | Octaves | number | 4 oct | 0 – 10 oct, step 0.1 | Pitch drop range in octaves. |
@@ -2481,16 +2514,17 @@ Generates a synthetic kick drum using Tone.js MembraneSynth. The sound is render
 
 *Generates a metallic sound (hi-hat, bell, cymbal) with Tone.js.*
 
-Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js MetalSynth. The sound is rendered offline to directly produce an audio buffer. Settings: • the note (pitch) • duration • volume • harmonicity • modulation index • resonance • filter octaves • envelope.
+Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js MetalSynth. The sound is rendered offline to directly produce an audio buffer. Settings: • the note (pitch) • duration • volume • harmonicity • modulation index • resonance • filter octaves • envelope. A file connected to the « MIDI » input is played note by note: each hit starts at the beginning of its note, at its pitch, at a level proportional to its velocity; the « Note » and « Duration » are then not used. The mix is only reduced above a 0.99 peak.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C5` |  | Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
-| Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
+| Note | text | `C5` |  | Base note (e.g. C5, G5), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 5.1 | 0.1 – 10, step 0.1 | Frequency ratio between modulator and carrier. |
 | Modulation index | number | 32 | 1 – 100, step 1 | Intensity of frequency modulation. |
@@ -2506,16 +2540,17 @@ Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js Meta
 
 *Generates a plucked string note using Karplus-Strong synthesis.*
 
-Generates a plucked string note using Karplus-Strong synthesis: a short burst of noise excites a loop tuned to the note, where a lowpass makes the treble die out before the bass. Settings: • the note • attack noise • dampening • resonance • release • the seed of the noise, which replays the same string. The sound is rendered offline.
+Generates a plucked string note using Karplus-Strong synthesis: a short burst of noise excites a loop tuned to the note, where a lowpass makes the treble die out before the bass. Settings: • the note • attack noise • dampening • resonance • release • the seed of the noise, which replays the same string. The sound is rendered offline. A file connected to the « MIDI » input is played note by note: each note starts at its beginning, at its pitch, and its resonance ramps down to zero over the « Release » from its end, at a level proportional to its velocity; the « Note » and « Duration » are then not used. The mix is only reduced above a 0.99 peak.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C4` |  | Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
-| Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
+| Note | text | `C4` |  | Plucked string note (e.g. C4, G3), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Attack noise | number | 1 | 0.1 – 20, step 0.1 | Duration of the pink noise that plucks the string, counted in periods of the note: at 1 it lasts one period, at 20 twenty periods, and never less than one millisecond. While it lasts it feeds the loop: the longer it is, the more energy the string receives and the louder it sounds. |
 | Dampening | number | 4000 Hz | 100 – 7000 Hz, step 10 | Cutoff frequency of the lowpass inside the string's loop, the one that makes the treble die out before the bass: the lower it is, the duller the string. |
@@ -2529,16 +2564,17 @@ Generates a plucked string note using Karplus-Strong synthesis: a short burst of
 
 *Generates a polyphonic chord with an ADSR envelope.*
 
-Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple oscillator (sine, square, sawtooth, triangle) with a full ADSR envelope. Enter notes separated by commas. The sound is rendered offline to directly produce an audio buffer.
+Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple oscillator (sine, square, sawtooth, triangle) with a full ADSR envelope. The « Notes » are written separated by commas. The sound is rendered offline to directly produce an audio buffer. A file connected to the « MIDI » input is played note by note: each note starts at its beginning, at its pitch, held for the time the MIDI gives it and then released, at a level proportional to its velocity; the « Notes » and « Note duration » are then not used. The mix is only reduced above a 0.99 peak.
 
 | Port | Name | Type | |
 |---|---|---|---|
+| input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named. |
-| Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. |
+| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named. |
+| Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. No effect when a MIDI file is connected: each note is held for the time the MIDI gives it. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Waveform | choice | Triangle | Sine / Square / Sawtooth / Triangle | Oscillator waveform. |
 | Attack | number | 0.01 s | 0 – 1 s, step 0.001 | Envelope attack time (0 = instantaneous). |

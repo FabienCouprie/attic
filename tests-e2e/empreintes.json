@@ -578,15 +578,21 @@
     },
     "pluck-synth": {
       "empreintes": [
-        "0.011860584/0.426397443"
+        "0.011921163/0.335746020"
       ],
-      "message": "Pluck C4 — 2.00s · graine 7"
+      "message": "8 note(s) du MIDI · 4.95 s · graine 7"
     },
     "generateur-bruit": {
       "empreintes": [
         "0.170539144/0.720000029"
       ],
       "message": "Bruit rose · 2.0s · graine 7"
+    },
+    "karplus-strong": {
+      "empreintes": [
+        "0.102326781/0.540000021"
+      ],
+      "message": "8 corde(s) · 4.3 s · graine 1"
     }
   }
 }

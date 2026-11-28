@@ -56,6 +56,10 @@ export const INERTIES_DECLAREES: InertieInscrite[] = [
   { ou: "beat-repeat·Tempo", sous: "Intervalle", valeurs: ["1/16", "1/16t", "1/32"], raison: SEGMENT },
   { ou: "beat-repeat·Tempo", sous: "Taille", valeurs: ["1/2", "1/4.", "1/4"], raison: SEGMENT },
   { ou: "beat-repeat·Taille", sous: "Intervalle", valeurs: ["1/16", "1/16t", "1/32"], raison: "sous ces intervalles, les deux tailles que la passe éprouve, 1/2 et 1/4 pointée, sont plus longues et rendent l'entrée telle quelle ; une taille plus courte s'entend, et sa documentation le dit" },
+  // LA CORDE DE KARPLUS-STRONG (2026-11-27) : l'impulsion est un seul échantillon, et rien n'est tiré
+  // pour elle ; la graine n'y agit que par le tirage des signes, sous un « Mélange » inférieur à 1.
+  { ou: "karplus-strong·Longueur d'excitation", sous: "Excitation", valeurs: ["impulsion"], raison: "l'impulsion ne dure qu'un échantillon, quelle que soit la longueur ; dit dans la documentation du réglage" },
+  { ou: "karplus-strong·Graine", sous: "Excitation", valeurs: ["impulsion"], raison: "l'impulsion ne tire aucun bruit, et au « Mélange » de 1 aucun signe n'est tiré : la graine n'a rien à semer ; dit dans la documentation du réglage" },
 ];
 
 const UNE_GRAINE = "la graine ne tire que l'ordre aléatoire, et hors de lui elle n'a rien à tirer ; dit dans sa documentation";
