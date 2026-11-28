@@ -112,6 +112,9 @@ masque-activite
 arpege-duree-accord
 nappe-accords
 matrice-activite
+motif-au-hasard
+motif-par-fragments
+motif-crescendo
 glissando-harmonique
 glissando-de-gamme
 pulsation
