@@ -40,3 +40,67 @@ export function raieSurParasites(y: ArrayLike<number>, rang: number, n: number):
   }
   return 10 * Math.log10(signal / Math.max(reste, 1e-30));
 }
+
+// ═══ LA HAUTEUR D'UNE RAIE, BALAYÉE AU VINGTIÈME DE CENT ═══
+//
+// L'AUTRE QUESTION, QUAND LA FRÉQUENCE N'EST PAS CHOISIE : où tombe la raie qu'un composant rend. La
+// transformée se calcule alors directement à la fréquence essayée, sous une fenêtre de Hann, sans
+// rang ni puissance de deux. `audio/tone-synths.test.ts` l'écrivait pour lui seul, balayée au
+// demi-cent ; la corde de Karplus-Strong en demandait une seconde, et elle vit désormais ici.
+//
+// L'AUTOCORRÉLATION À RETARD ENTIER NE SUFFIT PAS DANS L'AIGU : à 44,1 kHz, la période d'un do7 vaut
+// 21,07 échantillons, et un échantillon d'écart y fait quatre-vingts cents.
+
+/** Le module de la transformée de `x[i0 … i0+n[`, sous Hann, à la fréquence `f`. */
+function moduleSousHann(x: ArrayLike<number>, i0: number, n: number, f: number, sr: number): number {
+  const w = (2 * Math.PI * f) / sr;
+  // LA ROTATION SE FAIT PAR RÉCURRENCE, un produit complexe par échantillon : deux trigonométriques
+  // par échantillon et par fréquence essayée rendaient la mesure d'une note aiguë de plusieurs
+  // secondes. En double précision, sur une demi-seconde, l'erreur cumulée reste sous 1e-10.
+  const cw = Math.cos(w), sw = Math.sin(w);
+  let c = 1, s = 0, re = 0, im = 0;
+  for (let k = 0; k < n; k++) {
+    const v = (x[i0 + k] ?? 0) * (0.5 - 0.5 * Math.cos((2 * Math.PI * k) / (n - 1)));
+    re += v * c;
+    im -= v * s;
+    const c2 = c * cw - s * sw;
+    s = s * cw + c * sw;
+    c = c2;
+  }
+  return Math.hypot(re, im);
+}
+
+/**
+ * L'amplitude de la raie de fréquence `f` sur `[debut, fin]` secondes de `x`, sous Hann : la moitié
+ * du module, normalisée par la somme de la fenêtre, si bien qu'un sinus d'amplitude A rend A.
+ */
+export function amplitudeDeRaie(x: ArrayLike<number>, sr: number, debut: number, fin: number, f: number): number {
+  const i0 = Math.round(debut * sr), n = Math.max(2, Math.round((fin - debut) * sr));
+  return (2 * moduleSousHann(x, i0, n, f, sr)) / ((n - 1) / 2);
+}
+
+/**
+ * La fréquence de la raie la plus forte entre `fMin` et `fMax`, sur `[debut, fin]` secondes de `x`.
+ *
+ * DEUX BALAYAGES : au cent sur tout l'intervalle, puis au vingtième de cent sur deux cents de part
+ * et d'autre du meilleur. Le lobe principal d'une fenêtre de Hann d'un dixième de seconde déjà couvre
+ * plusieurs dizaines de cents dans le grave : un pas d'un cent ne peut pas sauter le sommet.
+ */
+export function raieLaPlusForte(
+  x: ArrayLike<number>, sr: number, debut: number, fin: number, fMin: number, fMax: number,
+): number {
+  const i0 = Math.round(debut * sr), n = Math.max(2, Math.round((fin - debut) * sr));
+  const balayer = (de: number, a: number, pas: number) => {
+    let meilleure = de, plusHaute = -1;
+    for (let f = de; f <= a; f *= pas) {
+      const m = moduleSousHann(x, i0, n, f, sr);
+      if (m > plusHaute) { plusHaute = m; meilleure = f; }
+    }
+    return meilleure;
+  };
+  const grossiere = balayer(fMin, fMax, 2 ** (1 / 1200));
+  return balayer(grossiere * 2 ** (-2 / 1200), grossiere * 2 ** (2 / 1200), 2 ** (1 / 24000));
+}
+
+/** L'écart entre deux fréquences, en cents, signé. */
+export const centsEntre = (obtenue: number, attendue: number) => 1200 * Math.log2(obtenue / attendue);

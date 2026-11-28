@@ -3436,7 +3436,9 @@
   },
   "fm-synth": {
    "version": 1,
-   "entrees": [],
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false}
+   ],
    "sorties": [
     {"nom":"Audio","type":"audio"}
    ],
@@ -4414,6 +4416,31 @@
     {"nom":"Timeout","type":"curseur","defaut":30,"min":5,"max":120,"unite":"s"}
    ]
   },
+  "karplus-strong": {
+   "version": 1,
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false},
+    {"nom":"Excitation","type":"audio","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Audio","type":"audio"}
+   ],
+   "reglages": [
+    {"nom":"Note","type":"texte","defaut":"A3"},
+    {"nom":"Durée","type":"nombre","defaut":2,"min":0.1,"max":10,"unite":"s"},
+    {"nom":"Excitation","type":"choix","defaut":"blanc","choix":["blanc","rose","impulsion","audio"]},
+    {"nom":"Longueur d'excitation","type":"nombre","defaut":1,"min":0.25,"max":20,"unite":"périodes"},
+    {"nom":"Mélange","type":"nombre","defaut":1,"min":0,"max":1},
+    {"nom":"Étirement","type":"nombre","defaut":1,"min":1,"max":50},
+    {"nom":"Gain de boucle","type":"nombre","defaut":1,"min":0.9,"max":1},
+    {"nom":"Position du pincement","type":"nombre","defaut":0,"min":0,"max":0.5},
+    {"nom":"Direction du pincement","type":"nombre","defaut":0,"min":0,"max":0.95},
+    {"nom":"Brillance","type":"nombre","defaut":20000,"min":200,"max":20000,"unite":"Hz"},
+    {"nom":"Relâchement","type":"nombre","defaut":0.2,"min":0,"max":3,"unite":"s"},
+    {"nom":"Volume","type":"nombre","defaut":60,"min":0,"max":100,"unite":"%"},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
+   ]
+  },
   "l-systeme": {
    "version": 1,
    "entrees": [],
@@ -4978,7 +5005,9 @@
   },
   "membrane-synth": {
    "version": 1,
-   "entrees": [],
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false}
+   ],
    "sorties": [
     {"nom":"Audio","type":"audio"}
    ],
@@ -4994,7 +5023,9 @@
   },
   "metal-synth": {
    "version": 1,
-   "entrees": [],
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false}
+   ],
    "sorties": [
     {"nom":"Audio","type":"audio"}
    ],
@@ -6171,7 +6202,9 @@
   },
   "pluck-synth": {
    "version": 1,
-   "entrees": [],
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false}
+   ],
    "sorties": [
     {"nom":"Audio","type":"audio"}
    ],
@@ -6213,7 +6246,9 @@
   },
   "poly-synth": {
    "version": 1,
-   "entrees": [],
+   "entrees": [
+    {"nom":"MIDI","type":"midi","requis":false}
+   ],
    "sorties": [
     {"nom":"Audio","type":"audio"}
    ],

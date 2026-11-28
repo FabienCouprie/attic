@@ -11,6 +11,7 @@
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
+import { raieLaPlusForte } from "./mesure-raie";
 
 describe("genererMembraneSynth", () => {
   it("rend un buffer stéréo non silencieux pour un kick C2", async () => {
@@ -266,28 +267,10 @@ describe("genererPluckSynth", () => {
     for (const sampleRate of [44100, 48000]) {
       for (const [note, attendue] of [["A2", 110], ["C4", 261.626], ["A4", 440], ["C6", 1046.502], ["C7", 2093.005]] as const) {
         const b = await genererPluckSynth({ note, duree: 1, volume: 80, dampening: 7000, resonance: 1, release: 0, sampleRate });
-        const jouee = raieLaPlusForte(b, 0.2, 0.7, attendue / 2 ** (1 / 12), attendue * 2 ** (1 / 12));
+        const jouee = raieLaPlusForte(b.getChannelData(0), b.sampleRate, 0.2, 0.7, attendue / 2 ** (1 / 12), attendue * 2 ** (1 / 12));
         expect(Math.abs(1200 * Math.log2(jouee / attendue)), `${note} à ${sampleRate} Hz : ${jouee.toFixed(2)} Hz`).toBeLessThan(3);
       }
     }
   });
 });
 
-/**
- * La fréquence de la raie la plus forte entre `fMin` et `fMax`, par une transformée de Fourier
- * directe sous fenêtre de Hann, sur `[debut, fin]` du canal gauche, au demi-cent près.
- */
-function raieLaPlusForte(b: AudioBuffer, debut: number, fin: number, fMin: number, fMax: number): number {
-  const d = b.getChannelData(0), sr = b.sampleRate;
-  const i0 = Math.round(debut * sr), n = Math.round((fin - debut) * sr);
-  const fenetre = Float64Array.from({ length: n }, (_, k) => d[i0 + k] * (0.5 - 0.5 * Math.cos((2 * Math.PI * k) / (n - 1))));
-  let meilleure = fMin, plusHaute = -1;
-  for (let f = fMin; f <= fMax; f *= 2 ** (1 / 2400)) {
-    const w = (2 * Math.PI * f) / sr;
-    let re = 0, im = 0;
-    for (let k = 0; k < n; k++) { re += fenetre[k] * Math.cos(w * k); im -= fenetre[k] * Math.sin(w * k); }
-    const m = re * re + im * im;
-    if (m > plusHaute) { plusHaute = m; meilleure = f; }
-  }
-  return meilleure;
-}

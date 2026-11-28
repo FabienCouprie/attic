@@ -24,6 +24,7 @@ import { fiches as f_miroir } from "../miroir";
 import { fiches as f_cantor } from "../cantor";
 import { fiches as f_tone_synths } from "../tone-synths";
 import { fiches as f_tone_synths_fm } from "../tone-synths-fm";
+import { fiches as f_karplus_strong } from "../karplus-strong";
 import { fiches as f_phase_vocoder } from "../phase-vocoder";
 import { fiches as f_resonance } from "../resonance";
 import { fiches as f_ddsp } from "../ddsp";
@@ -57,6 +58,7 @@ export const fiches = [
   ...f_cantor,
   ...f_tone_synths,
   ...f_tone_synths_fm,
+  ...f_karplus_strong,
   ...f_phase_vocoder,
   ...f_resonance,
   ...f_ddsp,
