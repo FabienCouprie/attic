@@ -261,6 +261,10 @@ const SURVEILLES: {
   // sur l'intégration continue, 0,268730044, soit 1,7 %, dix-sept fois la tolérance de « Particules »,
   // et une tolérance assez large pour l'absorber laisserait passer un changement de niveau de
   // 0,15 dB. Son réglage « Réflexion » est tenu par `src/plugins/csound.test.ts`.
+  // LA CORDE DE KARPLUS-STRONG, née le 2026-11-27 sur le même `audio/corde-pincee.ts`, graine épinglée.
+  // Elle reçoit le MIDI d'essai, que le banc donne à son entrée MIDI ; « Pluck Synth » aussi, depuis
+  // qu'il a la sienne (2026-11-28), et son empreinte a été réécrite ce jour-là.
+  { id: "karplus-strong", parametres: { "Graine": 1 } },
 ];
 
 interface Ligne {

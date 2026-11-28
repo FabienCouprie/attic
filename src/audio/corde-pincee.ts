@@ -15,6 +15,15 @@
 //
 // LA BOUCLE NE REND JAMAIS PLUS QUE LA RÉSONANCE. Le passe-bas est un Butterworth, sans bosse à la
 // coupure, et le passe-tout a un gain de 1 à toute fréquence.
+//
+// LA BOUCLE DE 1983, À CÔTÉ (2026-11-27). Avec `etirement`, le filtre de la boucle est la moyenne
+// de deux échantillons de Karplus et Strong, pondérée `(1 − s) + s·z⁻¹` comme chez Jaffe et Smith :
+// son module vaut `√(1 − 4s(1−s)·sin²(ω/2))`, jamais plus que 1, et son retard de phase se déduit
+// comme celui du Butterworth. `melange` est le facteur b de la variante tambour, `excitation` ce qui
+// pince la corde, déjà mis en forme (`audio/excitation-corde.ts`), et `priseALEntree` prend la
+// sortie là où l'article l'écrit, y(n) = x(n) + …, sans le retard d'une période. Sans ces quatre
+// options, le calcul est celui d'avant, échantillon pour échantillon : `corde-pincee.test.ts` le
+// tient par son empreinte.
 
 import { creerAleatoire, resoudreGraine } from "../core/hasard";
 import { bruitRoseKellet } from "../core/bruit-rose";
@@ -26,10 +35,27 @@ export interface ReglagesCorde {
   sampleRate: number;
   /** La durée du rendu, en secondes. */
   duree: number;
-  /** La durée de l'excitation par le bruit rose, en secondes. */
-  bruit: number;
-  /** La coupure du passe-bas de la boucle, en hertz. */
-  coupure: number;
+  /** La durée de l'excitation par le bruit rose, en secondes, quand `excitation` est absente. */
+  bruit?: number;
+  /** La coupure du passe-bas de la boucle, en hertz, quand `etirement` est absent. */
+  coupure?: number;
+  /**
+   * L'étirement S de la décroissance, au moins 1. Présent, la boucle moyenne deux échantillons au
+   * lieu du passe-bas : à 1, la moyenne de 1983 ; à S, les partiels graves durent S fois plus.
+   */
+  etirement?: number;
+  /** Le facteur b de la variante tambour : le signe gardé avec la probabilité b, inversé sinon. */
+  melange?: number;
+  /** Ce qui pince la corde, ajouté à l'entrée de la boucle ; absente, le bruit rose sur `bruit`. */
+  excitation?: Float32Array;
+  /** La sortie prise à l'entrée de la boucle plutôt qu'à la sortie de la ligne. */
+  priseALEntree?: boolean;
+  /**
+   * Le temps, en secondes, en lequel la corde perd 60 dB à partir de `debutRelache`. Présent, il
+   * remplace la descente linéaire de `relache` : le gain par période devient 10^(−3 / (f·T)), et la
+   * corde s'éteint en ce temps quelle que soit sa hauteur. À 0, elle se tait d'un coup.
+   */
+  t60Relache?: number;
   /** Le gain de la boucle, borné à [0, 1]. */
   resonance: number;
   /** Où la résonance commence à descendre vers zéro, et en combien de temps, en secondes. */
@@ -50,6 +76,22 @@ function passeBas(coupure: number, sr: number) {
   const alpha = Math.sin(w0) / Math.SQRT2, cw = Math.cos(w0), a0 = 1 + alpha;
   return { b0: (1 - cw) / 2 / a0, b1: (1 - cw) / a0, b2: (1 - cw) / 2 / a0, a1: (-2 * cw) / a0, a2: (1 - alpha) / a0 };
 }
+
+/**
+ * Le poids s de la moyenne `(1 − s) + s·z⁻¹` qui étire la décroissance de S.
+ *
+ * S EST CELUI DE KARPLUS ET STRONG (1983), la durée de chaque partiel multipliée par S ; leur forme
+ * tire au sort, à chaque échantillon, la recopie ou la moyenne. La moyenne pondérée est celle de
+ * Jaffe et Smith (1983, équation 20), sans hasard. Le partiel de pulsation ω y perd
+ * `−ln|H| ≈ 2s(1−s)·sin²(ω/2)` par tour, quand la moyenne d'origine, s = ½, en perd `½·sin²(ω/2)` :
+ * durer S fois plus demande donc s(1−s) = 1/(4S), dont la racine sous ½ est celle-ci, exactement ½ à
+ * S = 1. La forme multiplicative que Karplus et Strong proposent, d = 1/(2S), n'en est qu'une
+ * approximation : au do6, à S = 4, elle ne fait durer le fondamental que 2,29 fois plus.
+ */
+export const poidsDEtirement = (etirement: number) => (1 - Math.sqrt(1 - 1 / Math.max(1, etirement))) / 2;
+
+/** La moyenne pondérée de deux échantillons, sous la forme du biquad de la boucle. */
+const moyennePonderee = (s: number) => ({ b0: 1 - s, b1: s, b2: 0, a1: 0, a2: 0 });
 
 /** L'argument de `c0 + c1·e^(−jω) + c2·e^(−2jω)`. */
 const argument = (c0: number, c1: number, c2: number, w: number) =>
@@ -72,14 +114,14 @@ function retardDuPasseBas(f: ReturnType<typeof passeBas>, w: number): number {
  * Le bruit rose de Paul Kellet, mis en régime avant d'être gardé : la corde reçoit une tranche prise
  * dans un bruit établi, et non le départ à froid de ses filtres.
  */
-const bruitRose = (n: number, aleatoire: () => number) =>
+export const bruitRose = (n: number, aleatoire: () => number) =>
   bruitRoseKellet(n, () => aleatoire() * 2 - 1, { regime: 4096 });
 
 /** Calcule la corde pincée, un canal ; le tampon audio se fait chez l'appelant. */
 export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer> {
   const sr = r.sampleRate;
   const n = Math.max(1, Math.round(r.duree * sr));
-  const filtre = passeBas(r.coupure, sr);
+  const filtre = r.etirement !== undefined ? moyennePonderee(poidsDEtirement(r.etirement)) : passeBas(r.coupure ?? 4000, sr);
   const w = (2 * Math.PI * r.frequence) / sr;
 
   // LA PÉRIODE SE PARTAGE : la ligne à retard prend l'entier, le passe-tout la fraction, entre un
@@ -90,13 +132,23 @@ export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer>
 
   const resonance = Math.min(1, Math.max(0, r.resonance));
   const debut = r.debutRelache * sr, longueurRelache = r.relache * sr;
+  // LA DESCENTE LINÉAIRE ÉTEINT LA CORDE BIEN AVANT SA FIN : le gain passe sous 0,9 en un dixième du
+  // relâchement, et à 0,9 par période un la2 perd déjà cent décibels par seconde. Mesuré par `varier`
+  // sur la corde de Karplus-Strong : un relâchement de 0 et un de 1 s ne s'y séparaient que de
+  // 0,4 dB. Le T60 dit ce qu'il fait, et c'est la loi de la corde neuve ; « Pluck Synth » garde la sienne.
+  const apresRelache = r.t60Relache === undefined ? null
+    : r.t60Relache > 0 ? resonance * Math.pow(10, -3 / (r.frequence * r.t60Relache)) : 0;
   const gain = (i: number) => {
     if (i < debut) return resonance;
+    if (apresRelache !== null) return apresRelache;
     if (longueurRelache <= 0) return 0;
     return Math.max(0, resonance * (1 - (i - debut) / longueurRelache));
   };
 
-  const excitation = bruitRose(Math.max(1, Math.round(r.bruit * sr)), r.aleatoire ?? creerAleatoire(resoudreGraine(0)));
+  const aleatoire = r.aleatoire ?? creerAleatoire(resoudreGraine(0));
+  const excitation = r.excitation ?? bruitRose(Math.max(1, Math.round((r.bruit ?? 0) * sr)), aleatoire);
+  // À b = 1, AUCUN SIGNE N'EST TIRÉ : la suite du hasard reste celle de la corde sans tambour.
+  const melange = Math.min(1, Math.max(0, r.melange ?? 1));
   const retard = new Float32Array(ligne);
   const sortie = new Float32Array(n);
   let curseur = 0, entreeAvant = 0, passeToutAvant = 0;
@@ -106,10 +158,12 @@ export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer>
     const y = pasPasseTout(eta, lu, entreeAvant, passeToutAvant);
     entreeAvant = lu;
     passeToutAvant = y;
-    sortie[i] = y * r.volume;
     const f = filtre.b0 * y + filtre.b1 * y1 + filtre.b2 * y2 - filtre.a1 * f1 - filtre.a2 * f2;
     y2 = y1; y1 = y; f2 = f1; f1 = f;
-    retard[curseur] = (i < excitation.length ? excitation[i] : 0) + gain(i) * f;
+    const signe = melange < 1 && aleatoire() >= melange ? -1 : 1;
+    const entree = (i < excitation.length ? excitation[i] : 0) + gain(i) * signe * f;
+    retard[curseur] = entree;
+    sortie[i] = (r.priseALEntree ? entree : y) * r.volume;
     curseur = (curseur + 1) % ligne;
   }
   return sortie;

@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**524 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**525 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -343,6 +343,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Isoler la voix | `isoler-voix` | 240 × 140 |
 | Jointure audio | `jointure-audio` | 240 × 140 |
 | Jointure MIDI | `jointure-midi` | 240 × 140 |
+| Corde de Karplus-Strong | `karplus-strong` | 240 × 140 |
 | L-système | `l-systeme` | 240 × 162 |
 | Largeur stéréo / MS | `largeur-stereo` | 240 × 140 |
 | Lecteur d'analyse | `lecteur-analyse` | 380 × 300 |

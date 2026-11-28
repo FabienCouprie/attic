@@ -12,6 +12,14 @@ import { genererMembraneSynth, genererMetalSynth, genererPolySynth } from "../au
 import { avecDoc } from "./notices";
 import { hauteurOuRefus, nomAnglais } from "../audio/noms-de-notes";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
+import { notesDuMidi } from "../audio/midi";
+import { jouerLeMidi } from "./instruments-communs";
+
+/** L'entrée MIDI facultative des synthétiseurs : branchée, chaque note est jouée à son instant. */
+const ENTREE_MIDI = { nom: "MIDI", type: "midi", requis: false } as const;
+
+/** Le message d'un MIDI joué : combien de notes, et la durée du rendu. */
+const messageMidi = (notes: number, b: AudioBuffer) => traduire("msg.synthe.midi_var_0_var_1_s", notes, b.duration.toFixed(2));
 
 
 export const fiches: FicheAudio[] = ([
@@ -23,7 +31,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère un coup de grosse caisse synthétique avec Tone.js.",
     resumeEn: "Generates a synthetic kick drum with Tone.js.",
-    entrees: [],
+    entrees: [ENTREE_MIDI],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -31,8 +39,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C2",
-        doc: "Note de base du kick (ex. C2, A1). Plus la note est grave, plus le kick est gros. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C2",
+        doc: "Note de base du kick (ex. C2, A1), quand aucun MIDI n'est branché ; un MIDI l'emporte, chacune de ses notes y portant sa hauteur. Plus la note est grave, plus le kick est gros. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Base note of the kick (e.g. C2, A1), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C2",
       },
       {
         nom: "Durée",
@@ -42,8 +50,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.1,
         defaut: 1.5,
         unite: "s",
-        doc: "Durée totale du buffer généré. Le son est rallongé si l'enveloppe dépasse cette valeur.",
-        docEn: "Total duration of the generated buffer. The sound is extended if the envelope exceeds this value.",
+        doc: "Durée totale du buffer généré. Le son est rallongé si l'enveloppe dépasse cette valeur. Sans effet quand un MIDI est branché : chaque note dure ce que le MIDI lui donne.",
+        docEn: "Total duration of the generated buffer. The sound is extended if the envelope exceeds this value. No effect when a MIDI file is connected: each note lasts what the MIDI gives it.",
       },
       {
         nom: "Volume",
@@ -102,15 +110,27 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C2"));
-      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
-      const note = nomAnglais(lue.nom);
-      const duree = ctx.paramNombre("Durée", 1.5);
       const volume = ctx.paramNombre("Volume", 80);
       const pitchDecay = ctx.paramNombre("Pitch decay", 0.05);
       const octaves = ctx.paramNombre("Octaves", 4);
       const decay = ctx.paramNombre("Decay", 0.4);
       const release = ctx.paramNombre("Release", 1.4);
+      const sampleRate = frequenceDeTravail();
+      const midi = await notesDuMidi(ctx.entree(0));
+      try {
+        if (midi && midi.length > 0) {
+          const buffer = await jouerLeMidi(midi, (n, note) => genererMembraneSynth({
+            note, duree: Math.max(0.1, n.fin - n.debut), volume, pitchDecay, octaves, decay, release, sampleRate,
+          }));
+          return { valeurs: [buffer], message: messageMidi(midi.length, buffer) };
+        }
+      } catch (e: any) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_membranesynth_var_0", e?.message ?? e) };
+      }
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C2"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
+      const duree = ctx.paramNombre("Durée", 1.5);
       try {
         const buffer = await genererMembraneSynth({
           note,
@@ -143,7 +163,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère un son métallique (hi-hat, cloche, cymbale) avec Tone.js.",
     resumeEn: "Generates a metallic sound (hi-hat, bell, cymbal) with Tone.js.",
-    entrees: [],
+    entrees: [ENTREE_MIDI],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -151,8 +171,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C5",
-        doc: "Note de base (ex. C5, G5). Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C5",
+        doc: "Note de base (ex. C5, G5), quand aucun MIDI n'est branché ; un MIDI l'emporte, chacune de ses notes y portant sa hauteur. Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Base note (e.g. C5, G5), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C5",
       },
       {
         nom: "Durée",
@@ -162,8 +182,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.1,
         defaut: 2,
         unite: "s",
-        doc: "Durée totale du buffer généré.",
-        docEn: "Total duration of the generated buffer.",
+        doc: "Durée totale du buffer généré. Sans effet quand un MIDI est branché : chaque note dure ce que le MIDI lui donne.",
+        docEn: "Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it.",
       },
       {
         nom: "Volume",
@@ -253,10 +273,6 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C5"));
-      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
-      const note = nomAnglais(lue.nom);
-      const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
       const harmonicity = ctx.paramNombre("Harmonicity", 5.1);
       const modulationIndex = ctx.paramNombre("Modulation index", 32);
@@ -265,6 +281,23 @@ export const fiches: FicheAudio[] = ([
       const attack = ctx.paramNombre("Attack", 0.001);
       const decay = ctx.paramNombre("Decay", 1.4);
       const release = ctx.paramNombre("Release", 0.2);
+      const sampleRate = frequenceDeTravail();
+      const midi = await notesDuMidi(ctx.entree(0));
+      try {
+        if (midi && midi.length > 0) {
+          const buffer = await jouerLeMidi(midi, (n, note) => genererMetalSynth({
+            note, duree: Math.max(0.1, n.fin - n.debut), volume, harmonicity, modulationIndex, resonance, octaves,
+            attack, decay, release, sampleRate,
+          }));
+          return { valeurs: [buffer], message: messageMidi(midi.length, buffer) };
+        }
+      } catch (e: any) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_metalsynth_var_0", e?.message ?? e) };
+      }
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C5"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
+      const duree = ctx.paramNombre("Durée", 2);
       try {
         const buffer = await genererMetalSynth({
           note,
@@ -300,7 +333,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère un accord polyphonique avec enveloppe ADSR.",
     resumeEn: "Generates a polyphonic chord with an ADSR envelope.",
-    entrees: [],
+    entrees: [ENTREE_MIDI],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -308,8 +341,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Notes",
         type: "texte",
         defaut: "C4,E4,G4",
-        doc: "Notes de l'accord, séparées par des virgules (ex. C4,E4,G4). Chaque note porte son octave, en lettres ou en noms français : Do4,Mi4,Sol4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4). Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4,E4,G4",
+        doc: "Notes de l'accord, séparées par des virgules (ex. C4,E4,G4), quand aucun MIDI n'est branché ; un MIDI l'emporte, chacune de ses notes y portant sa hauteur. Chaque note porte son octave, en lettres ou en noms français : Do4,Mi4,Sol4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4,E4,G4",
       },
       {
         nom: "Durée par note",
@@ -319,8 +352,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.05,
         defaut: 0.5,
         unite: "s",
-        doc: "Durée de tenue de chaque note avant le relâchement.",
-        docEn: "Duration each note is held before release.",
+        doc: "Durée de tenue de chaque note avant le relâchement. Sans effet quand un MIDI est branché : chaque note est tenue le temps que le MIDI lui donne.",
+        docEn: "Duration each note is held before release. No effect when a MIDI file is connected: each note is held for the time the MIDI gives it.",
       },
       {
         nom: "Volume",
@@ -395,6 +428,22 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
+      const midi = await notesDuMidi(ctx.entree(0));
+      if (midi && midi.length > 0) {
+        const commun = {
+          volume: ctx.paramNombre("Volume", 80), waveform: ctx.paramTexte("Forme d'onde", "triangle"),
+          attack: ctx.paramNombre("Attack", 0.01), decay: ctx.paramNombre("Decay", 0.1),
+          sustain: ctx.paramNombre("Sustain", 0.3), release: ctx.paramNombre("Release", 1), sampleRate: frequenceDeTravail(),
+        };
+        try {
+          const buffer = await jouerLeMidi(midi, (n, note) => genererPolySynth({
+            ...commun, notes: [note], dureeNote: Math.max(0.05, n.fin - n.debut),
+          }));
+          return { valeurs: [buffer], message: messageMidi(midi.length, buffer) };
+        } catch (e: any) {
+          return { valeurs: [null], erreur: true, message: traduire("msg.erreur_polysynth_var_0", e?.message ?? e) };
+        }
+      }
       const notesBrutes = ctx.paramTexte("Notes", "C4,E4,G4");
       const lues = notesBrutes.split(",").map((n: string) => n.trim()).filter(Boolean).map(hauteurOuRefus);
       // UNE NOTE ILLISIBLE, OU SANS OCTAVE, EST REFUSÉE, ET NOMMÉE : la bibliothèque rendait son erreur
