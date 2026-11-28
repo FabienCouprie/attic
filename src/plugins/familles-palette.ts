@@ -114,7 +114,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
  */
 export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Les instruments joués par le graphe, un timbre chacun.
-  "Synthétiseurs": ["fm-synth", "membrane-synth", "metal-synth", "pluck-synth", "poly-synth"],
+  "Synthétiseurs": ["fm-synth", "karplus-strong", "membrane-synth", "metal-synth", "pluck-synth", "poly-synth"],
   // Ce qui se joue en posant des notes.
   "Claviers": ["clavier-melodie", "clavier-isomorphe", "clavier-sfz", "frontiere-note", "banque-sfz"],
   // L'autosimilarité géométrique, et elle seule. Un L-système réécrit une chaîne, la série de Nørgård

@@ -249,6 +249,12 @@ const SURVEILLES: {
   // Logistique, dont l etiquette annoncait une courbe en S et rendait une suite chaotique. Son
   // empreinte porte le nombre de paliers, qui distingue une courbe lisse d un escalier.
   { id: "generateur-courbe", parametres: { Forme: "Logistique" } },
+  // LES DEUX CORDES QUE CALCULE `audio/corde-pincee.ts`, retouché le 2026-11-27 pour la corde de
+  // Karplus-Strong : la seconde est née ce jour-là, et la première ne devait pas bouger d'un
+  // échantillon. La graine est épinglée, le bruit qui pince la corde étant tiré au hasard. La corde de
+  // Karplus-Strong reçoit le MIDI d'essai, que le banc donne à son entrée MIDI.
+  { id: "pluck-synth", parametres: { "Graine": 1 } },
+  { id: "karplus-strong", parametres: { "Graine": 1 } },
 ];
 
 interface Ligne {

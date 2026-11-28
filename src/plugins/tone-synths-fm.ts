@@ -14,6 +14,11 @@ import { analyserMidi } from "../audio/midi";
 import { parseMidi } from "midi-file";
 import { avecDoc } from "./notices";
 import { hauteurOuRefus, nomAnglais } from "../audio/noms-de-notes";
+import { notesDuMidi } from "../audio/midi";
+import { jouerLeMidi } from "./instruments-communs";
+
+/** Le message d'un MIDI joué : combien de notes, et la durée du rendu. */
+const messageMidi = (notes: number, b: AudioBuffer) => traduire("msg.synthe.midi_var_0_var_1_s", notes, b.duration.toFixed(2));
 
 
 export const fiches: FicheAudio[] = ([
@@ -25,7 +30,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère une note avec modulation de fréquence (FM) ou d'amplitude (AM).",
     resumeEn: "Generates a note with frequency modulation (FM) or amplitude modulation (AM).",
-    entrees: [],
+    entrees: [{ nom: "MIDI", type: "midi", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -43,8 +48,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C4", defautEn: "C4",
-        doc: "Note à jouer (ex. C4, G5). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.",
+        doc: "Note à jouer (ex. C4, G5), quand aucun MIDI n'est branché ; un MIDI l'emporte, chacune de ses notes y portant sa hauteur. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note to play (e.g. C4, G5), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.",
       },
       {
         nom: "Durée",
@@ -54,8 +59,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.1,
         defaut: 1.5,
         unite: "s",
-        doc: "Durée totale du buffer généré.",
-        docEn: "Total duration of the generated buffer.",
+        doc: "Durée totale du buffer généré. Sans effet quand un MIDI est branché : chaque note dure ce que le MIDI lui donne.",
+        docEn: "Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it.",
       },
       {
         nom: "Volume",
@@ -136,10 +141,6 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const mode = ctx.paramTexte("Mode", "FM") as "FM" | "AM";
-      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
-      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
-      const note = nomAnglais(lue.nom);
-      const duree = ctx.paramNombre("Durée", 1.5);
       const volume = ctx.paramNombre("Volume", 80);
       const harmonicity = ctx.paramNombre("Harmonicity", 3);
       const modulationIndex = ctx.paramNombre("Modulation index", 10);
@@ -147,6 +148,24 @@ export const fiches: FicheAudio[] = ([
       const decay = ctx.paramNombre("Decay", 0.1);
       const sustain = ctx.paramNombre("Sustain", 0.3);
       const release = ctx.paramNombre("Release", 0.5);
+      const midi = await notesDuMidi(ctx.entree(0));
+      try {
+        // UNE NOTE DU MIDI DURE SA TENUE PLUS SON RELÂCHEMENT : le rendu d'une note se relâche à sa
+        // « Durée » moins son « Release », donc à la fin de la note.
+        if (midi && midi.length > 0) {
+          const buffer = await jouerLeMidi(midi, (n, note) => genererModulationSynth({
+            note, duree: Math.max(0.05, n.fin - n.debut) + release, volume, mode, harmonicity, modulationIndex,
+            attack, decay, sustain, release, sampleRate: frequenceDeTravail(),
+          }));
+          return { valeurs: [buffer], message: messageMidi(midi.length, buffer) };
+        }
+      } catch (e: any) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_var_0_synth_var_1", mode, e?.message ?? e) };
+      }
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
+      const duree = ctx.paramNombre("Durée", 1.5);
       try {
         const buffer = await genererModulationSynth({
           note,
@@ -182,7 +201,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Génération",
     resume: "Génère une note de corde pincée par synthèse Karplus-Strong.",
     resumeEn: "Generates a plucked string note using Karplus-Strong synthesis.",
-    entrees: [],
+    entrees: [{ nom: "MIDI", type: "midi", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       {
@@ -190,8 +209,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C4",
-        doc: "Note de corde pincée (ex. C4, G3). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4",
+        doc: "Note de corde pincée (ex. C4, G3), quand aucun MIDI n'est branché ; un MIDI l'emporte, chacune de ses notes y portant sa hauteur. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Plucked string note (e.g. C4, G3), when no MIDI is connected; a MIDI file wins, each of its notes carrying its own pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4",
       },
       {
         nom: "Durée",
@@ -201,8 +220,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.1,
         defaut: 2,
         unite: "s",
-        doc: "Durée totale du buffer généré.",
-        docEn: "Total duration of the generated buffer.",
+        doc: "Durée totale du buffer généré. Sans effet quand un MIDI est branché : chaque note dure ce que le MIDI lui donne.",
+        docEn: "Total duration of the generated buffer. No effect when a MIDI file is connected: each note lasts what the MIDI gives it.",
       },
       {
         nom: "Volume",
@@ -264,16 +283,30 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
-      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
-      const note = nomAnglais(lue.nom);
-      const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
       const attackNoise = ctx.paramNombre("Attack noise", 1);
       const dampening = ctx.paramNombre("Dampening", 4000);
       const resonance = ctx.paramNombre("Resonance", 0.7);
       const release = ctx.paramNombre("Release", 1);
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
+      const midi = await notesDuMidi(ctx.entree(0));
+      try {
+        // LA RÉSONANCE DESCEND À PARTIR DE LA FIN DE LA NOTE : le rendu d'une note commence son
+        // relâchement à sa « Durée » moins son « Release ».
+        if (midi && midi.length > 0) {
+          const buffer = await jouerLeMidi(midi, (n, note) => genererPluckSynth({
+            note, duree: Math.max(0.05, n.fin - n.debut) + release, volume, attackNoise, dampening, resonance, release,
+            sampleRate: frequenceDeTravail(), aleatoire,
+          }));
+          return { valeurs: [buffer], message: traduire("msg.var_0_graine_var_1", messageMidi(midi.length, buffer), graine) };
+        }
+      } catch (e: any) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.erreur_plucksynth_var_0", e?.message ?? e) };
+      }
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
+      const duree = ctx.paramNombre("Durée", 2);
       try {
         const buffer = await genererPluckSynth({
           note,

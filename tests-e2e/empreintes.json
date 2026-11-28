@@ -575,6 +575,18 @@
         "courbe 0.636804686/1.000000000 · 2000 valeurs · 2000 paliers"
       ],
       "message": "2000 valeurs · 10.0 s"
+    },
+    "pluck-synth": {
+      "empreintes": [
+        "0.010046746/0.396614760"
+      ],
+      "message": "8 note(s) du MIDI · 4.95 s · graine 1"
+    },
+    "karplus-strong": {
+      "empreintes": [
+        "0.102326781/0.540000021"
+      ],
+      "message": "8 corde(s) · 4.3 s · graine 1"
     }
   }
 }

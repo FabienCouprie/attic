@@ -432,6 +432,7 @@ poly-synth
 fm-synth
 pluck-synth
 drum-synth
+karplus-strong
 phase-vocoder-tempo
 phase-vocoder-tonalite
 resonance-audio
