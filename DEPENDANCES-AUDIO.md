@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 100 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 310 · transposable tel quel
+- **pur** : 314 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -390,6 +390,10 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | sonie-bs1770.ts | pur | — |
 | sopranos-modaux-dcml.ts | pur | — |
 | soundfont.ts | pur | — |
+| soundhelix-accords.ts | pur | — |
+| soundhelix-harmonie-midi.ts | pur | — |
+| soundhelix-harmonie.ts | pur | — |
+| soundhelix-motifs.ts | pur | — |
 | sous-titres-image.ts | pur | — |
 | sous-titres.ts | pur | — |
 | sous-types-controle.ts | pur | — |

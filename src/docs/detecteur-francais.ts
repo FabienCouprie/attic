@@ -43,7 +43,9 @@
 // un nom.
 // ET « GAËTAN » RELÈVE DU MÊME CAS : Gaëtan Hadjeres signe ainsi, en anglais, l'article de 2016 sur
 // le champ à paires que la notice d'« Apprendre sur un corpus » cite, avec François Pachet.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä|gaëtan)(?![a-zà-ÿ])/gi;
+// ET « SCHÜRGER » RELÈVE DU MÊME CAS : Thomas Schürger signe ainsi SoundHelix, que les notices du
+// chantier qui en reprend le modèle citent, à partir d'« Harmonie par motifs » (2026-11-28).
+const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä|gaëtan|schürger)(?![a-zà-ÿ])/gi;
 
 /**
  * Une affectation de script, « gamme=majeur » : du code cité, que l'anglais recopie tel quel.

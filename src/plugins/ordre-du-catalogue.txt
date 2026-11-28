@@ -106,6 +106,7 @@ generateur-accords
 melodie-aleatoire
 gamme-jouee
 accords-joues
+harmonie-motifs
 glissando-harmonique
 glissando-de-gamme
 pulsation
