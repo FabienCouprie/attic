@@ -4154,6 +4154,26 @@
     {"nom":"Position","type":"choix","defaut":"centre","choix":["gauche","centre","droite"],"optionsHeritees":{"Centre":"centre","Droite":"droite","Gauche":"gauche"}}
    ]
   },
+  "harmonie-motifs": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Harmonie","type":"midi"},
+    {"nom":"Accords","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Motifs d'accords","type":"texte","defaut":"Am/4,F/4,C/4,G/4\nAm/8,Dm/4,E7/4\n0/4,1/4,1!0/4,+2/4,$1/4,1/4,2/8"},
+    {"nom":"Tables d'accords","type":"texte","defaut":"Am,Am,Dm\nC,F,G,Em,Dm,Am\nE,E7,G,Esus4"},
+    {"nom":"Mesures","type":"curseur","defaut":64,"min":4,"max":512},
+    {"nom":"Temps par mesure","type":"curseur","defaut":4,"min":2,"max":7},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]},
+    {"nom":"Tempo","type":"curseur","defaut":120,"min":40,"max":240,"unite":"BPM"},
+    {"nom":"Registre","type":"curseur","defaut":3,"min":-6,"max":11},
+    {"nom":"Renversement au plus proche","type":"case","defaut":1},
+    {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true},
+    {"nom":"Instrument","type":"sf2instrument","defaut":0}
+   ]
+  },
   "harmonie-negative": {
    "version": 1,
    "entrees": [

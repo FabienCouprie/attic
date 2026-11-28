@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **525 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **526 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 104 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 105 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -691,6 +691,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
 | [Frequency Generator](#frequency-generator) | Generates a pure tone at a given frequency (Hz) or note. |
 | [Harmonic Glissando](#harmonic-glissando) | Slides a whole chord into another, each voice joining its own without ever settling. |
+| [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
 | [Integer Sequences](#integer-sequences) | Plays an integer sequence note by note, and measures the period of what comes out. |
 | [Logarithmic Spiral](#logarithmic-spiral) | A geometric spectrum that glides: one turn of the spiral multiplies it by a ratio, and it maps onto itself. |
 | [Mathematical Audio Generator](#mathematical-audio-generator) | Generates an audio signal from a mathematical expression. |
@@ -1027,6 +1028,32 @@ Sounds a chord, slides it into a second one, and holds that one. No note is ever
 | Closing hold | slider | 1 s | 0 – 10 s, step 0.1 | The time the arrival chord is held after the journey. |
 | Richness | slider | 4  partials | 1 – 12  partials, step 1 | The number of harmonic partials per voice. One gives a sine. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | The peak level. It accounts for the number of voices and partials. |
+
+#### Harmony from Patterns
+
+`harmonie-motifs` · Inputs → Generation
+
+*Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections.*
+
+Draws a chord pattern from a bank, resolves its table references, then repeats it until the end of the piece. The model is that of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). A pattern is a series of « chord/length » elements, separated by commas; the length is counted in beats and may be fractional. The chord always has three notes. It is written: • by its name: a root, from C to B, with # or b, then nothing for the major chord, m, 7, m7, aug, dim, sus4 or sus2. A final digit gives the inversion: 4 the first, 6 the second. Am6 is therefore A minor with E in the bass, and not a sixth chord; G7 has only G, B and F; • by three pitches in semitones from middle C, separated by colons: -7:-3:4; • by a table reference: 1 draws a chord from table 1, 1!3 draws from table 1 a chord different from element 3, $0 repeats element 0. Elements are counted from zero, references included. A + before an element opens a chord section; the first element always opens one. (x)*n repeats a group of elements n times. « Chord patterns » gives the bank, one pattern per line; only one is drawn for the whole piece. « Chord tables » gives the tables, one per line, the first counted as zero, chords separated by commas. A draw refuses the chord equal to the previous one up to an inversion, and for the last element the same name as the first; when the tables allow no draw, the node says so. « Bars » and « Beats per bar » give the length of the piece; the pattern is cut at the end, and its last section is then shorter. « Ticks per beat » is the grid of the piece: a length that does not fall on it is rounded to the nearest tick, and the rendered file takes this grid as its resolution. « Tempo » is written into the file. « Register » places the lowest note of each named chord between the register minus twelve and the register minus one, in semitones from middle C. « Closest inversion » gives each chord the inversion, up to an octave, whose middle note is closest to that of the pattern's first chord; at equal distance, the least moved. Two equal chords in a row make only one, even across a section boundary. « Seed » fixes the draw of the pattern and of the tables; 0 draws a seed at every run, and the message gives it. « Instrument » writes the channel's program into the file. The « Harmony » output carries a MIDI file: the block chords on channel 1, middle C at 60, a « section » marker at the start of each section, the tempo and the time signature. The « Chords » output carries the usual symbols of the chords, Am, F/A, E7/G#, one line per section. The message gives the rank of the drawn pattern, the number of sections and bars, the chords of the first section and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Harmony | MIDI |  |
+| output | Chords | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Chord patterns | text | `Am/4,F/4,C/4,G/4 Am/8,Dm/4,E7/4 0/4,1/4,1!0/4,+2/4,$1/4,1…` |  | The bank of patterns, one per line, in the SoundHelix grammar: « chord/length in beats », a + to open a section, table references 1, 1!3 and $0. Only one pattern is drawn for the whole piece. |
+| Chord tables | text | `Am,Am,Dm C,F,G,Em,Dm,Am E,E7,G,Esus4` |  | The tables that references draw their chords from, one per line, the first counted as zero, chords separated by commas. A chord repeated in a table weighs more there. No effect on a pattern without table references. |
+| Bars | number | 64 | 4 – 512, step 1 | The length of the piece, in bars. The pattern repeats up to it, and the last one is cut. |
+| Beats per bar | number | 4 | 2 – 7, step 1 | The number of beats in a bar. It counts in the length of the piece and is written into the file. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The grid of the piece, in ticks per beat. A length that does not fall on it is rounded to the nearest tick: at 4, a length of 0.3 beats is one tick. The rendered file takes this grid as its resolution. |
+| Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | The tempo written into the file, in quarter notes per minute. |
+| Register | number | 3 | -6 – 11, step 1 | Where named chords sit: the lowest note of each falls between the register minus twelve and the register minus one, in semitones from middle C. At 3, between the E flat below middle C and the D above it. No effect on a chord written by its three pitches. |
+| Closest inversion | checkbox | 1 | 0 / 1 | Checked, each chord takes the inversion, up to an octave, whose middle note is closest to that of the pattern's first chord, which keeps the voices from leaping. Unchecked, each chord keeps the inversion its name writes. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the pattern and the tables. 0 = drawn at every run, and given in the message so it can be copied back here. No effect when the bank has a single pattern without table references. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Integer Sequences
 

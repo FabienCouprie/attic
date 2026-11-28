@@ -8,6 +8,7 @@ import type { FicheAudio } from "../../audio/types-domaine";
 import { fiches as f_generateurs } from "../generateurs";
 import { fiches as f_gamme_jouee } from "../gamme-jouee";
 import { fiches as f_accords_joues } from "../accords-joues";
+import { fiches as f_harmonie_motifs } from "../harmonie-motifs";
 import { fiches as f_glissando_harmonique } from "../glissando-harmonique";
 import { fiches as f_glissando_de_gamme } from "../glissando-de-gamme";
 import { fiches as f_pulsation } from "../pulsation";
@@ -27,6 +28,7 @@ export const fiches = [
   ...f_generateurs,
   ...f_gamme_jouee,
   ...f_accords_joues,
+  ...f_harmonie_motifs,
   ...f_glissando_harmonique,
   ...f_glissando_de_gamme,
   ...f_pulsation,
