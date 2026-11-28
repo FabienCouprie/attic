@@ -116,6 +116,9 @@ motif-au-hasard
 motif-par-fragments
 motif-crescendo
 melodie-harmonie
+batterie-motifs
+motif-conditionnel
+groove-midi
 glissando-harmonique
 glissando-de-gamme
 pulsation

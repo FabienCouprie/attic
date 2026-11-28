@@ -15,6 +15,7 @@ import { fiches as f_arpege_nappe } from "../arpege-nappe";
 import { fiches as f_matrice_activite } from "../matrice-activite";
 import { fiches as f_motifs_generes } from "../motifs-generes";
 import { fiches as f_melodie_harmonie } from "../melodie-harmonie";
+import { fiches as f_batterie_soundhelix } from "../batterie-soundhelix";
 import { fiches as f_glissando_harmonique } from "../glissando-harmonique";
 import { fiches as f_glissando_de_gamme } from "../glissando-de-gamme";
 import { fiches as f_pulsation } from "../pulsation";
@@ -41,6 +42,7 @@ export const fiches = [
   ...f_matrice_activite,
   ...f_motifs_generes,
   ...f_melodie_harmonie,
+  ...f_batterie_soundhelix,
   ...f_glissando_harmonique,
   ...f_glissando_de_gamme,
   ...f_pulsation,

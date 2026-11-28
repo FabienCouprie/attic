@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **535 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **538 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 114 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (10) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Inputs](#inputs) | 116 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (12) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 250 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (10) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2398,9 +2398,11 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | [Activity Matrix](#activity-matrix) | Draws which voices play in each chord section, under each voice's constraints. |
 | [Arpeggio by Chord Length](#arpeggio-by-chord-length) | Arpeggiates each chord of the harmony with the pattern whose length covers its duration. |
 | [Chord Pad](#chord-pad) | Holds the notes of each chord of the harmony for the whole chord, one line per note. |
+| [Conditional Pattern](#conditional-pattern) | Writes a pattern into a drum part before the section boundaries where the matrix holds its conditions. |
 | [Crescendo Pattern](#crescendo-pattern) | Repeats a pattern between a prefix and a suffix, the velocity rising from one end to the other. |
 | [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
 | [Melody over the Harmony](#melody-over-the-harmony) | Draws one melody per kind of section, a walk on the scale and the chord, repeated when the section comes back. |
+| [Pattern Drums](#pattern-drums) | Lays one drum line per percussion, each under its voice of the activity matrix. |
 | [Pattern from Fragments](#pattern-from-fragments) | Assembles a pattern from written fragments, drawn at random up to the length of each part. |
 | [Random Pattern](#random-pattern) | Draws a pattern of notes and rests, part by part, with its variations. |
 | [Voice on the Chord](#voice-on-the-chord) | Lays a pattern over the harmony, note by note on the current chord or in free pitches, one line per pattern. |
@@ -2501,6 +2503,33 @@ Holds the notes of each chord of the received harmony for the whole chord, one l
 | Velocity | number | 70 % | 1 – 100 %, step 1 | The velocity of each note, out of 1000: at 70 %, 700. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
+#### Conditional Pattern
+
+`motif-conditionnel` · Inputs → SoundHelix
+
+*Writes a pattern into a drum part before the section boundaries where the matrix holds its conditions.*
+
+Writes a pattern into a drum part just before the section boundaries where the activity matrix holds its conditions: the roll before the bass drum comes in, the cymbal on the first beat. The model is that of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). The pattern is written in the ticks before the boundary, as many as its length. « Before » is judged on each section these ticks cover, « After » on the section that starts: voices separated by commas, +voice when it must play, -voice when it must be silent; an empty condition always holds. The activity of the targeted percussions is not consulted. « Probability » gives the chance of writing the pattern at each boundary that holds; « Seed » fixes this draw, 0 drawing one at every run. « Pattern » gives the pattern; the « Pattern » input, when connected, replaces it. A pattern entry is written offset, /length in ticks, :velocity from 1 to 1000; - is a rest; E(), (x)*n and (x)+d may be used. « Targeted percussions » gives MIDI pitches separated by commas: the notes of the pattern are laid on the first one, an offset being added to it. With « Mode » on « Replace », the notes of the targeted percussions that start in these ticks are removed, and those that enter them are shortened; on « Add », they stay. « Ticks per beat » is the resolution the pattern is written in. The « MIDI » input carries the drum part, each note of which is read as a percussion; the « Harmony » input gives the sections and the grid, the « Activity » input the matrix, one line per voice, its name, then one sign per chord section, x when the voice plays, . when it is silent. The « MIDI » output carries the drum part on channel 10, at the grid and tempo of the harmony. The message gives the number of boundaries where the pattern was written, the number of notes and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| input | Harmony | MIDI (harmonie) |  |
+| input | Activity | text (activite) |  |
+| input | Pattern | text (motif) |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pattern | text | `(0/1)*16` |  | The pattern written before the boundary. No effect when the « Pattern » input is connected. |
+| Targeted percussions | text | `38` |  | MIDI pitches separated by commas: the pattern is laid on the first one, and « Replace » empties them all. |
+| Before | text | `-v1` |  | The conditions of the sections the pattern covers, +voice or -voice separated by commas; empty, always held. |
+| After | text | `+v1` |  | The conditions of the section that starts, +voice or -voice separated by commas; empty, always held. |
+| Mode | choice | Replace | Replace / Add | Replace: the notes of the targeted percussions in these ticks are removed. Add: they stay, and the pattern is added to them. |
+| Probability | number | 100 % | 0 – 100 %, step 1 | The chance of writing the pattern at each boundary that holds. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The resolution the pattern is written in, in ticks per beat, brought to the grid of the harmony. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the probability. 0 = drawn at every run; no effect at 100 %. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
 #### Crescendo Pattern
 
 `motif-crescendo` · Inputs → SoundHelix
@@ -2577,6 +2606,30 @@ Draws one melody for each kind of section of the received harmony, a random walk
 | Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The resolution the pattern is written in, in ticks per beat, brought to the grid of the harmony. |
 | Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the melodies. 0 = drawn at every run, and given in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### Pattern Drums
+
+`batterie-motifs` · Inputs → SoundHelix
+
+*Lays one drum line per percussion, each under its voice of the activity matrix.*
+
+Lays one drum line per percussion on the grid of the received harmony, each governed by its voice of the activity matrix. The model is that of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Lines » gives one line per percussion: its MIDI pitch, the name of its voice, then its pattern, separated by spaces, 36 v1 0,-,-,-,0,-,-,- for instance. The pattern is laid from the start of the piece, in a loop; an offset is added to the pitch, 0 plays it as it is. A pattern entry is written offset, /length in ticks, :velocity from 1 to 1000; - is a rest; E(), (x)*n and (x)+d may be used. The « Pattern 1 » to « Pattern 4 » inputs, when connected, replace the pattern of the first four lines. « Ticks per beat » is the resolution the patterns are written in, brought to the grid of the harmony. The « Activity » input carries an activity matrix, one line per voice, its name, then one sign per chord section, x when the voice plays, . when it is silent. A note only starts on a tick where the voice of its line plays. Without a matrix connected, each line plays the whole piece. « Velocity » scales the velocity of each note. The « MIDI » output carries the notes on channel 10, at the grid and tempo of the harmony. The message gives the number of notes and lines.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Harmony | MIDI (harmonie) |  |
+| input | Activity | text (activite) |  |
+| input | Pattern 1 | text |  |
+| input | Pattern 2 | text |  |
+| input | Pattern 3 | text |  |
+| input | Pattern 4 | text |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Lines | text | `36  v1  0,-,-,-,-,-,0,-,0,-,-,-,-,-,-,- 38  v1  -/4,0/4:9…` |  | One line per percussion: its MIDI pitch, the name of its voice and its pattern, separated by spaces. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The resolution the patterns are written in, in ticks per beat, brought to the grid of the harmony. |
+| Velocity | number | 100 % | 1 – 100 %, step 1 | The velocity of each note, scaled. |
 
 #### Pattern from Fragments
 
@@ -8925,6 +8978,7 @@ Above the pivot frequency, each component f is moved to pivot × (f / pivot)^k, 
 
 | Component | Summary |
 |---|---|
+| [Groove](#groove) | Moves each event of a MIDI file according to the relative length of each step of the grid. |
 | [MIDI Speed](#midi-speed) | Plays a MIDI file slower or faster, without touching the pitches. |
 | [Phase Vocoder Tempo](#phase-vocoder-tempo) | Changes tempo via phase vocoder (frequency-domain), with transient detection. |
 | [Reich Phasing](#reich-phasing) | Lets several copies of a pattern drift apart from one another. |
@@ -8934,6 +8988,24 @@ Above the pivot frequency, each component f is moved to pivot × (f / pivot)^k, 
 | [Tempo Canon (Nancarrow)](#tempo-canon-nancarrow) | Layers a pattern against itself at a fixed tempo ratio. |
 | [Tempo Change](#tempo-change) | Time-stretch via phase vocoder. |
 | [Varispeed](#varispeed) | The tape you speed up or slow down: pitch and duration tied together, drivable by a curve. |
+
+#### Groove
+
+`groove-midi` · Processing → Tempo
+
+*Moves each event of a MIDI file according to the relative length of each step of the grid.*
+
+Moves each event of a MIDI file according to a groove: the relative length of each step of the grid, in a loop. The model is that of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Groove » gives the relative lengths, separated by commas: at 110,90, one step in two is lengthened by a tenth and the other shortened as much, the sway of a light swing. The lengths are brought to their mean, so one turn of the groove keeps its length, and so does the bar. « Ticks per beat » gives the grid of the steps, in steps per beat: at 4, each sixteenth note is a step. An event between two steps takes its share of the step it falls in. The « MIDI » output carries the file received on the « MIDI » input, its tracks, channels, programs and tempos kept; only the instants of its events change. A file of fewer than 480 ticks per quarter note is brought to it, its ticks multiplied, so that a shift of a fraction of a step is not lost to rounding. The message gives the number of moved notes and the groove.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | MIDI | MIDI |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Groove | text | `110,90` |  | The relative lengths of the steps, separated by commas, looped and brought to their mean. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The grid of the steps, in steps per beat: at 4, each sixteenth note is a step. An event falling at the end of a whole turn of the groove does not move: under a two-step groove and an even grid, notes laid on the beats stay where they are. |
 
 #### MIDI Speed
 

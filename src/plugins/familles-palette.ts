@@ -41,7 +41,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   // Changer la durée sans changer la hauteur — ou la vitesse, qui change les deux.
   "Tempo": [
     "changement-tempo", "soundtouch-tempo", "phase-vocoder-tempo", "soundtouch-rate",
-    "vitesse-variable", "vitesse-midi", "canon-nancarrow", "dephasage-reich", "rythme-risset",
+    "vitesse-variable", "vitesse-midi", "canon-nancarrow", "dephasage-reich", "rythme-risset", "groove-midi",
   ],
   // Changer la hauteur sans changer la durée.
   "Hauteur": [
@@ -136,7 +136,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Les nœuds d'après le générateur SoundHelix de Thomas Schürger (chantier du 2026-11-28), qui ne se
   // comprennent qu'ensemble : l'harmonie, la matrice d'activité et les motifs passent de l'un à l'autre.
   "SoundHelix": ["harmonie-motifs", "voix-sur-accord", "masque-activite", "arpege-duree-accord", "nappe-accords", "matrice-activite",
-    "motif-au-hasard", "motif-par-fragments", "motif-crescendo", "melodie-harmonie"],
+    "motif-au-hasard", "motif-par-fragments", "motif-crescendo", "melodie-harmonie", "batterie-motifs", "motif-conditionnel"],
   // Tout ce qui produit une figure rythmique, quelle qu'en soit la mécanique.
   "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
     "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],
