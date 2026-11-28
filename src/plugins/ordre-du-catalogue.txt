@@ -109,6 +109,8 @@ accords-joues
 harmonie-motifs
 voix-sur-accord
 masque-activite
+arpege-duree-accord
+nappe-accords
 glissando-harmonique
 glissando-de-gamme
 pulsation

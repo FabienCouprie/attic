@@ -62,10 +62,11 @@ describe("les contenus du flux texte", () => {
     // huitième est celui de « Texte → image (MOSS) », né le 2026-10-28.
     expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 8]);
     // LES DEUX CONTENUS DU CHANTIER SOUNDHELIX, nés le 2026-11-28 sans producteur : la matrice entre
-    // dans « Voix sur l'accord » et « Masque d'activité », le motif dans la première.
-    expect([compte("activite", "sorties"), compte("activite", "entrees")]).toEqual([0, 2]);
-    expect([compte("motif", "sorties"), compte("motif", "entrees")]).toEqual([0, 1]);
-    expect(ports.length).toBe(43);
+    // dans « Voix sur l'accord », « Masque d'activité », « Arpège par durée d'accord » et « Nappe
+    // d'accords », le motif dans la première et dans l'arpège.
+    expect([compte("activite", "sorties"), compte("activite", "entrees")]).toEqual([0, 4]);
+    expect([compte("motif", "sorties"), compte("motif", "entrees")]).toEqual([0, 2]);
+    expect(ports.length).toBe(46);
   });
 
   // ─── Le cas fondateur ───

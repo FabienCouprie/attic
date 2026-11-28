@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**528 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**530 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -152,6 +152,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Apparier sur une référence | `apparier-reference` | 240 × 140 |
 | Apprendre sur un corpus | `apprendre-corpus` | 240 × 140 |
 | Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 162 |
+| Arpège par durée d'accord | `arpege-duree-accord` | 240 × 162 |
 | Arpège flocon de Koch | `arpege-koch` | 240 × 140 |
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
 | Arpégiateur MIDI | `arpegiateur-midi` | 240 × 118 |
@@ -392,6 +393,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Rétrograde et palindrome | `motif-retrograde` | 240 × 140 |
 | Multi-réservoirs | `multi-reservoirs` | 280 × 540 |
 | MusicXML | `musicxml` | 240 × 162 |
+| Nappe d'accords | `nappe-accords` | 240 × 140 |
 | Paroles multilingues (IA) | `nllb-paroles` | 240 × 118 |
 | Normaliseur | `normaliseur` | 240 × 118 |
 | Objet sonore | `objet-sonore` | 240 × 184 |

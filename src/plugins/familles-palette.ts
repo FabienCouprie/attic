@@ -135,7 +135,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   "Xenakis": ["crible-xenakis", "ecrans-xenakis", "gendyn-xenakis"],
   // Les nœuds d'après le générateur SoundHelix de Thomas Schürger (chantier du 2026-11-28), qui ne se
   // comprennent qu'ensemble : l'harmonie, la matrice d'activité et les motifs passent de l'un à l'autre.
-  "SoundHelix": ["harmonie-motifs", "voix-sur-accord", "masque-activite"],
+  "SoundHelix": ["harmonie-motifs", "voix-sur-accord", "masque-activite", "arpege-duree-accord", "nappe-accords"],
   // Tout ce qui produit une figure rythmique, quelle qu'en soit la mécanique.
   "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
     "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],

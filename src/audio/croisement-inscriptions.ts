@@ -183,6 +183,9 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   // LA VOIX SUR L'ACCORD (2026-11-28) : le MIDI d'essai est une mélodie, dont chaque note se lit comme
   // un accord d'une seule note.
   { ou: "voix-sur-accord·Position fondamentale", quand: { banc: true }, raison: SANS_HARMONIE },
+  // L'ARPÈGE PAR DURÉE D'ACCORD (2026-11-28), sous la même mélodie d'essai, sans section ni accord de trois sons.
+  { ou: "arpege-duree-accord·Position fondamentale", quand: { banc: true }, raison: SANS_HARMONIE.replace("voix-sur-accord", "arpege-nappe") },
+  { ou: "arpege-duree-accord·Couper à la section", quand: { banc: true }, raison: "non mesurable au banc : le MIDI d'essai n'a aucun marqueur de section, et aucun début de section ne coupe un accord ; tenu par plugins/arpege-nappe.test.ts et audio/soundhelix-accompagnement.test.ts sur une harmonie à sections ; dit dans sa documentation" },
   // LE LOT 3e (2026-11-15) : tout réglage à choix gouverne, et ce qu'il fait voir est dans son module.
   ...INERTIES_DES_CHOIX,
 ];

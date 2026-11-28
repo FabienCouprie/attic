@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **528 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **530 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 107 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (3) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 109 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (5) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -2395,6 +2395,8 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Component | Summary |
 |---|---|
 | [Activity Mask](#activity-mask) | Keeps the notes of a MIDI file that start while a voice of the activity matrix plays. |
+| [Arpeggio by Chord Length](#arpeggio-by-chord-length) | Arpeggiates each chord of the harmony with the pattern whose length covers its duration. |
+| [Chord Pad](#chord-pad) | Holds the notes of each chord of the harmony for the whole chord, one line per note. |
 | [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
 | [Voice on the Chord](#voice-on-the-chord) | Lays a pattern over the harmony, note by note on the current chord or in free pitches, one line per pattern. |
 
@@ -2417,6 +2419,57 @@ Keeps the notes of a MIDI file that start while a voice of the activity matrix p
 |---|---|---|---|---|
 | Voice | text | `v1` |  | The name of the activity matrix line that governs the file. |
 | Cut at the edges | checkbox | 0 | 0 / 1 | Checked, a kept note that lasts beyond the activity stops at the instant the voice falls silent. Unchecked, it keeps its length. |
+
+#### Arpeggio by Chord Length
+
+`arpege-duree-accord` · Inputs → SoundHelix
+
+*Arpeggiates each chord of the harmony with the pattern whose length covers its duration.*
+
+Arpeggiates each chord of the received harmony with the pattern whose length covers the chord's duration. The model is that of the arpeggio engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Pattern » gives the patterns, one per line, each of a different length in ticks. At each chord, the node takes the shortest one that lasts at least as long as the chord, and the longest when none lasts long enough; it lays it from the start of the chord, loops it when needed and cuts it at the end of the chord. The « Pattern » input, when connected, replaces the setting. A pattern entry is written offset, then ~ to tie the note to the next one, /length in ticks, :velocity from 1 to 1000; - is a rest; E(), (x)*n and (x)+d may be used. 0, 1 and 2 are the bass, middle and top of the chord, 3 the bass an octave up, -1 the top an octave down. « Ticks per beat » is the resolution the patterns are written in, brought to the grid of the harmony. « Cut at the section » treats a section start as a chord change. « Root position » brings each chord to the root position its shape designates before reading the offsets on it. The « Activity » input carries an activity matrix: one line per voice, its name, then one sign per chord section, x when the voice plays, . when it is silent; debut= and fin=, optional, move each entry and each exit of the voice, in ticks. « Voice » names the line that governs the node. Without a matrix connected, the voice plays the whole piece and « Voice » has no effect. A note only starts on a tick where its voice plays, and it is not cut when the voice falls silent. « Transpose » shifts all notes, in semitones. « Velocity » scales the velocity of each note. « Instrument » writes the channel's program into the file. The « MIDI » output carries the notes on channel 1, at the grid and tempo of the harmony, middle C at 60. The message gives the number of notes and the voice followed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Harmony | MIDI |  |
+| input | Activity | text (activite) |  |
+| input | Pattern | text (motif) |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pattern | text | `0,1,2,1 0,1,2,3,2,1,0,- 0,1,2,3,4,5,4,3,2,1,0,- 0/2,1,2,3…` |  | The arpeggio patterns, one per line, each of a different length in ticks; each chord takes the shortest one that covers it, otherwise the longest. No effect when the « Pattern » input is connected. |
+| Voice | text | `v1` |  | The name of the activity matrix line that governs the voice. No effect when the « Activity » input is free. |
+| Cut at the section | checkbox | 0 | 0 / 1 | Checked, a section start counts as a chord change, even when the same chord runs across the boundary. No effect over a harmony without section markers. |
+| Root position | checkbox | 1 | 0 / 1 | Checked, each chord is brought to its root position before reading the offsets on it, and 0 is its root. Unchecked, 0 is the lowest note of the received chord. No effect on a chord that does not have three notes. |
+| Transpose | number | 0 st | -48 – 48 st, step 1 | The shift of all notes, in semitones. |
+| Velocity | number | 100 % | 1 – 100 %, step 1 | The velocity of each note, scaled: at 50 %, a note written at 1000 plays at 500, out of 1000. |
+| Ticks per beat | choice | 4 | 2 / 3 / 4 / 6 / 8 / 12 | The resolution the patterns are written in, in ticks per beat, brought to the grid of the harmony. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### Chord Pad
+
+`nappe-accords` · Inputs → SoundHelix
+
+*Holds the notes of each chord of the harmony for the whole chord, one line per note.*
+
+Holds the notes of each chord of the received harmony for the whole chord, one line per note. The model is that of the pad engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Notes » gives the held offsets, separated by commas: 0, 1 and 2 are the bass, middle and top of the chord, 3 the bass an octave up, -1 the top an octave down. Each offset is a line. « Retrigger each chord » unchecked, a pitch shared by two chords in a row keeps sounding in its line, and the new pitches go, in the order of the offsets, to the lines the new chord frees. Checked, each chord plays all its notes again. « Cut at the section » treats a section start as a chord change. « Root position » brings each chord to the root position its shape designates before reading the offsets on it. The « Activity » input carries an activity matrix: one line per voice, its name, then one sign per chord section, x when the voice plays, . when it is silent; debut= and fin=, optional, move each entry and each exit of the voice, in ticks. « Voice » names the line that governs the node. Without a matrix connected, the voice plays the whole piece and « Voice » has no effect. A note starts at the voice's entry and stops at its exit. « Transpose » shifts all notes, in semitones. « Velocity » gives the velocity of each note. « Instrument » writes the channel's program into the file. The « MIDI » output carries the notes on channel 1, at the grid and tempo of the harmony, middle C at 60. The message gives the number of notes, that of the lines when there are several, and the voice followed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Harmony | MIDI |  |
+| input | Activity | text (activite) |  |
+| output | MIDI | MIDI |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Notes | text | `0,1,2` |  | The held offsets, separated by commas, one line each: 0,1,2 holds the three notes of the chord, -1,0,1,2,3 widens it by one note on each side. |
+| Voice | text | `v1` |  | The name of the activity matrix line that governs the voice. No effect when the « Activity » input is free. |
+| Retrigger each chord | checkbox | 0 | 0 / 1 | Checked, each chord plays all its notes again. Unchecked, a pitch shared by two chords in a row keeps sounding. |
+| Cut at the section | checkbox | 0 | 0 / 1 | Checked, a section start counts as a chord change, even when the same chord runs across the boundary. No effect over a harmony without section markers. |
+| Root position | checkbox | 0 | 0 / 1 | Checked, each chord is brought to its root position before reading the offsets on it, and 0 is its root. Unchecked, 0 is the lowest note of the received chord. No effect on a chord that does not have three notes. |
+| Transpose | number | 0 st | -48 – 48 st, step 1 | The shift of all notes, in semitones. |
+| Velocity | number | 70 % | 1 – 100 %, step 1 | The velocity of each note, out of 1000: at 70 %, 700. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Harmony from Patterns
 
