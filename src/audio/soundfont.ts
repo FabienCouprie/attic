@@ -1,4 +1,8 @@
 import { traduire } from "../i18n";
+import {
+  AUCUN_DECALAGE, ENVELOPPE_PAR_DEFAUT, additionnerEnveloppes, enveloppeDeZone, lireGenerateurEnveloppe,
+  type GenerateursEnveloppe,
+} from "./sf2-enveloppe";
 
 export interface EchantillonSF2 {
   nom: string;
@@ -24,6 +28,10 @@ export interface ZoneInstrument {
   fineTune?: number;
   attenuation?: number;
   pan?: number;
+  /** L'enveloppe de volume, valeurs absolues ; absente, ce sont les défauts de la norme. */
+  enveloppe?: GenerateursEnveloppe;
+  /** Générateur 57 : une note plus jeune de la même classe étouffe celle-ci. Zéro ou absent, aucune. */
+  classeExclusive?: number;
 }
 
 export interface InstrumentSF2 {
@@ -41,6 +49,8 @@ export interface PresetZone {
   fineTune?: number;
   attenuation?: number;
   pan?: number;
+  /** Ce que la zone de preset ajoute à l'enveloppe de l'instrument ; absente, rien. */
+  enveloppe?: GenerateursEnveloppe;
 }
 
 export interface PresetSF2 {
@@ -142,6 +152,7 @@ const GEN_FINE_TUNE = 52;
 const GEN_SAMPLE_ID = 53;
 const GEN_SAMPLE_MODES = 54;
 const GEN_OVERRIDING_ROOT_KEY = 58;
+const GEN_EXCLUSIVE_CLASS = 57;
 
 export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
   const v = new DataView(buffer);
@@ -207,6 +218,15 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
     const zoneFin = i + 1 <= nbInstruments ? lireUint16(v, instChunk.pos + (i + 1) * 22 + 20) : nbIbag;
 
     const zones: ZoneInstrument[] = [];
+    // ═══ LA ZONE GLOBALE D'UN INSTRUMENT, LUE POUR SON ENVELOPPE ═══
+    //
+    // La première zone d'un instrument qui ne nomme aucun échantillon donne ses générateurs par défaut
+    // aux autres. Elle était jetée entière, et c'est là que FluidR3 écrit l'enveloppe : 132 de ses 193
+    // instruments y posent leur relâchement. Seuls les générateurs de l'enveloppe de volume en sont lus
+    // ici, et sa classe exclusive ; ce qu'elle porte d'autre (atténuation, filtre, accord) reste à
+    // décider, et n'est pas lu.
+    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {};
+    let classeGlobale = 0;
     for (let zi = zoneDebut; zi < Math.min(zoneFin, nbIbag); zi++) {
       const genDebut = lireIbagIndex(zi);
       const genFin = lireIbagIndex(zi + 1);
@@ -220,12 +240,15 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let fineTune = 0;
       let attenuation = 0;
       let pan = 0;
+      const enveloppe: Partial<GenerateursEnveloppe> = {};
+      let classeExclusive: number | undefined;
 
       for (let gi = genDebut; gi < Math.min(genFin, nbIgen); gi++) {
         const genBase = igenChunk.pos + gi * 4;
         const type = lireUint16(v, genBase);
         const valeur = lireUint16(v, genBase + 2);
 
+        if (lireGenerateurEnveloppe(enveloppe, type, valeur)) continue;
         if (type === GEN_KEY_RANGE) {
           noteMin = valeur & 0xFF;
           noteMax = (valeur >> 8) & 0xFF;
@@ -244,14 +267,25 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         } else if (type === GEN_FINE_TUNE) {
           fineTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         } else if (type === GEN_INITIAL_ATTENUATION) {
-          attenuation = valeur;
+          attenuation = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         } else if (type === GEN_PAN) {
-          pan = valeur;
+          // SIGNÉ, comme l'accord : −500 tout à gauche. Lu sans signe, −500 devenait 65036, ramené à
+          // +500 par la borne de `zonesDeLInstrument`, et toute zone placée à gauche sortait à droite.
+          pan = (valeur & 0x8000) ? (valeur - 65536) : valeur;
+        } else if (type === GEN_EXCLUSIVE_CLASS) {
+          classeExclusive = valeur;
         }
       }
 
       if (echantillonId >= 0 && echantillonId < nbEchantillons) {
-        zones.push({ noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune, attenuation, pan });
+        zones.push({
+          noteMin, noteMax, velMin, velMax, echantillonId, boucleActive, rootKey, coarseTune, fineTune, attenuation, pan,
+          enveloppe: enveloppeDeZone(enveloppeGlobale, enveloppe, ENVELOPPE_PAR_DEFAUT),
+          classeExclusive: classeExclusive ?? classeGlobale,
+        });
+      } else if (zi === zoneDebut && echantillonId === -1) {
+        enveloppeGlobale = enveloppe;
+        classeGlobale = classeExclusive ?? 0;
       }
     }
 
@@ -286,6 +320,9 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
     let globalFineTune = 0;
     let globalAttenuation = 0;
     let globalPan = 0;
+    // L'enveloppe d'une zone de preset DÉCALE celle de l'instrument. Sa zone globale suit la norme :
+    // un générateur local la remplace, il ne s'y ajoute pas, à la différence des accumulateurs voisins.
+    let enveloppeGlobale: Partial<GenerateursEnveloppe> = {};
     for (let zi = zoneDebut; zi < Math.min(zoneFin, nbPbag); zi++) {
       const genDebut = lirePbagIndex(zi);
       const genFin = lirePbagIndex(zi + 1);
@@ -297,12 +334,14 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
       let fineTune = 0;
       let attenuation = 0;
       let pan = 0;
+      const enveloppe: Partial<GenerateursEnveloppe> = {};
 
       for (let gi = genDebut; gi < Math.min(genFin, nbPgen); gi++) {
         const genBase = pgenChunk.pos + gi * 4;
         const type = lireUint16(v, genBase);
         const valeur = lireUint16(v, genBase + 2);
 
+        if (lireGenerateurEnveloppe(enveloppe, type, valeur)) continue;
         if (type === GEN_KEY_RANGE) {
           noteMin = valeur & 0xFF;
           noteMax = (valeur >> 8) & 0xFF;
@@ -316,9 +355,11 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         } else if (type === GEN_FINE_TUNE) {
           fineTune = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         } else if (type === GEN_INITIAL_ATTENUATION) {
-          attenuation = valeur;
+          // SIGNÉE : une zone de preset décale l'atténuation de l'instrument, et peut la diminuer.
+          // Lue sans signe, −214 devenait 65 322 centibels, et cinq presets de FluidR3 se taisaient.
+          attenuation = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         } else if (type === GEN_PAN) {
-          pan = valeur;
+          pan = (valeur & 0x8000) ? (valeur - 65536) : valeur;
         }
       }
 
@@ -330,6 +371,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
           fineTune: fineTune + globalFineTune,
           attenuation: attenuation + globalAttenuation,
           pan: pan + globalPan,
+          enveloppe: enveloppeDeZone(enveloppeGlobale, enveloppe, AUCUN_DECALAGE),
         });
       } else if (instrumentIdx === -1) {
         // Zone globale (pas d'instrument) : accumulateurs pour les zones suivantes
@@ -337,6 +379,7 @@ export function analyserSF2(buffer: ArrayBuffer): StructureSF2 {
         globalFineTune += fineTune;
         globalAttenuation += attenuation;
         globalPan += pan;
+        enveloppeGlobale = { ...enveloppeGlobale, ...enveloppe };
       }
     }
 
@@ -419,7 +462,8 @@ function zonesDeLInstrument(
     const ech = sf.echantillons[zone.echantillonId];
     if (!ech || ech.debut >= ech.fin) continue;
 
-    const finalAttenuation = (zone.attenuation ?? 0) + (presetZone?.attenuation ?? 0);
+    // La norme borne la somme de 0 à 1440 centibels : une atténuation négative ne devient pas un gain.
+    const finalAttenuation = Math.max(0, Math.min(1440, (zone.attenuation ?? 0) + (presetZone?.attenuation ?? 0)));
     const finalPan = Math.max(-500, Math.min(500, (zone.pan ?? 0) + (presetZone?.pan ?? 0)));
     const combinedZone: ZoneInstrument = {
       ...zone,
@@ -427,6 +471,7 @@ function zonesDeLInstrument(
       fineTune: (zone.fineTune ?? 0) + (presetZone?.fineTune ?? 0),
       attenuation: finalAttenuation,
       pan: finalPan,
+      enveloppe: additionnerEnveloppes(zone.enveloppe ?? ENVELOPPE_PAR_DEFAUT, presetZone?.enveloppe),
     };
 
     matches.push({

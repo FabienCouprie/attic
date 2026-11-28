@@ -7,7 +7,7 @@ import { parseMidi, writeMidi } from "midi-file";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
 import { analyserMidi, midiDuFichier } from "./midi";
-import { normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
+import { mixerCouche, normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
 import { bpmInitial, evenementsAbsolus } from "./midi-ecriture";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { frequenceDeNoteMidi } from "./commun";
@@ -134,7 +134,8 @@ export async function rendreMidiDepuisBytes(
     console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.presets.length} presets, ${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
     const sr = frequenceDeTravail();
     const duree = Math.max(dureeTotale, 0.5);
-    const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
+    // Le mélange part de la durée du fichier et s'allonge de la queue la plus longue : `mixerCouche`.
+    let master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
       const canaux = [...new Set(notes.map((n) => n.canal))].sort((a, b) => a - b);
       // Les frappes du canal dix, quand le SoundFont n'a aucun kit : voir `midi-canal-percussion.ts`.
       const auSynthetiseur: typeof notes = [];
@@ -153,13 +154,7 @@ export async function rendreMidiDepuisBytes(
         const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
         console.log(`[attic] rendreMidiDepuisBytes canal ${canal} -> programme ${prog} banque=${bq} -> preset "${preset?.nom ?? "?"}" -> instrument SF2 "${nomInst}" (${nc.length} notes)`);
         const an = nc.map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
-        const layer = rendreAvecSF2(sf2Global, an, volume, prog, bq);
-        // Canaux sortis de la boucle : appeler `getChannelData` par échantillon
-        // coûtait 40× le temps du même calcul, pour un résultat identique.
-        const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
-        const srcL = layer.getChannelData(0), srcR = layer.getChannelData(1);
-        const n = Math.min(master.length, layer.length);
-        for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
+        master = mixerCouche(master, rendreAvecSF2(sf2Global, an, volume, prog, bq));
       }
       await ajouterBatterieSynthetisee(master, auSynthetiseur, volume);
       normaliserBuffer(master);

@@ -7,7 +7,7 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
+import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, mixerCouche, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
@@ -80,22 +80,15 @@ export const fiches: FicheAudio[] = ([
       if (sf2) {
         const { notes, canauxInstrument } = analyserMidi(parseMidi(midiBytes));
         const sr = frequenceDeTravail(), dTot = notes.reduce((m:number,n:any)=>Math.max(m,n.fin),0)+1;
-        const master = new AudioBuffer({numberOfChannels:2,length:Math.ceil(dTot*sr),sampleRate:sr});
+        // Le mélange s'allonge si la queue des enveloppes passe la seconde réservée : `mixerCouche`.
+        let master = new AudioBuffer({numberOfChannels:2,length:Math.ceil(dTot*sr),sampleRate:sr});
         for (const canal of [0,1]) {
           const nc = notes.filter((n:any)=>n.canal===canal);
           if (!nc.length) continue;
           const instCanal = canauxInstrument.get(canal)??{programme:0,banque:0};
           const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
           const an = nc.map((n:any)=>({note:n.note,velocite:n.velocite,debut:n.debut,fin:n.fin}));
-          const layer = rendreAvecSF2(sf2, an, vol, idx, instCanal.banque);
-          // Canaux sortis de la boucle : quatrième et dernière occurrence du motif,
-          // mesuré 40× plus lent pour un résultat identique au bit. Le master et
-          // les couches partagent ici la même fréquence (44 100 des deux côtés),
-          // donc pas de désaccord comme celui qu'avait le Groove Box.
-          const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
-          const srcL = layer.getChannelData(0), srcR = layer.getChannelData(1);
-          const n = Math.min(master.length, layer.length);
-          for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
+          master = mixerCouche(master, rendreAvecSF2(sf2, an, vol, idx, instCanal.banque));
         }
         return { valeurs:[master], message:traduire("msg.var_0_soundfont", description) };
       }

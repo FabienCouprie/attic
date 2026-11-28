@@ -171,7 +171,7 @@ const entrees: FicheAudio[] = [
       const instr3 = ctx.paramTexte("Instrument 3", "Marimba");
 
       ctx.onProgress(traduire("progress.g_n_ration_du_script"));
-      const { genererDepuisScript, analyserMidi, rendreMidiDepuisBytes, rendreAvecSF2 } = await import("../audio");
+      const { genererDepuisScript, analyserMidi, rendreMidiDepuisBytes, rendreAvecSF2, mixerCouche } = await import("../audio");
       const { sf2Chargee } = await import("./soundfontGlobal");
 
       const script = `genre = ${genre}\ntempo = ${tempo}\ncle = ${cle}\ngamme = ${gamme}\nduree = ${duree}\ninstr1 = ${instr1}\ninstr2 = ${instr2}\ninstr3 = ${instr3}`;
@@ -186,20 +186,15 @@ const entrees: FicheAudio[] = [
         const { notes, dureeTotale, canauxInstrument } = analyserMidi(parsed);
         const sr = frequenceDeTravail();
         const dTot = Math.max(dureeTotale, 0.5);
-        const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(dTot * sr), sampleRate: sr });
+        // Le mélange s'allonge de la queue des enveloppes : `mixerCouche`.
+        let master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(dTot * sr), sampleRate: sr });
         for (const canal of [0,1,2]) {
           const nc = notes.filter((n: any) => n.canal === canal);
           if (!nc.length) continue;
           const instCanal = canauxInstrument.get(canal) ?? { programme: 0, banque: 0 };
           const idx = instCanal.programme < sf2.instruments.length ? instCanal.programme : undefined;
           const an = nc.map((n: any) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
-          const layer = rendreAvecSF2(sf2, an, volume, idx, instCanal.banque);
-          // Canaux sortis de la boucle : troisième occurrence du même motif,
-          // mesuré 40× plus lent pour un résultat identique.
-          const mixL = master.getChannelData(0), mixR = master.getChannelData(1);
-          const srcL = layer.getChannelData(0), srcR = layer.getChannelData(1);
-          const n = Math.min(master.length, layer.length);
-          for (let i = 0; i < n; i++) { mixL[i] += srcL[i]; mixR[i] += srcR[i]; }
+          master = mixerCouche(master, rendreAvecSF2(sf2, an, volume, idx, instCanal.banque));
         }
         audioBuffer = master;
       } else {

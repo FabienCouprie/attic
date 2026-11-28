@@ -42,14 +42,33 @@ const CARACTERES_FM: Record<CaractereTimbreId | "origine" | "pur", { ratio: numb
   percutante: { ratio: 2, idxMod: 5, a: 0.001, d: 0.06, sVal: 0.15, r: 0.03 },
 };
 
-/** Le même son, dans un tampon plus long : le silence qui suit fait partie de la pièce. */
-function allongerA(buffer: AudioBuffer, duree: number): AudioBuffer {
+/** Le fondu qui ferme une séquence coupée : celui qui fermait chaque note avant les enveloppes. */
+const FONDU_DE_COUPE = 0.005;
+
+/**
+ * Le même son, à la durée de la pièce : le silence qui suit en fait partie, et ce qui la dépasse non.
+ *
+ * LA DURÉE VOULUE L'EMPORTE, et c'est la règle de `melangerTampons` : une mesure de deux secondes en
+ * rend deux, et deux cercles de tailles différentes finissent ensemble. Depuis que le SoundFont rend
+ * le relâchement de ses enveloppes, sa voie dépasse la dernière note ; la queue est donc coupée à la
+ * durée, et la coupe se ferme sur cinq millisecondes, comme se fermait chaque note avant : sans ce
+ * fondu, une note encore tenue à la fin claquerait.
+ */
+function ajusterA(buffer: AudioBuffer, duree: number): AudioBuffer {
   const longueur = Math.ceil(duree * buffer.sampleRate);
-  if (longueur <= buffer.length) return buffer;
+  if (longueur === buffer.length) return buffer;
   const sortie = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels, length: longueur, sampleRate: buffer.sampleRate,
   });
-  for (let c = 0; c < buffer.numberOfChannels; c++) sortie.copyToChannel(buffer.getChannelData(c), c, 0);
+  const coupe = longueur < buffer.length;
+  const fondu = Math.min(longueur, Math.floor(FONDU_DE_COUPE * buffer.sampleRate));
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const source = buffer.getChannelData(c);
+    sortie.copyToChannel(coupe ? source.subarray(0, longueur) : source, c, 0);
+    if (!coupe) continue;
+    const canal = sortie.getChannelData(c);
+    for (let k = 1; k <= fondu; k++) canal[longueur - k] *= (k - 1) / fondu;
+  }
   return sortie;
 }
 
@@ -94,7 +113,9 @@ export async function rendreSequence(
 
   const { frappes, hauteurs } = separerPercussions(notes);
   if (frappes.length > 0) {
-    const batterie = await rendreFrappes(frappes, mode, volume, instrument, banque);
+    const { tampon, auKit } = await rendreFrappes(frappes, mode, volume, instrument, banque);
+    // Un kit du SoundFont rend la queue de ses enveloppes : elle est coupée à la durée, avec le fondu.
+    const batterie = auKit ? ajusterA(tampon, duree) : tampon;
     const melodie = hauteurs.length > 0
       ? await rendreHauteurs(hauteurs, mode, volume, instrument, banque, caractere, duree)
       : tamponSilencieux(duree, batterie.sampleRate);
@@ -125,19 +146,20 @@ async function rendreFrappes(
   volume: number,
   instrument: number | undefined,
   banque: number | undefined,
-): Promise<AudioBuffer> {
+): Promise<{ tampon: AudioBuffer; auKit: boolean }> {
   const sf2 = mode === "SoundFont" ? sf2Chargee() : null;
   if (sf2) {
     const voie = voieDuCanal(sf2.presets, CANAL_PERCUSSION, { programme: 0, banque: 0 }, { programme: instrument, banque });
     if (voie.voie === "soundfont") {
       console.log(`[attic] rendreSequence canal ${CANAL_PERCUSSION} -> kit programme ${voie.programme} banque=${voie.banque} (${frappes.length} frappes)`);
-      return rendreAvecSF2(sf2, frappes, volume, voie.programme, voie.banque);
+      return { tampon: rendreAvecSF2(sf2, frappes, volume, voie.programme, voie.banque), auKit: true };
     }
   }
   const { rendreBatterieMidi } = await import("./tone-synths");
   // LA MÊME RÉSERVE QUE LA SYNTHÈSE DES HAUTEURS, et le niveau est un gain : multiplier le volume
   // revient exactement à multiplier le rendu. Voir `RESERVE_BATTERIE` pour la mesure qui l'exige.
-  return rendreBatterieMidi({ notes: frappes, volume: volume * RESERVE_BATTERIE });
+  // Le synthétiseur rend sa demi-seconde de queue, que `melangerTampons` coupe sans fondu, comme avant.
+  return { tampon: await rendreBatterieMidi({ notes: frappes, volume: volume * RESERVE_BATTERIE }), auKit: false };
 }
 
 /**
@@ -183,9 +205,9 @@ async function rendreHauteurs(
     const preset = sf2Global.presets.find(p => p.programme === prog && p.banque === bq) ?? sf2Global.presets[0];
     const nomInst = preset ? sf2Global.instruments[preset.zones[0]?.instrumentIdx ?? 0]?.nom ?? "?" : "?";
     console.log(`[attic] rendreSequence utilise SF2 global : ${sf2Global.nom}, programme ${prog}, preset "${preset?.nom ?? "?"}" -> instrument "${nomInst}" (${notes.length} notes)`);
-    // La voie SoundFont calcule sa propre longueur sur les notes : on la rallonge si la durée
-    // voulue va plus loin, plutôt que de reprendre ce calcul à deux endroits.
-    return allongerA(rendreAvecSF2(sf2Global, notes, volume, prog, banque ?? 0), duree);
+    // La voie SoundFont calcule sa propre longueur sur les notes, relâchement compris : on la ramène
+    // à la durée voulue, plutôt que de reprendre ce calcul à deux endroits.
+    return ajusterA(rendreAvecSF2(sf2Global, notes, volume, prog, banque ?? 0), duree);
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing
