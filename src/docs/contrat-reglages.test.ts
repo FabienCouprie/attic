@@ -51,6 +51,9 @@ const CHAMPS_LEGITIMES: Record<string, string> = {
   "repartiteur-midi/Partie 2": "une liste de canaux ou de pistes",
   "repartiteur-midi/Partie 3": "une liste de canaux ou de pistes",
   "repartiteur-midi/Batterie": "une liste de canaux ou de pistes",
+  // Les voix parallèles de SoundHelix sont une liste de décalages, une ligne par valeur : « 0 » en
+  // est la plus courte, et « 0,1,2 » l'accord plaqué.
+  "voix-sur-accord/Voix parallèles": "une liste de décalages sur l'accord, une ligne par valeur",
 };
 
 /** Le défaut se lit-il comme une grandeur : un nombre seul, une rampe « a:b », un tirage « a~b » ? */

@@ -107,6 +107,8 @@ melodie-aleatoire
 gamme-jouee
 accords-joues
 harmonie-motifs
+voix-sur-accord
+masque-activite
 glissando-harmonique
 glissando-de-gamme
 pulsation

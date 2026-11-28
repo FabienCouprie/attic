@@ -135,11 +135,14 @@ export function rapprocherAccord(c: AccordSH, cible: AccordSH): AccordSH {
 /**
  * La hauteur que désigne un décalage sur l'accord : 0, 1, 2 la basse, le milieu et le haut ; 3 la
  * basse une octave plus haut ; −1 le haut une octave plus bas.
+ *
+ * UN ACCORD VENU D'AILLEURS peut avoir une note, ou quatre : la même règle compte alors ses notes
+ * au lieu de trois, et à trois elle rend ce que SoundHelix rend.
  */
-export function hauteurSurAccord(c: AccordSH, decalage: number): number {
-  const rang = ((decalage % 3) + 3) % 3;
-  const octaves = Math.trunc((decalage < 0 ? decalage - 2 : decalage) / 3);
-  return 12 * octaves + c[rang];
+export function hauteurSurAccord(c: readonly number[], decalage: number): number {
+  const n = c.length;
+  const rang = ((decalage % n) + n) % n;
+  return 12 * Math.floor(decalage / n) + c[rang];
 }
 
 /** L'accord contient-il cette classe de hauteur, à l'octave près ? */

@@ -131,6 +131,11 @@ export function texteDEssai(sousType?: string): string {
     case "paroles": return "une phrase chantee sur quatre temps\net une seconde pour la suite";
     case "plan": return "intro 4 mesures\ncouplet 8 mesures\nrefrain 8 mesures";
     case "prompt": return "un motif simple, tempo moyen, sans voix";
+    // UNE SEULE SECTION, celle d'une harmonie sans marqueur, comme le MIDI d'essai ; et la voix sous
+    // le nom que les nœuds lisent par défaut, le même dans les deux langues.
+    case "activite": return "# une voix\n" + "v1  x";
+    // Sans joker : sous « Libres », une note de passage est refusée, et l'on mesurerait le refus.
+    case "motif": return "0/2,1,2,-/2,(0,1)*2,2/2";
     default: return "un texte d'essai, court et sans accent particulier";
   }
 }

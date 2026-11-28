@@ -42,7 +42,7 @@ describe("décrire", () => {
     expect(abc.sorties[0]).toMatchObject({ type: "texte", contenu: "abc" });
     // Et le flux qui distingue des contenus les énumère, pour qu'un lecteur sache lesquels existent.
     const texte = decrireCatalogue().flux.find((f) => f.id === "texte")!;
-    expect(texte.contenus).toEqual(["plan", "notation", "abc", "paroles", "prompt"]);
+    expect(texte.contenus).toEqual(["plan", "notation", "abc", "paroles", "prompt", "activite", "motif"]);
   });
 
   it("DONNE LES IDENTIFIANTS D'UN CHOIX, jamais ses libellés traduits", () => {

@@ -64,6 +64,8 @@ export const INERTIES_DECLAREES: InertieInscrite[] = [
 
 const UNE_GRAINE = "la graine ne tire que l'ordre aléatoire, et hors de lui elle n'a rien à tirer ; dit dans sa documentation";
 
+const SANS_HARMONIE = "non mesurable au banc : le MIDI d'essai, une mélodie, ne rend que des accords d'une note, et la position fondamentale ne vaut que pour un accord de trois sons ; tenu par plugins/voix-sur-accord.test.ts sur une harmonie de « Harmonie par motifs » ; dit dans sa documentation";
+
 // LES RAISONS COMMUNES DU LOT 3d-2.
 const VUE_ANIMEE = "non mesurable au banc : ce réglage ne règle que l'animation montrée dans le composant, et aucune sortie n'en dépend ; dit dans sa documentation";
 const VUE_SEULE_ECHELLE = "non mesurable au banc : l'échelle ne règle que la vue, et le nœud rend son entrée telle quelle ; dit dans sa documentation";
@@ -178,6 +180,9 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "spectrogramme-fractal·Format", quand: { banc: true }, raison: SANS_DOM },
   { ou: "boucle-creneau-fin·Plier", quand: { banc: true }, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", quand: { banc: true }, raison: HORS_BOUCLE },
+  // LA VOIX SUR L'ACCORD (2026-11-28) : le MIDI d'essai est une mélodie, dont chaque note se lit comme
+  // un accord d'une seule note.
+  { ou: "voix-sur-accord·Position fondamentale", quand: { banc: true }, raison: SANS_HARMONIE },
   // LE LOT 3e (2026-11-15) : tout réglage à choix gouverne, et ce qu'il fait voir est dans son module.
   ...INERTIES_DES_CHOIX,
 ];
@@ -234,6 +239,7 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
   { ou: "accords-vers-notation·Gamme", valeurs: GAMMES_DES_ROMAINS.map((g) => g.id), raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
+  { ou: "voix-sur-accord·Reprise", valeurs: ["morceau", "section"], raison: "le MIDI d'essai n'a aucun marqueur de section : le morceau n'en a qu'une, et la reprise à chaque section est la reprise à la fin du morceau ; tenu par plugins/voix-sur-accord.test.ts sur une harmonie de « Harmonie par motifs »" },
   ...COINCIDENCES_DES_CHOIX,
 ];
 

@@ -31,6 +31,13 @@
 // désormais sous la souris. Les deux contenus qui voyagent ensemble, le plan et les paroles, sont
 // aussi ceux qu'on échange le plus facilement : « Rendre la chanson » les reçoit l'un sous l'autre,
 // et rien ne disait lequel allait où.
+//
+// DEUX CONTENUS DU CHANTIER SOUNDHELIX, nés le 2026-11-28 (plan validé par Fabien, lot 2) : la
+// MATRICE D'ACTIVITÉ, une ligne par voix et un signe par section (`audio/soundhelix-activite.ts`), et
+// le MOTIF, dans la grammaire des motifs de SoundHelix (`audio/soundhelix-motifs.ts`). Les voix du
+// chantier les reçoivent côte à côte, l'un sous l'autre : sans sous-type, une matrice posée sur
+// l'entrée d'un motif serait lue comme un motif illisible, et l'inverse comme une matrice illisible.
+// Ils naissent destinations, comme le prompt ; leurs producteurs viennent aux lots suivants.
 
 /**
  * Les contenus déclarés, et le nom de port qui les désigne à l'écran.
@@ -45,6 +52,8 @@ export const CONTENUS_TEXTE: Record<string, { nom: string; nomEn: string }> = {
   abc: { nom: "ABC", nomEn: "ABC" },
   paroles: { nom: "Paroles", nomEn: "Lyrics" },
   prompt: { nom: "Prompt", nomEn: "Prompt" },
+  activite: { nom: "Activité", nomEn: "Activity" },
+  motif: { nom: "Motif", nomEn: "Pattern" },
 };
 
 /**
