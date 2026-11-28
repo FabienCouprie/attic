@@ -60,10 +60,10 @@ describe("les valeurs d'essai", () => {
   });
 
   it("LE TEXTE depend du CONTENU declare, et chaque contenu a le sien", () => {
-    // Donner la meme chaine aux cinq ferait rendre un refus a quatre d'entre eux : on mesurerait
+    // Donner la meme chaine a tous ferait rendre un refus a presque tous : on mesurerait
     // alors un refus et non un composant.
     const rendus = CONTENUS_FABRIQUES.map((c) => texteDEssai(c));
-    expect(new Set(rendus).size, "les cinq contenus doivent differer").toBe(CONTENUS_FABRIQUES.length);
+    expect(new Set(rendus).size, "les contenus doivent differer").toBe(CONTENUS_FABRIQUES.length);
     for (const t of rendus) expect(t.length).toBeGreaterThan(10);
     expect(texteDEssai("abc")).toContain("K:C");
     expect(texteDEssai("notation")).toMatch(/^[A-G]\d \d/);

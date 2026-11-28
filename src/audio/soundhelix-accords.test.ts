@@ -82,6 +82,11 @@ describe("les décalages sur l'accord", () => {
       expect(hauteurSurAccord(am, d)).toBe(h);
     });
 
+  it("compte les notes d'un accord venu d'ailleurs, une seule ou quatre", () => {
+    expect([0, 1, -1, 2].map((d) => hauteurSurAccord([7], d))).toEqual([7, 19, -5, 31]);
+    expect([0, 3, 4, -1, -5].map((d) => hauteurSurAccord([0, 4, 7, 10], d))).toEqual([0, 10, 12, -2, -14]);
+  });
+
   it("reconnaît une note de l'accord à l'octave près", () => {
     expect(accordContient(am, 21)).toBe(true);
     expect(accordContient(am, 2)).toBe(false);

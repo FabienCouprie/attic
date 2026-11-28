@@ -444,6 +444,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Résonance sensorielle": { fr: "Résonance sensorielle", en: "Sensory resonance" },
   "famille.Séquenceurs": { fr: "Séquenceurs", en: "Sequencers" },
   "famille.Xenakis": { fr: "Xenakis", en: "Xenakis" },
+  "famille.SoundHelix": { fr: "SoundHelix", en: "SoundHelix" },
   "famille.Rythmes": { fr: "Rythmes", en: "Rhythms" },
   "famille.Générateurs AI": { fr: "Générateurs AI", en: "AI generators" },
   // Les familles de « Visualisation » (cf. plugins/familles-palette.ts).

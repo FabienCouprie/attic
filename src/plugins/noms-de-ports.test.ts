@@ -44,6 +44,8 @@ const DIVERGENCES_DECLAREES: Record<string, string> = {
     "Le réglage n'est pas le repli du port : l'entrée reçoit la tonique, et le réglage la suite de degrés.",
   "corpus-fabriquer-fin":
     "Le réglage n'est pas le repli du port : l'entrée reçoit le rang de la pièce, et le réglage le début du nom de fichier.",
+  "masque-activite":
+    "Le réglage n'est pas le repli du port : l'entrée reçoit la matrice d'activité entière, et le réglage nomme la ligne qu'on y lit.",
 };
 
 /**

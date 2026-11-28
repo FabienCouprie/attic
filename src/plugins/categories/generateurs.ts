@@ -9,6 +9,8 @@ import { fiches as f_generateurs } from "../generateurs";
 import { fiches as f_gamme_jouee } from "../gamme-jouee";
 import { fiches as f_accords_joues } from "../accords-joues";
 import { fiches as f_harmonie_motifs } from "../harmonie-motifs";
+import { fiches as f_voix_sur_accord } from "../voix-sur-accord";
+import { fiches as f_masque_activite } from "../masque-activite";
 import { fiches as f_glissando_harmonique } from "../glissando-harmonique";
 import { fiches as f_glissando_de_gamme } from "../glissando-de-gamme";
 import { fiches as f_pulsation } from "../pulsation";
@@ -29,6 +31,8 @@ export const fiches = [
   ...f_gamme_jouee,
   ...f_accords_joues,
   ...f_harmonie_motifs,
+  ...f_voix_sur_accord,
+  ...f_masque_activite,
   ...f_glissando_harmonique,
   ...f_glissando_de_gamme,
   ...f_pulsation,

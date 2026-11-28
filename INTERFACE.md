@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**526 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**528 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -364,6 +364,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Mappeur Mandelbrot | `mappeur-mandelbrot` | 240 × 140 |
 | Chaîne de Markov | `markov-midi` | 240 × 162 |
 | Masquage | `masquage` | 240 × 140 |
+| Masque d'activité | `masque-activite` | 240 × 162 |
 | Masque de zones | `masque-zones` | 240 × 140 |
 | Matrice de paramètres | `matrice-parametres` | 240 × 140 |
 | Mélange des fenêtres | `melange-fenetres` | 240 × 118 |
@@ -549,6 +550,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Vocoder | `vocoder` | 240 × 228 |
 | Voice Changer | `voice-changer` | 240 × 118 |
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
+| Voix sur l'accord | `voix-sur-accord` | 240 × 162 |
 | VOSIM | `vosim` | 240 × 184 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |

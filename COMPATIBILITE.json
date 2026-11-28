@@ -4848,6 +4848,21 @@
     {"nom":"Finesse","type":"choix","defaut":"2048","choix":["1024","2048","4096","8192"]}
    ]
   },
+  "masque-activite": {
+   "version": 1,
+   "entrees": [
+    {"nom":"MIDI","type":"midi"},
+    {"nom":"Harmonie","type":"midi"},
+    {"nom":"Activité","type":"texte","sousType":"activite"}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Voix","type":"texte","defaut":"v1"},
+    {"nom":"Couper aux bords","type":"case","defaut":0}
+   ]
+  },
   "masque-zones": {
    "version": 1,
    "entrees": [
@@ -9108,6 +9123,29 @@
     {"nom":"Synthèse","type":"choix","defaut":"auto","choix":["auto","fm","soundfont"]},
     {"nom":"Instrument","type":"sf2instrument","defaut":0},
     {"nom":"Volume","type":"nombre","defaut":80,"min":0,"max":100,"unite":"%"}
+   ]
+  },
+  "voix-sur-accord": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Harmonie","type":"midi"},
+    {"nom":"Activité","type":"texte","sousType":"activite","requis":false},
+    {"nom":"Motif","type":"texte","sousType":"motif","requis":false}
+   ],
+   "sorties": [
+    {"nom":"MIDI","type":"midi"}
+   ],
+   "reglages": [
+    {"nom":"Motif","type":"texte","defaut":"0/2,-/2,1,2,-/2,(0,1)*2,+/2,-/2"},
+    {"nom":"Voix","type":"texte","defaut":"v1"},
+    {"nom":"Voix parallèles","type":"texte","defaut":"0"},
+    {"nom":"Hauteurs","type":"choix","defaut":"accord","choix":["accord","libres"]},
+    {"nom":"Reprise","type":"choix","defaut":"morceau","choix":["morceau","section","accord"]},
+    {"nom":"Position fondamentale","type":"case","defaut":1},
+    {"nom":"Transposition","type":"curseur","defaut":0,"min":-48,"max":48,"unite":" ½-ton"},
+    {"nom":"Vélocité","type":"curseur","defaut":100,"min":1,"max":100,"unite":"%"},
+    {"nom":"Tics par temps","type":"choix","defaut":"4","choix":["2","3","4","6","8","12"]},
+    {"nom":"Instrument","type":"sf2instrument","defaut":0}
    ]
   },
   "vosim": {

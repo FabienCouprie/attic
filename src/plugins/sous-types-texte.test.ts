@@ -45,7 +45,7 @@ describe("les contenus du flux texte", () => {
     expect(intrus, "ces ports déclarent un contenu que leur nom ne dit pas").toEqual([]);
   });
 
-  it("les cinq contenus sont posés, et leur compte est celui du relevé", () => {
+  it("les sept contenus sont posés, et leur compte est celui du relevé", () => {
     const ports = portsTexte().filter((p) => p.sousType);
     const compte = (st: string, sens: "entrees" | "sorties") =>
       ports.filter((p) => p.sousType === st && p.sens === sens).length;
@@ -61,7 +61,11 @@ describe("les contenus du flux texte", () => {
     // PROMPT N'A AUCUN PRODUCTEUR, et il compte quand même : il refuse ce qui VA vers lui. Le
     // huitième est celui de « Texte → image (MOSS) », né le 2026-10-28.
     expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 8]);
-    expect(ports.length).toBe(40);
+    // LES DEUX CONTENUS DU CHANTIER SOUNDHELIX, nés le 2026-11-28 sans producteur : la matrice entre
+    // dans « Voix sur l'accord » et « Masque d'activité », le motif dans la première.
+    expect([compte("activite", "sorties"), compte("activite", "entrees")]).toEqual([0, 2]);
+    expect([compte("motif", "sorties"), compte("motif", "entrees")]).toEqual([0, 1]);
+    expect(ports.length).toBe(43);
   });
 
   // ─── Le cas fondateur ───
