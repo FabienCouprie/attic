@@ -71,6 +71,10 @@ export function entreesRiches(fiche: FicheLancable, o: { facultatifs?: boolean }
     // donc `sonSecond`.
     if (p.type === "audio") return audios++ === 0 ? communes[i] : sonSecond();
     if (p.type === "cercle") return CERCLE_D_ESSAI;
+    // UN PORT QUI DÉCLARE UNE HARMONIE la reçoit de `valeurs-essai.ts`, ses sections comprises : les
+    // accords ci-dessous n'ont aucun marqueur, et sous eux les voix du chantier SoundHelix n'ont
+    // qu'une section (2026-11-28).
+    if (p.type === "midi" && p.sousType === "harmonie") return communes[i];
     if (p.type === "midi") return notesVersFichierMidi([...notesDesAccords(), ...DEUX_NOTES], 120, 0);
     if (p.type === "texte" && p.sousType === "abc") {
       return `X:1\nT:Essai\nM:4/4\nL:1/8\nQ:1/4=120\nK:G\n"G"GABG DGBG|"C"cBcd "G"efge|"D"dcBA GFGA|"G"BGAF "D"G4|]`;

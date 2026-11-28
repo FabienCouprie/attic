@@ -64,8 +64,6 @@ export const INERTIES_DECLAREES: InertieInscrite[] = [
 
 const UNE_GRAINE = "la graine ne tire que l'ordre aléatoire, et hors de lui elle n'a rien à tirer ; dit dans sa documentation";
 
-const SANS_HARMONIE = "non mesurable au banc : le MIDI d'essai, une mélodie, ne rend que des accords d'une note, et la position fondamentale ne vaut que pour un accord de trois sons ; tenu par plugins/voix-sur-accord.test.ts sur une harmonie de « Harmonie par motifs » ; dit dans sa documentation";
-
 // LES RAISONS COMMUNES DU LOT 3d-2.
 const VUE_ANIMEE = "non mesurable au banc : ce réglage ne règle que l'animation montrée dans le composant, et aucune sortie n'en dépend ; dit dans sa documentation";
 const VUE_SEULE_ECHELLE = "non mesurable au banc : l'échelle ne règle que la vue, et le nœud rend son entrée telle quelle ; dit dans sa documentation";
@@ -180,12 +178,8 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "spectrogramme-fractal·Format", quand: { banc: true }, raison: SANS_DOM },
   { ou: "boucle-creneau-fin·Plier", quand: { banc: true }, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", quand: { banc: true }, raison: HORS_BOUCLE },
-  // LA VOIX SUR L'ACCORD (2026-11-28) : le MIDI d'essai est une mélodie, dont chaque note se lit comme
-  // un accord d'une seule note.
-  { ou: "voix-sur-accord·Position fondamentale", quand: { banc: true }, raison: SANS_HARMONIE },
-  // L'ARPÈGE PAR DURÉE D'ACCORD (2026-11-28), sous la même mélodie d'essai, sans section ni accord de trois sons.
-  { ou: "arpege-duree-accord·Position fondamentale", quand: { banc: true }, raison: SANS_HARMONIE.replace("voix-sur-accord", "arpege-nappe") },
-  { ou: "arpege-duree-accord·Couper à la section", quand: { banc: true }, raison: "non mesurable au banc : le MIDI d'essai n'a aucun marqueur de section, et aucun début de section ne coupe un accord ; tenu par plugins/arpege-nappe.test.ts et audio/soundhelix-accompagnement.test.ts sur une harmonie à sections ; dit dans sa documentation" },
+  // LA MATRICE D'ACTIVITÉ (2026-11-28) : sous l'harmonie d'essai, chaque section trouve un choix sans écart.
+  { ou: "matrice-activite·Essais", quand: { reglage: "Recherche", valeurs: ["gloutonne"] }, raison: "la recherche gloutonne s'arrête, à chaque section, au premier choix sans écart, et sous l'harmonie d'essai chaque section en trouve un avant le centième ; dit dans sa documentation" },
   // LE LOT 3e (2026-11-15) : tout réglage à choix gouverne, et ce qu'il fait voir est dans son module.
   ...INERTIES_DES_CHOIX,
 ];
@@ -241,8 +235,8 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Plier", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
+  { ou: "matrice-activite·Recherche", valeurs: ["exacte", "gloutonne"], raison: "tant qu'aucune section n'est sans issue, les deux recherches gardent le même premier choix sans écart, et sous l'harmonie d'essai aucune ne l'est ; tenu par audio/soundhelix-arrangement.test.ts, où des contraintes impossibles les séparent ; dit dans sa documentation" },
   { ou: "accords-vers-notation·Gamme", valeurs: GAMMES_DES_ROMAINS.map((g) => g.id), raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
-  { ou: "voix-sur-accord·Reprise", valeurs: ["morceau", "section"], raison: "le MIDI d'essai n'a aucun marqueur de section : le morceau n'en a qu'une, et la reprise à chaque section est la reprise à la fin du morceau ; tenu par plugins/voix-sur-accord.test.ts sur une harmonie de « Harmonie par motifs »" },
   ...COINCIDENCES_DES_CHOIX,
 ];
 

@@ -29,6 +29,8 @@ import type { Sequence } from "./sequence";
 import type { Corpus, PieceDuCorpus } from "./corpus";
 import type { ModeleHarmonique } from "./modele-harmonique";
 import { apprendreSurCorpus } from "./champ-apprentissage";
+import { calculerHarmonie } from "./soundhelix-harmonie";
+import { harmonieEnMidi } from "./soundhelix-harmonie-midi";
 
 export interface OptionsEssai {
   /** Le son d'essai, quand la valeur demandée en a besoin. C'est l'appelant qui le détient. */
@@ -105,6 +107,22 @@ export function modeleDEssai(): ModeleHarmonique {
   });
   if (!r.modele) throw new Error("le corpus d'essai n'apprend aucun modèle");
   return r.modele;
+}
+
+/**
+ * Une HARMONIE d'essai, pour un port MIDI qui déclare le contenu `harmonie` : vingt mesures à 4 tics
+ * par temps et 120 BPM, quinze sections, des accords de trois sons et un marqueur par section. Le MIDI
+ * d'essai ordinaire est une mélodie sans marqueur : sous lui, une voix du chantier SoundHelix ne
+ * trouve ni accord de trois sons ni seconde section, et une matrice d'activité n'a qu'une colonne,
+ * où sept voix ne peuvent pas toutes entrer.
+ *
+ * LES DURÉES SONT IRRÉGULIÈRES À DESSEIN : des sections de 5, 7 et 4 temps et des accords de 2 et 3
+ * temps, pour qu'un motif d'une mesure ne retombe pas sur chaque reprise ; et le fa court par-dessus
+ * la première frontière de section, pour qu'une coupe à la section ait un accord à couper.
+ */
+export function harmonieDEssai(): File {
+  const h = calculerHarmonie({ motif: "Am/3,F/2,+F/2,C/2,G/3,+Dm/2,E/2", ticsParTemps: 4, tics: 20 * 16, registre: 3, rapprocher: true });
+  return new File([harmonieEnMidi(h, { tempo: 120, tempsParMesure: 4, ticsParTemps: 4 })], "harmonie.mid", { type: "audio/midi" });
 }
 
 /** Le même matériau, écrit en fichier MIDI : c'est ce qu'attend un port « midi ». */
@@ -256,7 +274,7 @@ export function valeurDEssai(type: string, sousType?: string, o: OptionsEssai = 
     case "sequence": return sequenceDEssai();
     case "corpus": return corpusDEssai();
     case "modele-harmonique": return modeleDEssai();
-    case "midi": return midiDEssai();
+    case "midi": return sousType === "harmonie" ? harmonieDEssai() : midiDEssai();
     case "texte": return texteDEssai(sousType);
     case "accordage": return accordageDEssai();
     case "banque": return o.source ? banqueDEssai(o.source) : null;

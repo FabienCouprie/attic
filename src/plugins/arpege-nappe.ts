@@ -67,7 +67,7 @@ function enFaute(e: unknown, en: boolean) {
   throw e;
 }
 
-const ENTREE_HARMONIE = { nom: "Harmonie", nomEn: "Harmony", type: "midi" } as const;
+const ENTREE_HARMONIE = { nom: "Harmonie", nomEn: "Harmony", type: "midi", sousType: "harmonie" } as const;
 const ENTREE_ACTIVITE = { nom: "Activité", nomEn: "Activity", type: "texte", sousType: "activite", requis: false } as const;
 
 const VOIX = { nom: "Voix", nomEn: "Voice", type: "texte", defaut: "v1", defautEn: "v1",

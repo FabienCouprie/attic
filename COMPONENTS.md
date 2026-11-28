@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **530 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **531 components** in **7 categories** and **64 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 109 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (5) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 110 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [SoundHelix](#soundhelix) (6) · [Synthesizers](#synthesizers) (7) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 249 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (40) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 46 | [Analysis](#analysis) (21) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 14 | [Export](#export) (6) · [Monitoring](#monitoring) (8) |
@@ -2395,6 +2395,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Component | Summary |
 |---|---|
 | [Activity Mask](#activity-mask) | Keeps the notes of a MIDI file that start while a voice of the activity matrix plays. |
+| [Activity Matrix](#activity-matrix) | Draws which voices play in each chord section, under each voice's constraints. |
 | [Arpeggio by Chord Length](#arpeggio-by-chord-length) | Arpeggiates each chord of the harmony with the pattern whose length covers its duration. |
 | [Chord Pad](#chord-pad) | Holds the notes of each chord of the harmony for the whole chord, one line per note. |
 | [Harmony from Patterns](#harmony-from-patterns) | Draws a chord pattern from a bank, repeats it over the whole piece and cuts it into sections. |
@@ -2411,7 +2412,7 @@ Keeps the notes of a MIDI file that start while a voice of the activity matrix p
 | Port | Name | Type | |
 |---|---|---|---|
 | input | MIDI | MIDI |  |
-| input | Harmony | MIDI |  |
+| input | Harmony | MIDI (harmonie) |  |
 | input | Activity | text (activite) |  |
 | output | MIDI | MIDI |  |
 
@@ -2419,6 +2420,31 @@ Keeps the notes of a MIDI file that start while a voice of the activity matrix p
 |---|---|---|---|---|
 | Voice | text | `v1` |  | The name of the activity matrix line that governs the file. |
 | Cut at the edges | checkbox | 0 | 0 / 1 | Checked, a kept note that lasts beyond the activity stops at the instant the voice falls silent. Unchecked, it keeps its length. |
+
+#### Activity Matrix
+
+`matrice-activite` · Inputs → SoundHelix
+
+*Draws which voices play in each chord section, under each voice's constraints.*
+
+Draws which voices play in each chord section of the received harmony, under each voice's constraints, and writes it as an activity matrix. The model is that of the arrangement engine of the SoundHelix generator by Thomas Schürger (version 0.9, 2016). « Voices » gives one voice per line: its name, then its constraints, counted in sections. share=a-b is the share of sections where the voice plays, in percent; entry=a-b the section of its first entry, counted from 1; exit=a-b the section of its last exit, counted from the end, 1 being the last; segments=a-b the number of its segments; length=a-b the length of each; pause=a-b the length of each silence between two segments. A bound is written a-b, a- or -b, or a single number. silent allows the voice never to play. debut= and fin= are copied into the matrix: they move each entry and each exit of the voice in ticks. The keywords may also be written in French. The number of playing voices is drawn first, section by section. « Opening » gives that of the first sections, « Closing » that of the last ones, separated by commas. In between, each section draws a number between « Active voices min » and « Active voices max », at most « Change per section » away from the previous one; the same number as the section before is kept only once in ten when another one is possible. The voices are then chosen: each section starts from the voices of the previous one and turns some on or off at random up to its number; at an equal number, one time in two, it swaps one. With « Search » on « Exact », each section tries several choices, keeps the first that holds the constraints, and goes back to the section before when none holds; when no matrix holds the drawn numbers of voices, they are drawn anew, up to ten times, each new attempt receiving a tenth of the tries; « Tries » bounds the number of choices of the whole search. With « Greedy », each section keeps, among « Tries » choices, the one that strays least from the constraints, without going back: the matrix is always returned, and its deviations counted. « Seed » fixes the draw; 0 draws a seed at every run, and the message gives it. The « Activity » output carries the matrix: one line per voice, its name, one sign per section, x when the voice plays, . when it is silent, then its shifts. The message gives the number of voices and sections, the search, the number of tries, the deviations of the greedy search and the seed; when the exact search fails, the constraint and the voice that blocked it most often.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Harmony | MIDI (harmonie) |  |
+| output | Activity | text (activite) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Voices | text | `pad       share=50-90 length=2- bass      share=50-90 ent…` |  | One voice per line, its name then its constraints in sections: share=, entry=, exit=, segments=, length=, pause=, silent, and the shifts debut= and fin= in ticks. |
+| Active voices min | number | 3 | 0 – 16, step 1 | The fewest voices playing in a section, outside the « Opening » and « Closing » sections. |
+| Active voices max | number | 6 | 1 – 16, step 1 | The most voices playing in a section, outside the « Opening » and « Closing » sections. |
+| Change per section | number | 2 | 1 – 8, step 1 | The largest change in the number of voices from one section to the next, outside the « Opening » and « Closing » sections. |
+| Opening | text | `1,2,3,4` |  | The number of voices of the first sections, separated by commas: 1,2,3,4 opens the piece voice by voice. |
+| Closing | text | `3,2` |  | The number of voices of the last sections, separated by commas. |
+| Search | choice | Exact | Exact / Greedy | Exact: the matrix holds every constraint, or the node names the one that blocks. Greedy: the matrix is always returned, as close to the constraints as it gets, and its deviations are counted. As long as no section is a dead end, both searches make the same choices and return the same matrix. |
+| Tries | number | 100000 | 100 – 1000000, step 100 | With « Search » on « Exact »: the number of choices of the whole search. On « Greedy »: the number of choices of each section, which stops at the first choice without deviation; no effect when every section finds one. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the draw of the numbers of voices and of the voices. 0 = drawn at every run, and given in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Arpeggio by Chord Length
 
@@ -2430,7 +2456,7 @@ Arpeggiates each chord of the received harmony with the pattern whose length cov
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Harmony | MIDI |  |
+| input | Harmony | MIDI (harmonie) |  |
 | input | Activity | text (activite) |  |
 | input | Pattern | text (motif) |  |
 | output | MIDI | MIDI |  |
@@ -2456,7 +2482,7 @@ Holds the notes of each chord of the received harmony for the whole chord, one l
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Harmony | MIDI |  |
+| input | Harmony | MIDI (harmonie) |  |
 | input | Activity | text (activite) |  |
 | output | MIDI | MIDI |  |
 
@@ -2481,7 +2507,7 @@ Draws a chord pattern from a bank, resolves its table references, then repeats i
 
 | Port | Name | Type | |
 |---|---|---|---|
-| output | Harmony | MIDI |  |
+| output | Harmony | MIDI (harmonie) |  |
 | output | Chords | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2507,7 +2533,7 @@ Lays a pattern over the received harmony, entry after entry, from the start of t
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Harmony | MIDI |  |
+| input | Harmony | MIDI (harmonie) |  |
 | input | Activity | text (activite) |  |
 | input | Pattern | text (motif) |  |
 | output | MIDI | MIDI |  |

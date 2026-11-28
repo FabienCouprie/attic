@@ -90,6 +90,51 @@
     "entrée 1 « Courbe » : renommée « Courbe des p-fields »"
    ],
    "raison": "Demandé par Fabien le 2026-11-27, pour la même raison : la courbe s'écrit dans les p-fields réglés sur « Courbe », et « Courbe » ne le disait pas. Le port garde son rang et son type, et un câble enregistré arrive toujours sur lui : rien n'est perdu à l'ouverture, seul le nom affiché change. Aucun graphe de exemples/, de tests-e2e/ ni de presets/ n'emploie ce composant par un câble ; tests-e2e/csound-relit.spec.ts le lance par rang, sans courbe."
+  },
+  {
+   "composant": "harmonie-motifs",
+   "version": 2,
+   "date": "2026-11-28",
+   "ruptures": [
+    "sortie 0 « Harmonie » : contenu aucun → \"harmonie\""
+   ],
+   "raison": "Lot 4 du chantier SoundHelix, sur la consigne de Fabien du 2026-11-28 d'enchaîner les lots : le port déclare qu'il porte une harmonie, des accords de trois sons et un marqueur par section, pour que le banc nourrisse les voix du chantier d'une harmonie d'essai plutôt que d'une mélodie sans section. Le flux MIDI ne déclare aucune règle de contenu : aucun câble n'est refusé, ni au geste ni à la lecture, et un graphe enregistré s'ouvre comme avant. Le composant est né le même jour."
+  },
+  {
+   "composant": "voix-sur-accord",
+   "version": 2,
+   "date": "2026-11-28",
+   "ruptures": [
+    "entrée 0 « Harmonie » : contenu aucun → \"harmonie\""
+   ],
+   "raison": "Lot 4 du chantier SoundHelix : l'entrée déclare qu'elle attend une harmonie, pour que le banc lui donne une harmonie d'essai, sous laquelle « Position fondamentale » et la reprise à la section se mesurent. Le flux MIDI ne déclare aucune règle de contenu : aucun câble n'est refusé, ni au geste ni à la lecture, et un graphe enregistré s'ouvre comme avant. Le composant est né le même jour."
+  },
+  {
+   "composant": "masque-activite",
+   "version": 2,
+   "date": "2026-11-28",
+   "ruptures": [
+    "entrée 1 « Harmonie » : contenu aucun → \"harmonie\""
+   ],
+   "raison": "Lot 4 du chantier SoundHelix : l'entrée déclare qu'elle attend une harmonie, pour que le banc lui donne une harmonie d'essai à sections. Le flux MIDI ne déclare aucune règle de contenu : aucun câble n'est refusé, ni au geste ni à la lecture, et un graphe enregistré s'ouvre comme avant. Le composant est né le même jour."
+  },
+  {
+   "composant": "arpege-duree-accord",
+   "version": 2,
+   "date": "2026-11-28",
+   "ruptures": [
+    "entrée 0 « Harmonie » : contenu aucun → \"harmonie\""
+   ],
+   "raison": "Lot 4 du chantier SoundHelix : l'entrée déclare qu'elle attend une harmonie, pour que le banc lui donne une harmonie d'essai, sous laquelle « Position fondamentale » et « Couper à la section » se mesurent. Le flux MIDI ne déclare aucune règle de contenu : aucun câble n'est refusé, ni au geste ni à la lecture, et un graphe enregistré s'ouvre comme avant. Le composant est né le même jour."
+  },
+  {
+   "composant": "nappe-accords",
+   "version": 2,
+   "date": "2026-11-28",
+   "ruptures": [
+    "entrée 0 « Harmonie » : contenu aucun → \"harmonie\""
+   ],
+   "raison": "Lot 4 du chantier SoundHelix : l'entrée déclare qu'elle attend une harmonie, pour que le banc lui donne une harmonie d'essai à sections. Le flux MIDI ne déclare aucune règle de contenu : aucun câble n'est refusé, ni au geste ni à la lecture, et un graphe enregistré s'ouvre comme avant. Le composant est né le même jour."
   }
  ]
 }
