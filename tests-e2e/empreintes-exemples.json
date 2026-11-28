@@ -1040,12 +1040,12 @@
     "un-morceau-a-la-soundhelix.json": {
       "lecteurs": {
         "ecoute": {
-          "rms": 0.12879304439232817,
-          "crete": 0.7283026576042175,
+          "rms": 0.13223403833560232,
+          "crete": 0.8974873423576355,
           "trames": 5375995,
           "canaux": 2,
           "taux": 44100,
-          "centroide": 2031.0439379759541,
+          "centroide": 2121.470376191395,
           "blocs": [
             "fmt",
             "fact",
