@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!--
+  Essai de niveau 1 pour Attic : l'harmonie et les six moteurs qui posent un motif sur l'accord.
+  Chaque choix est unique (un seul chordPattern, aucune table au hasard, un seul motif par moteur) :
+  une fois l'harmonie et la matrice d'activite connues, chaque note se deduit.
+  Ecrit pour Attic, aucun motif n'est repris des exemples de SoundHelix.
+-->
+<SoundHelix version="0.9">
+  <structure>
+    <bars>32</bars>
+    <beatsPerBar>4</beatsPerBar>
+    <ticksPerBeat>4</ticksPerBeat>
+    <maxVelocity>1000</maxVelocity>
+  </structure>
+  <harmonyEngine class="PatternHarmonyEngine">
+    <crossoverPitch>3</crossoverPitch>
+    <minimizeChordDistance>true</minimizeChordDistance>
+    <chordPattern>Am/4,Dm6/2,E7/2,Am4/4,F/4,+C/4,Gsus4/2,G/2,Bbaug/2,Edim/2,-5:-1:2/2,Em7/2,+Fsus2/4,Dm/4,(G/1.5,G7/0.5)*4,+Am6/8,E/4,E4/2,Esus4/2</chordPattern>
+  </harmonyEngine>
+  <arrangementEngine class="SimpleArrangementEngine">
+    <maxIterations>1000000</maxIterations>
+    <minActivityCount>3</minActivityCount>
+    <maxActivityCount>8</maxActivityCount>
+    <maxActivityChangeCount>3</maxActivityChangeCount>
+    <startActivityCounts>3,5</startActivityCounts>
+    <stopActivityCounts>5,3</stopActivityCounts>
+    <activityVector name="nappe"><minActive>30</minActive></activityVector>
+    <activityVector name="nappe_normale"><minActive>30</minActive></activityVector>
+    <activityVector name="plaque"><minActive>30</minActive></activityVector>
+    <activityVector name="basse"><minActive>30</minActive><startShift>-2</startShift></activityVector>
+    <activityVector name="accomp"><minActive>30</minActive><stopShift>3</stopShift></activityVector>
+    <activityVector name="arpege"><minActive>30</minActive></activityVector>
+    <activityVector name="libre"><minActive>30</minActive></activityVector>
+    <activityVector name="libre_multi"><minActive>30</minActive></activityVector>
+
+    <track>
+      <instrument>nappe</instrument>
+      <sequenceEngine class="PadSequenceEngine">
+        <offsets>0,1,2</offsets>
+        <velocity>700</velocity>
+        <retriggerPitches>false</retriggerPitches>
+      </sequenceEngine>
+      <activityVector>nappe</activityVector>
+    </track>
+
+    <track>
+      <instrument>nappe_normale</instrument>
+      <transposition>12</transposition>
+      <sequenceEngine class="PadSequenceEngine">
+        <offsets>-1,0,1,2,3</offsets>
+        <velocity>500</velocity>
+        <normalizeChords>true</normalizeChords>
+        <obeyChordSections>true</obeyChordSections>
+      </sequenceEngine>
+      <activityVector>nappe_normale</activityVector>
+    </track>
+
+    <track>
+      <instrument>plaque</instrument>
+      <sequenceEngine class="ChordSequenceEngine">
+        <offsets>0,1,2</offsets>
+        <patternEngine class="StringPatternEngine">
+          <string>0/3,0~/1,0/2:600,-/2,0/4,-/1,0/3:400</string>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>plaque</activityVector>
+    </track>
+
+    <track>
+      <instrument>basse</instrument>
+      <transposition>-12</transposition>
+      <sequenceEngine class="PatternSequenceEngine">
+        <normalizeChords>false</normalizeChords>
+        <patternRestartMode>chordSection</patternRestartMode>
+        <patternEngine class="StringPatternEngine">
+          <string>0/2,-/1,0,+/2,-1/2,0~/1,3/2:700,(0,2)*2,(0,-,1,-)+1,E(3,8,0:800,-),-3/2,+/2</string>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>basse</activityVector>
+    </track>
+
+    <track>
+      <instrument>accomp</instrument>
+      <sequenceEngine class="MultiPatternSequenceEngine">
+        <patternRestartMode>chord</patternRestartMode>
+        <patternEngines>
+          <patternEngine class="StringPatternEngine">
+            <string>-/2,1/2:500,-/2,1/2:500</string>
+          </patternEngine>
+          <patternEngine class="StringPatternEngine">
+            <string>-/2,2/2:500,-/2,2~/2:500</string>
+          </patternEngine>
+        </patternEngines>
+      </sequenceEngine>
+      <activityVector>accomp</activityVector>
+    </track>
+
+    <track>
+      <instrument>arpege</instrument>
+      <sequenceEngine class="ArpeggioSequenceEngine">
+        <normalizeChords>false</normalizeChords>
+        <obeyChordSections>true</obeyChordSections>
+        <patternEngines>
+          <patternEngine class="StringPatternEngine">
+            <string>0,1,2,1</string>
+          </patternEngine>
+          <patternEngine class="StringPatternEngine">
+            <string>0,1,2,3,4,3,2,1</string>
+          </patternEngine>
+          <patternEngine class="StringPatternEngine">
+            <string>0,2,4,2,1,3,5,3,-,4,6,4</string>
+          </patternEngine>
+          <patternEngine class="StringPatternEngine">
+            <string>0/2,2,1,3/2,5,4,6/2,4,3,2/2,1,-</string>
+          </patternEngine>
+        </patternEngines>
+      </sequenceEngine>
+      <activityVector>arpege</activityVector>
+    </track>
+
+    <track>
+      <instrument>libre</instrument>
+      <sequenceEngine class="FreePatternSequenceEngine">
+        <patternEngine class="StringPatternEngine">
+          <string ticksPerBeat="2">9,7,4,-,2/2,4,-</string>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>libre</activityVector>
+    </track>
+
+    <track>
+      <instrument>libre_multi</instrument>
+      <sequenceEngine class="FreeMultiPatternSequenceEngine">
+        <patternRestartMode>chordSection</patternRestartMode>
+        <patternEngines>
+          <patternEngine class="StringPatternEngine">
+            <string>12/6,-/2,11/4,7/4</string>
+          </patternEngine>
+          <patternEngine class="StringPatternEngine">
+            <string>-/4,16/4:300,14/3,-/1</string>
+          </patternEngine>
+        </patternEngines>
+      </sequenceEngine>
+      <activityVector>libre_multi</activityVector>
+    </track>
+  </arrangementEngine>
+
+  <player class="MidiPlayer">
+    <bpm>120</bpm>
+    <transposition>60</transposition>
+    <groove>100</groove>
+    <beforePlayWaitTicks>0</beforePlayWaitTicks>
+    <afterPlayWaitTicks>0</afterPlayWaitTicks>
+    <device name="device1" clockSynchronization="false">Gervill</device>
+    <map instrument="nappe" device="device1" channel="1" program="89" />
+    <map instrument="nappe_normale" device="device1" channel="2" program="49" />
+    <map instrument="plaque" device="device1" channel="3" program="1" />
+    <map instrument="basse" device="device1" channel="4" program="34" />
+    <map instrument="accomp" device="device1" channel="5" program="5" />
+    <map instrument="arpege" device="device1" channel="6" program="47" />
+    <map instrument="libre" device="device1" channel="7" program="74" />
+    <map instrument="libre_multi" device="device1" channel="8" program="12" />
+  </player>
+</SoundHelix>

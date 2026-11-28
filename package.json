@@ -84,6 +84,7 @@
     "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "varier": "playwright test tests-e2e/varier.spec.ts",
     "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
+    "temoins-soundhelix": "node scripts/temoins-soundhelix.mjs",
     "croisement": "cross-env BANC_CROISEMENT=1 RAPPORT_CROISEMENT=CROISEMENT/croisement.json vitest run src/docs/croisement-nomenclatures.test.ts --execArgv=--expose-gc",
     "controle-gammes": "cross-env BANC_GAMMES=1 vitest run src/docs/gammes-tenues.test.ts src/docs/gammes-tenues-son.test.ts --execArgv=--expose-gc",
     "controle-gammes-profond": "cross-env BANC_GAMMES_PROFOND=1 vitest run src/docs/gammes-passe-profonde.test.ts --execArgv=--expose-gc",

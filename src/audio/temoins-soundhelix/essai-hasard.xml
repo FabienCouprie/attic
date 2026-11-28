@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<!--
+  Essai de niveau 2 pour Attic : ce qui tire au hasard, rendu sous plusieurs noms de morceau.
+  Tables d'accords, motif au hasard, motif par fragments, deux melodies, recherche gloutonne.
+  On n'y compare pas des notes : on y releve ce que le hasard garantit.
+  Ecrit pour Attic, aucun motif n'est repris des exemples de SoundHelix.
+-->
+<SoundHelix version="0.9">
+  <structure>
+    <bars>64</bars>
+    <beatsPerBar>4</beatsPerBar>
+    <ticksPerBeat>4</ticksPerBeat>
+    <maxVelocity>1000</maxVelocity>
+  </structure>
+  <harmonyEngine class="PatternHarmonyEngine">
+    <crossoverPitch>3</crossoverPitch>
+    <minimizeChordDistance>true</minimizeChordDistance>
+    <chordPattern>0/8,1/4,1!0/4,+$0/8,1/4,2/4</chordPattern>
+    <chordPattern>0/4,1/4,1/4,1!1/4,+$0/4,$1/4,2/8</chordPattern>
+    <chordRandomTable>Am,Am,Dm</chordRandomTable>
+    <chordRandomTable>C,F,G,Em,Dm,Am,F,G</chordRandomTable>
+    <chordRandomTable>E,E7,G,Esus4</chordRandomTable>
+  </harmonyEngine>
+  <arrangementEngine class="SimpleArrangementEngine">
+    <constraintMode>greedy</constraintMode>
+    <maxIterations>1000</maxIterations>
+    <minActivityCount>2</minActivityCount>
+    <maxActivityCount>5</maxActivityCount>
+    <maxActivityChangeCount>1</maxActivityChangeCount>
+    <startActivityCounts>1,2,3</startActivityCounts>
+    <stopActivityCounts>3,2,1</stopActivityCounts>
+    <activityVector name="basse_hasard">
+      <startAfterSection>0</startAfterSection>
+      <minActive>40</minActive>
+      <maxActive>90</maxActive>
+      <minSegmentLength>2</minSegmentLength>
+    </activityVector>
+    <activityVector name="fragments">
+      <minActive>30</minActive>
+      <maxActive>80</maxActive>
+      <minSegmentLength>2</minSegmentLength>
+      <maxSegmentLength>6</maxSegmentLength>
+    </activityVector>
+    <activityVector name="melodie">
+      <startAfterSection>2</startAfterSection>
+      <stopBeforeSection>0</stopBeforeSection>
+      <minActive>25</minActive>
+      <maxActive>60</maxActive>
+      <minSegmentLength>2</minSegmentLength>
+      <maxSegmentCount>3</maxSegmentCount>
+      <startShift>-2</startShift>
+    </activityVector>
+    <activityVector name="contrechant">
+      <startAfterSection>3</startAfterSection>
+      <minActive>20</minActive>
+      <maxActive>50</maxActive>
+      <minSegmentLength>2</minSegmentLength>
+    </activityVector>
+    <activityVector name="nappe">
+      <minActive>30</minActive>
+      <maxActive>70</maxActive>
+      <minSegmentLength>3</minSegmentLength>
+    </activityVector>
+
+    <track>
+      <instrument>basse_hasard</instrument>
+      <transposition>-24</transposition>
+      <sequenceEngine class="PatternSequenceEngine">
+        <patternEngine class="RandomPatternEngine">
+          <patternTicks>16</patternTicks>
+          <patternString>A1,A2,A1,B1,A1,A2,A1,B2</patternString>
+          <noteProbability>70</noteProbability>
+          <legatoProbability>20</legatoProbability>
+          <minVelocity>500</minVelocity>
+          <maxVelocity>1000</maxVelocity>
+          <minActiveTicks>8</minActiveTicks>
+          <maxActiveTicks>14</maxActiveTicks>
+          <offsets>0,0,0,1,2,3,-1,+</offsets>
+          <noteLengths>1,1,2,2,3</noteLengths>
+          <pauseLengths>1,1,2</pauseLengths>
+          <pitchVelocityCorrelation>50</pitchVelocityCorrelation>
+          <velocityExponent>2</velocityExponent>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>basse_hasard</activityVector>
+    </track>
+
+    <track>
+      <instrument>fragments</instrument>
+      <sequenceEngine class="PatternSequenceEngine">
+        <patternEngine class="RandomFragmentPatternEngine">
+          <patternTicks>16</patternTicks>
+          <patternString>A1,B1,A2,B2,A1,B1,A3,C1</patternString>
+          <pattern group="A">0,1,2,-|0/2,2/2|1,-,1,2|0,-,-,2</pattern>
+          <pattern group="B">2/2,1/2|-,1,0,1|2,-/3|0/4</pattern>
+          <pattern group="C">0,-,0,-|-/2,2/2|3/4</pattern>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>fragments</activityVector>
+    </track>
+
+    <track>
+      <instrument>melodie</instrument>
+      <transposition>12</transposition>
+      <sequenceEngine class="MelodySequenceEngine">
+        <melodies>1,2,2,3</melodies>
+        <minPitch>-2</minPitch>
+        <maxPitch>10</maxPitch>
+        <pitchDistances>-3,-2,-1,-1,0,1,1,2,3</pitchDistances>
+        <patternEngine class="RandomPatternEngine">
+          <patternTicks>16</patternTicks>
+          <patternString>A1,A2,B1,A1</patternString>
+          <noteProbability>65</noteProbability>
+          <legatoProbability>10</legatoProbability>
+          <minVelocity>600</minVelocity>
+          <maxVelocity>1000</maxVelocity>
+          <minActiveTicks>8</minActiveTicks>
+          <maxActiveTicks>13</maxActiveTicks>
+          <offsets>0,0,+,+,+,*</offsets>
+          <noteLengths>1,2,2,3,4</noteLengths>
+          <pauseLengths>1,2,2</pauseLengths>
+          <pitchVelocityCorrelation>80</pitchVelocityCorrelation>
+          <velocityExponent>3</velocityExponent>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>melodie</activityVector>
+    </track>
+
+    <track>
+      <instrument>contrechant</instrument>
+      <sequenceEngine class="MelodySequenceEngine">
+        <melodies>2</melodies>
+        <minPitch>-5</minPitch>
+        <maxPitch>4</maxPitch>
+        <pitchDistances>-1,0,1</pitchDistances>
+        <patternEngine class="StringPatternEngine">
+          <string>#/4,+/2,+/2,*/4,-/4</string>
+        </patternEngine>
+      </sequenceEngine>
+      <activityVector>contrechant</activityVector>
+    </track>
+
+    <track>
+      <instrument>nappe</instrument>
+      <sequenceEngine class="PadSequenceEngine">
+        <offsets>0,1,2</offsets>
+        <velocity>500</velocity>
+      </sequenceEngine>
+      <activityVector>nappe</activityVector>
+    </track>
+  </arrangementEngine>
+
+  <player class="MidiPlayer">
+    <bpm>110</bpm>
+    <transposition>64</transposition>
+    <groove>100</groove>
+    <beforePlayWaitTicks>0</beforePlayWaitTicks>
+    <afterPlayWaitTicks>0</afterPlayWaitTicks>
+    <device name="device1" clockSynchronization="false">Gervill</device>
+    <map instrument="basse_hasard" device="device1" channel="1" program="34" />
+    <map instrument="fragments" device="device1" channel="2" program="5" />
+    <map instrument="melodie" device="device1" channel="3" program="74" />
+    <map instrument="contrechant" device="device1" channel="4" program="72" />
+    <map instrument="nappe" device="device1" channel="5" program="90" />
+  </player>
+</SoundHelix>
