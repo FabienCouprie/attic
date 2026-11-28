@@ -170,7 +170,11 @@ describe("ce que la transposition d'un SF2 fabrique", () => {
     // Une octave vers le bas : la source porte donc le double.
     const sf2 = buildSF2({ sampleRate: 44100, rootNote: 72, freq: fSortie * 2, duration: 2 });
     const buffer = rendreAvecSF2(sf2 as any, [{ note: 60, velocite: 127, debut: 0, fin: 1 }], 100, 0);
-    const db = raieSurParasites(buffer.getChannelData(0), rang, N);
+    // L'ANALYSE COMMENCE APRÈS L'ATTAQUE. Depuis que le rendu suit l'enveloppe de volume, une zone
+    // qui n'en écrit aucune monte par l'attaque d'une milliseconde que la norme donne par défaut. Prise
+    // dans les 2 048 premiers échantillons, cette rampe étalait la raie et la mesure tombait à 21,6 dB
+    // sans que l'interpolation y soit pour rien. Un interpolateur linéaire planté la fait toujours tomber.
+    const db = raieSurParasites(buffer.getChannelData(0).subarray(N), rang, N);
     console.log(`SF2, octave vers le bas · raie sur parasites : ${db.toFixed(1)} dB`);
     expect(db, [
       "",
